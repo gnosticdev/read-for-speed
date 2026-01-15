@@ -9,7 +9,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
-  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogPanel,
@@ -20,14 +19,27 @@ import { RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
 
 type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
 
+const buildExcerpt = (text: string, maxLength = 240) => {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  if (trimmed.length <= maxLength) return trimmed
+  return `${trimmed.slice(0, maxLength).trim()}...`
+}
+
 export default function ContentApp({
   docClone,
   anchor,
-  isReadable,
+  selectionText,
+  openOnSelection,
+  onSelectionHandled,
+  onClearSelection,
 }: {
   docClone: Document
   anchor: HTMLElement
-  isReadable: boolean
+  selectionText?: string | null
+  openOnSelection?: boolean
+  onSelectionHandled?: () => void
+  onClearSelection?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [pageContent, setPageContent] = useState<string | undefined>()
@@ -35,6 +47,8 @@ export default function ContentApp({
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [status, setStatus] = useState<PageContentStatus>('idle')
+  const selectedContent = selectionText?.trim()
+  const selectionExcerpt = selectedContent ? buildExcerpt(selectedContent) : null
 
   const actionsRef = useRef<DialogRootActions>({
     unmount: () => void 0,
@@ -43,7 +57,7 @@ export default function ContentApp({
 
   const controlsContainerRef = useRef<HTMLDivElement>(null)
 
-  const handleUsePageContent = useCallback(() => {
+  const loadPageContent = useCallback(() => {
     setStatus('loading')
     setPageError(null)
 
@@ -55,9 +69,7 @@ export default function ContentApp({
     }
 
     const articleText = article.textContent ?? ''
-    const excerptText =
-      article.excerpt?.trim() ||
-      (articleText.length > 0 ? `${articleText.slice(0, 240).trim()}...` : null)
+    const excerptText = article.excerpt?.trim() || buildExcerpt(articleText)
 
     // Store full content + excerpt for the reader UI.
     setPageContent(articleText)
@@ -66,12 +78,23 @@ export default function ContentApp({
     setStatus('ready')
   }, [docClone])
 
+  const handleUsePageContent = useCallback(() => {
+    loadPageContent()
+    onClearSelection?.()
+  }, [loadPageContent, onClearSelection])
+
   useEffect(() => {
     // Auto-load page content for the extension experience.
     if (status === 'idle') {
-      handleUsePageContent()
+      loadPageContent()
     }
-  }, [handleUsePageContent, status])
+  }, [loadPageContent, status])
+
+  useEffect(() => {
+    if (!openOnSelection || !selectedContent) return
+    setOpen(true)
+    onSelectionHandled?.()
+  }, [openOnSelection, onSelectionHandled, selectedContent])
 
   return (
     <div className='flex flex-col items-end gap-3'>
@@ -104,12 +127,12 @@ export default function ContentApp({
           </DialogHeader>
           <DialogPanel className='p-0'>
             <RSVPReader
-              initialContent={pageContent}
+              initialContent={selectedContent || pageContent}
               onUsePageContent={handleUsePageContent}
               pageContentStatus={status}
               pageContentTitle={pageTitle}
               pageContentError={pageError}
-              pageContentExcerpt={pageExcerpt}
+              pageContentExcerpt={selectionExcerpt || pageExcerpt}
               containerClassName='h-full'
               controlsContainer={controlsContainerRef.current}
               controlPanelClassName='border-t-0 bg-transparent'

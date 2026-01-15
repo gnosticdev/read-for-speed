@@ -3,9 +3,6 @@ import { defineConfig } from 'wxt'
 // See https://wxt.dev/api/config.html
 export default defineConfig({
 	modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
-	autoIcons: {
-		baseIconPath: './assets/icons/app-icons',
-	},
 
 	webExt: {
 		binaries: {
@@ -18,7 +15,17 @@ export default defineConfig({
 		disabled: false,
 	},
 	manifest: {
-		// permissions: ['activeTab'],
+		description:
+			'Read at 300-900 words per minute using the RSVP (Rapid Serial Visual Presentation) technique.',
+		permissions: [
+			'activeTab',
+			'contextMenus',
+			'clipboardWrite',
+			'clipboardRead',
+			'storage',
+			'tabs',
+			'scripting',
+		],
 		// Required, don't open popup, only action
 		action: {},
 		name:

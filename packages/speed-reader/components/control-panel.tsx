@@ -151,7 +151,6 @@ export function ControlPanel({
               >
                 3
               </ToggleGroupItem>
-              <ToggleGroupItem value='3'>3</ToggleGroupItem>
             </ToggleGroup>
           </div>
         </div>

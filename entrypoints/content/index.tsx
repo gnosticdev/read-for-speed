@@ -1,8 +1,56 @@
 import { isProbablyReaderable } from '@mozilla/readability'
+import { useCallback, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import ContentApp from './ContentApp'
 
 import '@/assets/tailwind.css'
+import type { CustomMessages } from '@/lib/message-types'
+
+type ContentAppShellProps = {
+  docClone: Document
+  anchor: HTMLElement
+}
+
+function ContentAppShell({ docClone, anchor }: ContentAppShellProps) {
+  const [selectionText, setSelectionText] = useState<string | null>(null)
+  const [openOnSelection, setOpenOnSelection] = useState(false)
+
+  const handleSelectionMessage = useCallback((message: CustomMessages) => {
+    if (message?.type !== 'RSVP_GET_SELECTION_TEXT') return
+    const nextSelection = message.payload?.trim() ?? ''
+    if (!nextSelection) return
+
+    // Use the highlighted selection for the reader and open the UI.
+    setSelectionText(nextSelection)
+    setOpenOnSelection(true)
+  }, [])
+
+  useEffect(() => {
+    browser.runtime.onMessage.addListener(handleSelectionMessage)
+    return () => {
+      browser.runtime.onMessage.removeListener(handleSelectionMessage)
+    }
+  }, [handleSelectionMessage])
+
+  const handleSelectionHandled = useCallback(() => {
+    setOpenOnSelection(false)
+  }, [])
+
+  const handleClearSelection = useCallback(() => {
+    setSelectionText(null)
+  }, [])
+
+  return (
+    <ContentApp
+      docClone={docClone}
+      anchor={anchor}
+      selectionText={selectionText}
+      openOnSelection={openOnSelection}
+      onSelectionHandled={handleSelectionHandled}
+      onClearSelection={handleClearSelection}
+    />
+  )
+}
 
 export default defineContentScript({
   matches: ['*://*/*'],
@@ -61,10 +109,9 @@ export default defineContentScript({
 
         // set our root theme to the system theme
         root.render(
-          <ContentApp
+          <ContentAppShell
             docClone={docClone}
             anchor={uiContainer}
-            isReadable={isReadable}
           />,
         )
         return { root, wrapper }
