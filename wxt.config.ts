@@ -16,7 +16,8 @@ export default defineConfig({
 	},
 	manifest: {
 		description:
-			'Read at 300-900 words per minute using the RSVP (Rapid Serial Visual Presentation) technique.',
+			'RSVP speed-reading overlay for webpages. Read text one word at a time with adjustable speed and focus controls.',
+
 		permissions: [
 			'activeTab',
 			'contextMenus',

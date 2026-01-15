@@ -1,12 +1,15 @@
 'use client'
 
+import { X } from 'lucide-react'
 import { useMemo } from 'react'
+import { Button } from '@/components/ui/button'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
   word: string
   settings: ReaderSettings
   isPlaying: boolean
+  onStop?: () => void
 }
 
 // Calculate Optimal Recognition Point (ORP) - roughly 35% into the word
@@ -21,7 +24,7 @@ function getORPIndex(word: string): number {
   return Math.floor(length * 0.35)
 }
 
-export function WordDisplay({ word, settings, isPlaying }: WordDisplayProps) {
+export function WordDisplay({ word, settings, isPlaying, onStop }: WordDisplayProps) {
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = word.trim()
     const idx = getORPIndex(cleanWord)
@@ -42,6 +45,19 @@ export function WordDisplay({ word, settings, isPlaying }: WordDisplayProps) {
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
       <div className='relative w-full max-w-4xl'>
+        {/* Quick exit button so users can return to the main screen. */}
+        {onStop && (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon-sm'
+            onClick={onStop}
+            className='absolute right-0 top-0 z-50'
+            aria-label='Stop reading'
+          >
+            <X />
+          </Button>
+        )}
         {/* Focal guide lines */}
         <div className='absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none'>
           <div className='absolute w-px h-16 bg-primary/20 -top-8' />

@@ -35,6 +35,7 @@ export interface RSVPReaderProps {
   initialContent?: string
   onContentChange?: (content: string) => void
   onUsePageContent?: () => void
+  pageContentFull?: string
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
@@ -67,6 +68,7 @@ export function RSVPReader({
   initialContent,
   onContentChange,
   onUsePageContent,
+  pageContentFull,
   pageContentStatus,
   pageContentTitle,
   pageContentError,
@@ -189,11 +191,13 @@ export function RSVPReader({
 
   const handleSelectPageContent = useCallback(() => {
     // Prefer the latest parsed page content when switching tabs.
-    if (typeof initialContent === 'string' && initialContent.trim()) {
+    if (typeof pageContentFull === 'string' && pageContentFull.trim()) {
+      setContent(pageContentFull)
+    } else if (typeof initialContent === 'string' && initialContent.trim()) {
       setContent(initialContent)
     }
     onUsePageContent?.()
-  }, [initialContent, onUsePageContent])
+  }, [initialContent, onUsePageContent, pageContentFull])
 
   useEffect(() => {
     if (typeof initialContent !== 'string') return
@@ -413,13 +417,14 @@ export function RSVPReader({
               pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
               pageContentExcerpt={pageContentExcerpt}
-              pageContentFull={initialContent ?? ''}
+              pageContentFull={pageContentFull ?? initialContent ?? ''}
             />
           ) : (
             <WordDisplay
               word={currentChunk}
               settings={settings}
               isPlaying={state === 'playing'}
+              onStop={handleStop}
             />
           ))}
 

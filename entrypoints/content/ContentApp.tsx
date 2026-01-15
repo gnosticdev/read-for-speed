@@ -194,6 +194,7 @@ export default function ContentApp({
           <RSVPReader
             initialContent={selectedContent || pageContent}
             onUsePageContent={handleUsePageContent}
+            pageContentFull={pageContent}
             pageContentStatus={status}
             pageContentTitle={pageTitle}
             pageContentError={pageError}

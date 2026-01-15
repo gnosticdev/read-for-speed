@@ -1,11 +1,11 @@
 'use client'
 
+import { BookOpen, Clipboard, FileText } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Readability } from '@mozilla/readability'
-import { BookOpen, Clipboard, FileText, Link } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 interface ContentInputProps {
   content: string
@@ -30,12 +30,9 @@ export function ContentInput({
   pageContentExcerpt,
   pageContentFull = '',
 }: ContentInputProps) {
-  const [inputMode, setInputMode] = useState<'page' | 'paste' | 'url'>(
-    onUsePageContent ? 'page' : 'paste',
-  )
-  const [url, setUrl] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
   const [showReaderPreview, setShowReaderPreview] = useState(false)
+  const showPageTab = Boolean(onUsePageContent)
 
   useEffect(() => {
     if (!onUsePageContent && inputMode === 'page') {
@@ -52,29 +49,6 @@ export function ContentInput({
     } catch {
       // Clipboard API not available or permission denied
     }
-  }
-
-  const handleUrlFetch = async () => {
-    if (!url) return
-    setIsLoading(true)
-    try {
-      const htmlContent = await fetch(url).then((res) => res.text())
-      const html = new DOMParser().parseFromString(htmlContent, 'text/html')
-      const article = new Readability(html).parse()
-      const content = article?.textContent?.trim() ?? ''
-      onContentChange(content)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setIsLoading(false)
-    }
-
-    setTimeout(() => {
-      onContentChange(
-        `Content fetched from: ${url}\n\nIn a Safari extension, this would extract the main article content from the webpage using readability algorithms to strip navigation, ads, and other non-essential elements.`,
-      )
-      setIsLoading(false)
-    }, 1000)
   }
 
   const handleModeChange = (mode: typeof inputMode) => {
@@ -97,127 +71,106 @@ export function ContentInput({
         <div className='text-center space-y-2'>
           <h2 className='text-2xl font-semibold'>Speed Read Any Content</h2>
           <p className='text-muted-foreground'>
-            Paste text or enter a URL to begin reading at lightning speed
+            Paste text or use the current page to begin reading at lightning speed
           </p>
         </div>
+        <Tabs
+          value={showPageTab ? inputMode : 'paste'}
+          onValueChange={handleModeChange}
+        >
+          {/* Keep both panels mounted to preserve text state when switching tabs. */}
+          <TabsList className='mx-auto'>
+            {showPageTab && (
+              <TabsTrigger value='page'>
+                <BookOpen />
+                On This Page
+              </TabsTrigger>
+            )}
+            <TabsTrigger value='paste'>
+              <FileText />
+              Paste Text
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Mode toggle */}
-        <div className='flex justify-center gap-2'>
-          {onUsePageContent && (
-            <Button
-              onClick={() => handleModeChange('page')}
-              variant={inputMode === 'page' ? 'default' : 'secondary'}
+          {showPageTab && (
+            <TabsContent
+              value='page'
+              keepMounted
             >
-              <BookOpen />
-              On This Page
-            </Button>
-          )}
-          <Button
-            onClick={() => handleModeChange('paste')}
-            variant={inputMode === 'paste' ? 'default' : 'secondary'}
-          >
-            <FileText />
-            Paste Text
-          </Button>
-          <Button
-            type='button'
-            onClick={() => handleModeChange('url')}
-            variant={inputMode === 'url' ? 'default' : 'secondary'}
-          >
-            <Link className='w-4 h-4' />
-            Enter URL
-          </Button>
-        </div>
+              <div className='space-y-4 text-center'>
+                <p className='text-sm text-muted-foreground'>
+                  {pageContentStatus === 'loading' && 'Loading page content...'}
+                  {pageContentStatus === 'ready' && 'Using the current page content.'}
+                  {pageContentStatus === 'idle' && 'Page content will load automatically.'}
+                  {pageContentStatus === 'error' && 'Unable to read content from this page.'}
+                </p>
+                {pageContentTitle && (
+                  <p className='text-sm font-medium'>Using: {pageContentTitle}</p>
+                )}
+                {pageContentStatus === 'error' && pageContentError && (
+                  <p className='text-xs text-destructive'>{pageContentError}</p>
+                )}
+                {pageContentStatus === 'ready' && (
+                  <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
+                )}
 
-        {inputMode === 'page' && onUsePageContent ? (
-          <div className='space-y-4 text-center'>
-            <p className='text-sm text-muted-foreground'>
-              {pageContentStatus === 'loading' && 'Loading page content...'}
-              {pageContentStatus === 'ready' && 'Using the current page content.'}
-              {pageContentStatus === 'idle' && 'Page content will load automatically.'}
-              {pageContentStatus === 'error' && 'Unable to read content from this page.'}
-            </p>
-            {pageContentTitle && <p className='text-sm font-medium'>Using: {pageContentTitle}</p>}
-            {pageContentStatus === 'error' && pageContentError && (
-              <p className='text-xs text-destructive'>{pageContentError}</p>
-            )}
-            {pageContentStatus === 'ready' && (
-              <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
-            )}
+                {pageContentStatus === 'ready' && previewText && (
+                  <div className='rounded-xl border border-border bg-secondary/30 p-4 text-left'>
+                    <p className='text-sm text-muted-foreground'>{previewText}</p>
+                  </div>
+                )}
 
-            {pageContentStatus === 'ready' && previewText && (
-              <div className='rounded-xl border border-border bg-secondary/30 p-4 text-left'>
-                <p className='text-sm text-muted-foreground'>{previewText}</p>
+                {pageContentStatus === 'ready' && (
+                  <div className='flex items-center justify-center gap-2'>
+                    <Button
+                      onClick={() => setShowReaderPreview((prev) => !prev)}
+                      disabled={!pageContentFull}
+                      variant='outline'
+                      size='sm'
+                    >
+                      {showReaderPreview ? 'Hide Preview' : 'Show Preview'}
+                    </Button>
+                  </div>
+                )}
+
+                {showReaderPreview && (
+                  <ScrollArea className='w-full h-64 p-4 bg-secondary/50 border border-border rounded-xl'>
+                    <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
+                      {pageContentFull}
+                    </pre>
+                  </ScrollArea>
+                )}
               </div>
-            )}
+            </TabsContent>
+          )}
 
-            {pageContentStatus === 'ready' && (
-              <div className='flex items-center justify-center gap-2'>
+          <TabsContent
+            value='paste'
+            keepMounted
+          >
+            <div className='space-y-4'>
+              <Textarea
+                rows={10}
+                value={content}
+                onChange={(e) => onContentChange(e.target.value)}
+                placeholder='Paste your text here...'
+                className='w-full'
+              />
+              <div className='flex justify-between items-center'>
                 <Button
-                  onClick={() => setShowReaderPreview((prev) => !prev)}
-                  disabled={!pageContentFull}
+                  type='button'
+                  onClick={handlePaste}
                   variant='outline'
                   size='sm'
                 >
-                  {showReaderPreview ? 'Hide Preview' : 'Show Preview'}
+                  <Clipboard />
+                  Paste
                 </Button>
+                <span className='text-sm text-muted-foreground'>{wordCount} words</span>
               </div>
-            )}
-
-            {showReaderPreview && (
-              <ScrollArea className='w-full h-64 p-4 bg-secondary/50 border border-border rounded-xl'>
-                <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
-                  {pageContentFull}
-                </pre>
-              </ScrollArea>
-            )}
-          </div>
-        ) : inputMode === 'paste' ? (
-          <div className='space-y-4'>
-            <Textarea
-              rows={10}
-              value={content}
-              onChange={(e) => onContentChange(e.target.value)}
-              placeholder='Paste your text here...'
-              className='w-full'
-            />
-            <div className='flex justify-between items-center'>
-              <Button
-                type='button'
-                onClick={handlePaste}
-                variant='outline'
-                size='sm'
-              >
-                <Clipboard />
-                Paste
-              </Button>
-              <span className='text-sm text-muted-foreground'>{wordCount} words</span>
             </div>
-          </div>
-        ) : (
-          <div className='space-y-4'>
-            <div className='flex gap-2'>
-              <input
-                type='url'
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder='https://example.com/article'
-                className='flex-1 px-4 py-3 bg-secondary/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground'
-              />
-              <button
-                type='button'
-                onClick={handleUrlFetch}
-                disabled={isLoading || !url}
-                className='px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50'
-              >
-                {isLoading ? 'Loading...' : 'Fetch'}
-              </button>
-            </div>
-            <p className='text-sm text-muted-foreground text-center'>
-              The extension will extract the main article content automatically
-            </p>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
 
         {/* Instructions */}
         <div className='bg-secondary/30 rounded-xl p-4 space-y-2'>
