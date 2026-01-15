@@ -1,6 +1,6 @@
+import { isProbablyReaderable } from '@mozilla/readability'
 import ReactDOM from 'react-dom/client'
 import ContentApp from './ContentApp'
-import { Readability, isProbablyReaderable } from '@mozilla/readability'
 
 import '@/assets/tailwind.css'
 
@@ -8,7 +8,10 @@ export default defineContentScript({
   matches: ['*://*/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
-    console.log('Hello content script.', ctx.isValid)
+    console.log(
+      '%c Evaluating page for readability...',
+      'color: var(--primary); font-weight: bold;',
+    )
 
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
@@ -17,34 +20,32 @@ export default defineContentScript({
       zIndex: 1000,
       // isolateEvents: true,
 
-      anchor() {
-        if (document.querySelector('article')) {
-          return document.querySelector('article')
-        }
-        if (document.querySelector('main')) {
-          return document.querySelector('main')
-        }
-        return document.body
-      },
+      anchor: document.body,
       append: 'last',
       onMount: (uiContainer, shadowRoot, shadowHost) => {
-        const isReadable = isProbablyReaderable(document)
-
-        if (!isReadable) return
-
-        const article = new Readability(document).parse()
-        if (!article) {
-          console.error('No article found')
-          return null
+        if (!isProbablyReaderable(document)) {
+          console.log(
+            '%c [Read For Speed] Page is not readable, skipping...',
+            'color: red; font-weight: bold;',
+          )
+          return
         }
+        // uiContainer is the body. use it to set 'dark' class on html element
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          uiContainer.classList.add('dark')
+        }
+        // clone before we mount our app so we don't mutate the original document
+        const docClone = document.cloneNode(true) as Document
 
         const wrapper = document.createElement('div')
         uiContainer.append(wrapper)
 
         const root = ReactDOM.createRoot(wrapper)
+
+        // set our root theme to the system theme
         root.render(
           <ContentApp
-            article={article}
+            docClone={docClone}
             anchor={uiContainer}
           />,
         )

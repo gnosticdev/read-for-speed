@@ -20,11 +20,10 @@ type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
 type Article = NonNullable<ReturnType<(typeof Readability)['prototype']['parse']>>
 
 export default function ContentApp({
-  article,
+  docClone,
   anchor,
 }: {
-  article: Article
-
+  docClone: Document
   anchor: HTMLElement
 }) {
   const [open, setOpen] = useState(false)
@@ -39,22 +38,17 @@ export default function ContentApp({
     setStatus('loading')
     setPageError(null)
 
-    let text = ''
-    let title = article.title ?? null
-
-    text = article.textContent ?? ''
-    title = article.title ?? title
-
-    if (!text.trim()) {
+    const article = new Readability(docClone).parse()
+    if (!article) {
       setPageError('No readable text found on this page.')
       setStatus('error')
       return
     }
 
-    setPageContent(text)
-    setPageTitle(title)
+    setPageContent(article.textContent ?? '')
+    setPageTitle(article.title ?? docClone.title)
     setStatus('ready')
-  }, [article.textContent, article.title])
+  }, [docClone])
 
   return (
     <div className='flex flex-col items-end gap-3'>

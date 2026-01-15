@@ -11,7 +11,8 @@ interface WordDisplayProps {
 
 // Calculate Optimal Recognition Point (ORP) - roughly 35% into the word
 function getORPIndex(word: string): number {
-  const length = word.length
+  const trimmedWord = word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') // trim punctuation
+  const length = [...trimmedWord].length // Unicode-safe length
   if (length <= 1) return 0
   if (length <= 3) return 0
   if (length <= 5) return 1

@@ -17,7 +17,7 @@ export default defineConfig({
 		disabled: false,
 	},
 	manifest: {
-		permissions: ['activeTab'],
+		// permissions: ['activeTab'],
 		// Required, don't open popup, only action
 		action: {},
 		name:

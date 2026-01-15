@@ -8,6 +8,7 @@ import { ControlPanel } from './control-panel'
 import { SettingsPanel } from './settings-panel'
 import { StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
+import { BookOpen } from 'lucide-react'
 
 export type ReaderState = 'idle' | 'playing' | 'paused'
 
@@ -268,9 +269,9 @@ export function RSVPReader({
       <header className='flex items-center justify-between px-6 py-4 border-b border-border'>
         <div className='flex items-center gap-3'>
           <div className='w-8 h-8 rounded-lg bg-primary flex items-center justify-center'>
-            <span className='text-primary-foreground font-bold text-sm'>R</span>
+            <BookOpen className='w-4 h-4 text-primary-foreground' />
           </div>
-          <h1 className='text-lg font-semibold'>RSVP Reader</h1>
+          <h1 className='text-lg/tight   font-semibold'>The Read For Speed</h1>
         </div>
         <div className='flex items-center gap-2'>
           <button
