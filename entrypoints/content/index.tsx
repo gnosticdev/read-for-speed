@@ -15,10 +15,9 @@ export default defineContentScript({
 
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
-      position: 'overlay',
-      alignment: 'top-right',
+      position: 'modal',
       zIndex: 1000,
-      // isolateEvents: true,
+      isolateEvents: true,
 
       anchor: document.body,
       append: 'last',
@@ -34,6 +33,20 @@ export default defineContentScript({
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           uiContainer.classList.add('dark')
         }
+        shadowHost.setAttribute(
+          'data-theme',
+          window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+        )
+        // calculate where to show the button - either below header or 25% of viewport height
+        const headerHeight = document.querySelector('header')?.clientHeight ?? 0
+        const top =
+          headerHeight > window.innerHeight * 0.25 ? headerHeight : window.innerHeight * 0.25
+        shadowRoot.querySelector('html')?.style.setProperty('right', '8px')
+        shadowRoot.querySelector('html')?.style.setProperty('top', `${top}px`)
+        shadowRoot.querySelector('html')?.style.setProperty('left', 'auto') // center
+        shadowRoot.querySelector('html')?.style.setProperty('bottom', 'auto') // bottom
+        shadowRoot.querySelector('html')?.style.setProperty('z-index', '1000')
+
         // clone before we mount our app so we don't mutate the original document
         const docClone = document.cloneNode(true) as Document
 

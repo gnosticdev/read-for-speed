@@ -1,12 +1,15 @@
 'use client'
 
+import { BookOpen } from 'lucide-react'
 import '@/assets/tailwind.css'
 
+import type { DialogRootActions } from '@base-ui/react'
 import { Readability } from '@mozilla/readability'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogFooter,
   DialogHeader,
   DialogPanel,
@@ -26,9 +29,15 @@ export default function ContentApp({
 }) {
   const [open, setOpen] = useState(false)
   const [pageContent, setPageContent] = useState<string | undefined>()
+  const [pageExcerpt, setPageExcerpt] = useState<string | null>(null)
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [status, setStatus] = useState<PageContentStatus>('idle')
+
+  const actionsRef = useRef<DialogRootActions>({
+    unmount: () => void 0,
+    close: () => void 0,
+  })
 
   const controlsContainerRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +52,14 @@ export default function ContentApp({
       return
     }
 
-    setPageContent(article.textContent ?? '')
+    const articleText = article.textContent ?? ''
+    const excerptText =
+      article.excerpt?.trim() ||
+      (articleText.length > 0 ? `${articleText.slice(0, 240).trim()}...` : null)
+
+    // Store full content + excerpt for the reader UI.
+    setPageContent(articleText)
+    setPageExcerpt(excerptText)
     setPageTitle(article.title ?? docClone.title)
     setStatus('ready')
   }, [docClone])
@@ -63,10 +79,12 @@ export default function ContentApp({
         variant='default'
         onClick={() => setOpen(true)}
       >
-        Open Speed Reader
+        <span className='sr-only'>Open Read For Speed</span>
+        <BookOpen className='w-4 h-4' />
       </Button>
 
       <Dialog
+        actionsRef={actionsRef}
         open={open}
         onOpenChange={setOpen}
       >
@@ -75,7 +93,12 @@ export default function ContentApp({
           container={anchor}
         >
           <DialogHeader>
-            <DialogTitle>{pageTitle}</DialogTitle>
+            <DialogTitle>
+              <div className='flex items-center gap-2'>
+                <BookOpen className='w-4 h-4' />
+                <span className='text-lg/tight font-semibold'>Read For Speed</span>
+              </div>
+            </DialogTitle>
           </DialogHeader>
           <DialogPanel className='p-0'>
             <RSVPReader
@@ -84,15 +107,13 @@ export default function ContentApp({
               pageContentStatus={status}
               pageContentTitle={pageTitle}
               pageContentError={pageError}
+              pageContentExcerpt={pageExcerpt}
               containerClassName='h-full'
               controlsContainer={controlsContainerRef.current}
               controlPanelClassName='border-t-0 bg-transparent'
             />
           </DialogPanel>
-          <DialogFooter
-            variant='bare'
-            className='p-0'
-          >
+          <DialogFooter className='p-0'>
             {/* Portal target for RSVP controls. */}
             <div
               ref={controlsContainerRef}

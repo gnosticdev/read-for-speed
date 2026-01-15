@@ -1,5 +1,6 @@
 'use client'
 
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { BookOpen, Clipboard, FileText, Link } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -11,6 +12,8 @@ interface ContentInputProps {
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
+  pageContentExcerpt?: string | null
+  pageContentFull?: string
 }
 
 export function ContentInput({
@@ -21,12 +24,15 @@ export function ContentInput({
   pageContentStatus = 'idle',
   pageContentTitle,
   pageContentError,
+  pageContentExcerpt,
+  pageContentFull = '',
 }: ContentInputProps) {
   const [inputMode, setInputMode] = useState<'page' | 'paste' | 'url'>(
     onUsePageContent ? 'page' : 'paste',
   )
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showReaderPreview, setShowReaderPreview] = useState(false)
 
   useEffect(() => {
     if (!onUsePageContent && inputMode === 'page') {
@@ -60,6 +66,7 @@ export function ContentInput({
 
   const handleModeChange = (mode: typeof inputMode) => {
     setInputMode(mode)
+    setShowReaderPreview(false)
     if (mode === 'page') {
       // Re-sync the reader with the latest parsed page content.
       onSelectPageContent?.()
@@ -68,6 +75,8 @@ export function ContentInput({
   }
 
   const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length
+  const pageWordCount = pageContentFull.split(/\s+/).filter((w) => w.length > 0).length
+  const previewText = pageContentExcerpt?.trim()
 
   return (
     <div className='flex-1 flex flex-col items-center justify-center px-6 py-8'>
@@ -91,7 +100,7 @@ export function ContentInput({
               `}
             >
               <BookOpen className='w-4 h-4' />
-              This Page
+              On This Page
             </button>
           )}
           <button
@@ -119,7 +128,7 @@ export function ContentInput({
         </div>
 
         {inputMode === 'page' && onUsePageContent ? (
-          <div className='space-y-3 text-center'>
+          <div className='space-y-4 text-center'>
             <p className='text-sm text-muted-foreground'>
               {pageContentStatus === 'loading' && 'Loading page content...'}
               {pageContentStatus === 'ready' && 'Using the current page content.'}
@@ -131,7 +140,34 @@ export function ContentInput({
               <p className='text-xs text-destructive'>{pageContentError}</p>
             )}
             {pageContentStatus === 'ready' && (
-              <p className='text-xs text-muted-foreground'>{wordCount} words detected</p>
+              <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
+            )}
+
+            {pageContentStatus === 'ready' && previewText && (
+              <div className='rounded-xl border border-border bg-secondary/30 p-4 text-left'>
+                <p className='text-sm text-muted-foreground'>{previewText}</p>
+              </div>
+            )}
+
+            {pageContentStatus === 'ready' && (
+              <div className='flex items-center justify-center gap-2'>
+                <button
+                  type='button'
+                  onClick={() => setShowReaderPreview((prev) => !prev)}
+                  disabled={!pageContentFull}
+                  className='px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-sm disabled:opacity-60'
+                >
+                  {showReaderPreview ? 'Hide parsed article' : 'View Content'}
+                </button>
+              </div>
+            )}
+
+            {showReaderPreview && (
+              <ScrollArea className='w-full h-64 p-4 bg-secondary/50 border border-border rounded-xl'>
+                <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
+                  {pageContentFull}
+                </pre>
+              </ScrollArea>
             )}
           </div>
         ) : inputMode === 'paste' ? (

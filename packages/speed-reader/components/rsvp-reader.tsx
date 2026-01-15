@@ -36,6 +36,7 @@ export interface RSVPReaderProps {
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
+  pageContentExcerpt?: string | null
   containerClassName?: string
   controlsContainer?: HTMLElement | null
   controlPanelClassName?: string
@@ -63,6 +64,7 @@ export function RSVPReader({
   pageContentStatus,
   pageContentTitle,
   pageContentError,
+  pageContentExcerpt,
   containerClassName,
   controlsContainer,
   controlPanelClassName,
@@ -78,8 +80,7 @@ export function RSVPReader({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [state, setState] = useState<ReaderState>('idle')
   const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_SETTINGS)
-  const [showSettings, setShowSettings] = useState(false)
-  const [showStats, setShowStats] = useState(false)
+  const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>({
     wordsRead: 0,
     totalWords: 0,
@@ -243,8 +244,11 @@ export function RSVPReader({
           setCurrentIndex((i) => Math.min(words.length - 1, i + settings.chunkSize * 5))
           break
         case 'Escape':
-          if (state === 'playing') {
-            e.preventDefault() // prevent dialog from closing
+          e.preventDefault()
+          e.stopPropagation()
+          if (activePanel !== 'reader') {
+            setActivePanel('reader')
+          } else if (state === 'playing') {
             handlePause()
           } else {
             handleStop()
@@ -255,7 +259,7 @@ export function RSVPReader({
 
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [state, settings.chunkSize, words.length])
+  }, [activePanel, state, settings.chunkSize, words.length])
 
   const currentChunk = words.slice(currentIndex, currentIndex + settings.chunkSize).join(' ')
   const progress = words.length > 0 ? (currentIndex / words.length) * 100 : 0
@@ -285,20 +289,26 @@ export function RSVPReader({
           <div className='w-8 h-8 rounded-lg bg-primary flex items-center justify-center'>
             <BookOpen className='w-4 h-4 text-primary-foreground' />
           </div>
-          <h1 className='text-lg/tight   font-semibold'>The Read For Speed</h1>
+          <h1 className='text-lg/tight   font-semibold'>{pageContentTitle}</h1>
         </div>
         <div className='flex items-center gap-2'>
           <button
             type='button'
-            onClick={() => setShowStats(!showStats)}
-            className='px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors'
+            onClick={() => setActivePanel((panel) => (panel === 'stats' ? 'reader' : 'stats'))}
+            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              activePanel === 'stats' ? 'bg-secondary' : 'hover:bg-secondary'
+            }`}
           >
             Stats
           </button>
           <button
             type='button'
-            onClick={() => setShowSettings(!showSettings)}
-            className='px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors'
+            onClick={() =>
+              setActivePanel((panel) => (panel === 'settings' ? 'reader' : 'settings'))
+            }
+            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              activePanel === 'settings' ? 'bg-secondary' : 'hover:bg-secondary'
+            }`}
           >
             Settings
           </button>
@@ -307,21 +317,41 @@ export function RSVPReader({
 
       {/* Main content area */}
       <div className='flex-1 flex flex-col'>
-        {state === 'idle' && currentIndex === 0 ? (
-          <ContentInput
-            content={content}
-            onContentChange={handleContentChange}
-            onUsePageContent={onUsePageContent}
-            onSelectPageContent={handleSelectPageContent}
-            pageContentStatus={pageContentStatus}
-            pageContentTitle={pageContentTitle}
-            pageContentError={pageContentError}
-          />
-        ) : (
-          <WordDisplay
-            word={currentChunk}
+        {activePanel === 'reader' &&
+          (state === 'idle' && currentIndex === 0 ? (
+            <ContentInput
+              content={content}
+              onContentChange={handleContentChange}
+              onUsePageContent={onUsePageContent}
+              onSelectPageContent={handleSelectPageContent}
+              pageContentStatus={pageContentStatus}
+              pageContentTitle={pageContentTitle}
+              pageContentError={pageContentError}
+              pageContentExcerpt={pageContentExcerpt}
+              pageContentFull={initialContent ?? ''}
+            />
+          ) : (
+            <WordDisplay
+              word={currentChunk}
+              settings={settings}
+              isPlaying={state === 'playing'}
+            />
+          ))}
+
+        {activePanel === 'settings' && (
+          <SettingsPanel
             settings={settings}
-            isPlaying={state === 'playing'}
+            onSettingsChange={setSettings}
+            onClose={() => setActivePanel('reader')}
+            layout='page'
+          />
+        )}
+
+        {activePanel === 'stats' && (
+          <StatsPanel
+            stats={stats}
+            onClose={() => setActivePanel('reader')}
+            layout='page'
           />
         )}
 
@@ -345,27 +375,13 @@ export function RSVPReader({
       </div>
 
       {/* Control panel */}
-      {controlsContainer
-        ? // Portal controls into dialog footer when provided.
-          createPortal(controlPanel, controlsContainer)
-        : controlPanel}
+      {activePanel === 'reader' &&
+        (controlsContainer
+          ? // Portal controls into dialog footer when provided.
+            createPortal(controlPanel, controlsContainer)
+          : controlPanel)}
 
-      {/* Settings panel overlay */}
-      {showSettings && (
-        <SettingsPanel
-          settings={settings}
-          onSettingsChange={setSettings}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
-
-      {/* Stats panel overlay */}
-      {showStats && (
-        <StatsPanel
-          stats={stats}
-          onClose={() => setShowStats(false)}
-        />
-      )}
+      {/* Settings/stats now render in-page to avoid nested dialog issues. */}
     </div>
   )
 }

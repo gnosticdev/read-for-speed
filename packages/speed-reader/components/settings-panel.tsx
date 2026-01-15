@@ -7,11 +7,25 @@ interface SettingsPanelProps {
   settings: ReaderSettings
   onSettingsChange: (settings: ReaderSettings) => void
   onClose: () => void
+  layout?: 'overlay' | 'page'
 }
 
-export function SettingsPanel({ settings, onSettingsChange, onClose }: SettingsPanelProps) {
+export function SettingsPanel({
+  settings,
+  onSettingsChange,
+  onClose,
+  layout = 'overlay',
+}: SettingsPanelProps) {
+  const isOverlay = layout === 'overlay'
+
   return (
-    <div className='fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
+    <div
+      className={
+        isOverlay
+          ? 'fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'
+          : 'flex-1 flex items-center justify-center px-6 py-8'
+      }
+    >
       <div className='bg-card border border-border rounded-xl shadow-xl w-full max-w-md'>
         <div className='flex items-center justify-between p-4 border-b border-border'>
           <h2 className='text-lg font-semibold'>Settings</h2>

@@ -6,6 +6,7 @@ import type { ReadingStats } from './rsvp-reader'
 interface StatsPanelProps {
   stats: ReadingStats
   onClose: () => void
+  layout?: 'overlay' | 'page'
 }
 
 function formatTime(seconds: number): string {
@@ -15,12 +16,19 @@ function formatTime(seconds: number): string {
   return `${mins}m ${secs}s`
 }
 
-export function StatsPanel({ stats, onClose }: StatsPanelProps) {
+export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelProps) {
   const effectiveWpm =
     stats.totalTimeSeconds > 0 ? Math.round((stats.wordsRead / stats.totalTimeSeconds) * 60) : 0
+  const isOverlay = layout === 'overlay'
 
   return (
-    <div className='fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
+    <div
+      className={
+        isOverlay
+          ? 'fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'
+          : 'flex-1 flex items-center justify-center px-6 py-8'
+      }
+    >
       <div className='bg-card border border-border rounded-xl shadow-xl w-full max-w-md'>
         <div className='flex items-center justify-between p-4 border-b border-border'>
           <h2 className='text-lg font-semibold'>Reading Statistics</h2>

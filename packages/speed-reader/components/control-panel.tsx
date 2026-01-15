@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
-import { Play, Pause, Square, Minus, Plus, SkipBack, SkipForward } from "lucide-react"
-import type { ReaderSettings, ReaderState } from "./rsvp-reader"
+import { Minus, Pause, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import type { ReaderSettings, ReaderState } from './rsvp-reader'
 
 interface ControlPanelProps {
   state: ReaderState
@@ -44,96 +45,97 @@ export function ControlPanel({
   }
 
   return (
-    <div
-      className={`border-t border-border bg-card/50 backdrop-blur-sm ${className ?? ""}`}
-    >
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+    <div className={`border-t border-border bg-card/50 backdrop-blur-sm ${className ?? ''}`}>
+      <div className='px-6 py-4'>
+        <div className='flex items-center justify-between max-w-3xl mx-auto'>
           {/* WPM control */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground w-12">WPM</span>
-            <button
-              type="button"
+          <div className='flex items-center gap-3'>
+            <span className='text-sm text-muted-foreground w-12'>WPM</span>
+            <Button
+              size='icon'
+              variant='secondary'
               onClick={() => adjustWpm(-25)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
-              aria-label="Decrease speed"
+              aria-label='Decrease speed'
             >
-              <Minus className="w-4 h-4" />
-            </button>
-            <span className="w-12 text-center font-mono font-semibold">{settings.wpm}</span>
-            <button
-              type="button"
+              <Minus />
+            </Button>
+            <span className='w-12 text-center font-mono font-semibold'>{settings.wpm}</span>
+            <Button
+              size='icon'
+              variant={'secondary'}
               onClick={() => adjustWpm(25)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
-              aria-label="Increase speed"
+              aria-label='Increase speed'
             >
-              <Plus className="w-4 h-4" />
-            </button>
+              <Plus />
+            </Button>
           </div>
 
           {/* Playback controls */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
+          <div className='flex items-center gap-2'>
+            <Button
+              size='icon'
+              variant='outline'
               onClick={skipBack}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
-              aria-label="Skip back"
+              aria-label='Skip back'
             >
-              <SkipBack className="w-5 h-5" />
-            </button>
+              <SkipBack />
+            </Button>
 
-            {state === "playing" ? (
-              <button
-                type="button"
+            {/* Play/Pause button */}
+            {state === 'playing' ? (
+              <Button
+                size='icon-xl'
+                variant='default'
                 onClick={onPause}
-                className="w-14 h-14 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                aria-label="Pause"
+                aria-label='Pause'
+                className='rounded-full'
               >
-                <Pause className="w-6 h-6" />
-              </button>
+                <Pause />
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                size='icon-xl'
+                variant='default'
                 onClick={onPlay}
-                className="w-14 h-14 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                aria-label="Play"
+                aria-label='Play'
+                className='rounded-full'
               >
-                <Play className="w-6 h-6 ml-1" />
-              </button>
+                <Play />
+              </Button>
             )}
 
-            <button
-              type="button"
+            <Button
+              size='icon'
+              variant='outline'
               onClick={skipForward}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
-              aria-label="Skip forward"
+              aria-label='Stop'
             >
-              <SkipForward className="w-5 h-5" />
-            </button>
+              <SkipForward />
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              size='icon'
+              variant={state === 'playing' ? 'destructive-outline' : 'outline'}
               onClick={onStop}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors ml-2"
-              aria-label="Stop"
+              aria-label='Stop'
             >
-              <Square className="w-5 h-5" />
-            </button>
+              <Square />
+            </Button>
           </div>
 
           {/* Chunk size control */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Words</span>
-            <div className="flex gap-1">
+          <div className='flex items-center gap-3'>
+            <span className='text-sm text-muted-foreground'>Words</span>
+            <div className='flex gap-1'>
               {[1, 2, 3].map((size) => (
                 <button
-                  type="button"
+                  type='button'
                   key={size}
                   onClick={() => onSettingsChange({ ...settings, chunkSize: size })}
                   className={`
                     w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium
                     transition-colors
-                    ${settings.chunkSize === size ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}
+                    ${settings.chunkSize === size ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}
                   `}
                 >
                   {size}
