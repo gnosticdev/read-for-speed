@@ -81,6 +81,8 @@ export default defineContentScript({
           // shadowHost.remove()
           // return { root: null, wrapper: null }
         }
+        // make the body transparent so no weird outline on button
+        uiContainer.classList.add('bg-transparent')
         // uiContainer is the body. use it to set 'dark' class on html element
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           uiContainer.classList.add('dark')

@@ -191,7 +191,8 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
+	/* Leave off setting the background as the button will have its own background */
 	body {
-		@apply bg-background text-foreground;
+		@apply text-foreground;
 	}
 }

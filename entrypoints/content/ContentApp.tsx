@@ -14,6 +14,7 @@ import {
   DialogPanel,
   DialogPopup,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
 
@@ -55,7 +56,7 @@ export default function ContentApp({
     close: () => void 0,
   })
 
-  const controlsContainerRef = useRef<HTMLDivElement>(null)
+  const controlsContainer = useRef<HTMLDivElement>(null)
 
   const loadPageContent = useCallback(() => {
     setStatus('loading')
@@ -97,56 +98,50 @@ export default function ContentApp({
   }, [openOnSelection, onSelectionHandled, selectedContent])
 
   return (
-    <div className='flex flex-col items-end gap-3'>
-      {/* Launcher button rendered in the overlay container. */}
-      <Button
-        type='button'
-        variant='default'
-        onClick={() => setOpen(true)}
+    <Dialog
+      actionsRef={actionsRef}
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <DialogTrigger
+        render={
+          <Button variant='default'>
+            <span className='sr-only'>Open Read For Speed</span>
+            <BookOpen className='w-4 h-4' />
+          </Button>
+        }
+      />
+      <DialogPopup
+        className='sm:max-w-3xl max-h-[85vh] overflow-hidden'
+        container={anchor}
       >
-        <span className='sr-only'>Open Read For Speed</span>
-        <BookOpen className='w-4 h-4' />
-      </Button>
-
-      <Dialog
-        actionsRef={actionsRef}
-        open={open}
-        onOpenChange={setOpen}
-      >
-        <DialogPopup
-          className='sm:max-w-3xl'
-          container={anchor}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              <div className='flex items-center gap-2'>
-                <BookOpen className='w-4 h-4' />
-                <span className='text-lg/tight font-semibold'>Read For Speed</span>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
-          <DialogPanel className='p-0'>
-            <RSVPReader
-              initialContent={selectedContent || pageContent}
-              onUsePageContent={handleUsePageContent}
-              pageContentStatus={status}
-              pageContentTitle={pageTitle}
-              pageContentError={pageError}
-              pageContentExcerpt={selectionExcerpt || pageExcerpt}
-              containerClassName='h-full'
-              controlsContainer={controlsContainerRef.current}
-              controlPanelClassName='border-t-0 bg-transparent'
-            />
-          </DialogPanel>
-          <DialogFooter className='p-0'>
-            {/* Portal target for RSVP controls. */}
-            <div
-              ref={controlsContainerRef}
-              className='w-full'
-            />
-          </DialogFooter>
-        </DialogPopup>
-      </Dialog>
-    </div>
+        <DialogHeader>
+          <DialogTitle>
+            <div className='flex items-center gap-2'>
+              <BookOpen className='w-4 h-4' />
+              <span className='text-lg/tight font-semibold'>Read For Speed</span>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <DialogPanel className='p-0 flex-1 min-h-0'>
+          <RSVPReader
+            initialContent={selectedContent || pageContent}
+            onUsePageContent={handleUsePageContent}
+            pageContentStatus={status}
+            pageContentTitle={pageTitle}
+            pageContentError={pageError}
+            pageContentExcerpt={selectionExcerpt || pageExcerpt}
+            containerClassName='h-full'
+            controlsContainer={controlsContainer}
+            controlPanelClassName='w-full'
+          />
+        </DialogPanel>
+        <DialogFooter
+          className='p-0 bg-background'
+          variant='bare'
+          ref={controlsContainer}
+        ></DialogFooter>
+      </DialogPopup>
+    </Dialog>
   )
 }

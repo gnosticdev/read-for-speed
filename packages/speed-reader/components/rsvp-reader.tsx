@@ -1,7 +1,6 @@
 'use client'
 
-import { BookOpen } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { extractContent } from '../lib/content-extractor'
 import { ContentInput } from './content-input'
@@ -38,7 +37,7 @@ export interface RSVPReaderProps {
   pageContentError?: string | null
   pageContentExcerpt?: string | null
   containerClassName?: string
-  controlsContainer?: HTMLElement | null
+  controlsContainer?: RefObject<HTMLDivElement | null>
   controlPanelClassName?: string
 }
 
@@ -281,7 +280,9 @@ export function RSVPReader({
 
   return (
     <div
-      className={`flex flex-col ${containerClassName ?? 'h-screen'} bg-background text-foreground`}
+      className={`flex min-h-0 flex-col ${
+        containerClassName ?? 'h-screen'
+      } bg-background text-foreground`}
     >
       {/* Header */}
       <header className='flex items-center justify-between px-6 py-4 border-b border-border'>
@@ -313,7 +314,7 @@ export function RSVPReader({
       </header>
 
       {/* Main content area */}
-      <div className='flex-1 flex flex-col'>
+      <div className='flex min-h-0 flex-1 flex-col'>
         {activePanel === 'reader' &&
           (state === 'idle' && currentIndex === 0 ? (
             <ContentInput
@@ -373,9 +374,9 @@ export function RSVPReader({
 
       {/* Control panel */}
       {activePanel === 'reader' &&
-        (controlsContainer
+        (controlsContainer?.current
           ? // Portal controls into dialog footer when provided.
-            createPortal(controlPanel, controlsContainer)
+            createPortal(controlPanel, controlsContainer.current)
           : controlPanel)}
 
       {/* Settings/stats now render in-page to avoid nested dialog issues. */}

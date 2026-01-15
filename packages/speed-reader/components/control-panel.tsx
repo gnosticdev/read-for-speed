@@ -4,6 +4,7 @@ import { Minus, Pause, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ReaderSettings, ReaderState } from './rsvp-reader'
+import { cn } from '@/lib/utils'
 
 interface ControlPanelProps {
   state: ReaderState
@@ -46,7 +47,7 @@ export function ControlPanel({
   }
 
   return (
-    <div className={`border-t border-border bg-card/50 backdrop-blur-sm ${className ?? ''}`}>
+    <div className={cn('border-t border-border bg-background', className)}>
       <div className='px-6 py-4'>
         <div className='flex items-center justify-between max-w-3xl mx-auto'>
           {/* WPM control */}
@@ -60,7 +61,7 @@ export function ControlPanel({
             >
               <Minus />
             </Button>
-            <span className='w-12 text-center font-mono font-semibold'>{settings.wpm}</span>
+            <span className='w-12 text-center font-mono'>{settings.wpm}</span>
             <Button
               size='icon'
               variant={'secondary'}
