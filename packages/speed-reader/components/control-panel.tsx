@@ -2,6 +2,7 @@
 
 import { Minus, Pause, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ReaderSettings, ReaderState } from './rsvp-reader'
 
 interface ControlPanelProps {
@@ -126,22 +127,32 @@ export function ControlPanel({
           {/* Chunk size control */}
           <div className='flex items-center gap-3'>
             <span className='text-sm text-muted-foreground'>Words</span>
-            <div className='flex gap-1'>
-              {[1, 2, 3].map((size) => (
-                <button
-                  type='button'
-                  key={size}
-                  onClick={() => onSettingsChange({ ...settings, chunkSize: size })}
-                  className={`
-                    w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium
-                    transition-colors
-                    ${settings.chunkSize === size ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}
-                  `}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
+            <ToggleGroup
+              value={[settings.chunkSize.toString()]}
+              onValueChange={(value) =>
+                onSettingsChange({ ...settings, chunkSize: Number(value[0] ?? 1) })
+              }
+            >
+              <ToggleGroupItem
+                aria-label='1 word'
+                value='1'
+              >
+                1
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                aria-label='2 words'
+                value='2'
+              >
+                2
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                aria-label='3 words'
+                value='3'
+              >
+                3
+              </ToggleGroupItem>
+              <ToggleGroupItem value='3'>3</ToggleGroupItem>
+            </ToggleGroup>
           </div>
         </div>
       </div>

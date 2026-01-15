@@ -22,12 +22,16 @@ export default defineContentScript({
       anchor: document.body,
       append: 'last',
       onMount: (uiContainer, shadowRoot, shadowHost) => {
-        if (!isProbablyReaderable(document)) {
+        const isReadable = isProbablyReaderable(document)
+        if (!isReadable) {
           console.log(
             '%c [Read For Speed] Page is not readable, skipping...',
             'color: red; font-weight: bold;',
           )
-          return
+          // make sure the overlay is removed
+          // uiContainer.remove()
+          // shadowHost.remove()
+          // return { root: null, wrapper: null }
         }
         // uiContainer is the body. use it to set 'dark' class on html element
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -60,14 +64,15 @@ export default defineContentScript({
           <ContentApp
             docClone={docClone}
             anchor={uiContainer}
+            isReadable={isReadable}
           />,
         )
         return { root, wrapper }
       },
       onRemove: (mounted) => {
         if (!mounted) return
-        mounted.root.unmount()
-        mounted.wrapper.remove()
+        mounted.root?.unmount()
+        mounted.wrapper?.remove()
       },
     })
 

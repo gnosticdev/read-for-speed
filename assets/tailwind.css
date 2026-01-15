@@ -180,6 +180,13 @@
 	--animate-pulse-subtle: pulse-subtle 0.15s ease-in-out;
 }
 
+.scrollbar-hidden {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;

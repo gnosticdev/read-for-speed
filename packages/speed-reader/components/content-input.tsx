@@ -1,6 +1,8 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Textarea } from '@/components/ui/textarea'
 import { BookOpen, Clipboard, FileText, Link } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -91,40 +93,29 @@ export function ContentInput({
         {/* Mode toggle */}
         <div className='flex justify-center gap-2'>
           {onUsePageContent && (
-            <button
-              type='button'
+            <Button
               onClick={() => handleModeChange('page')}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                ${inputMode === 'page' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
-              `}
+              variant={inputMode === 'page' ? 'default' : 'secondary'}
             >
-              <BookOpen className='w-4 h-4' />
+              <BookOpen />
               On This Page
-            </button>
+            </Button>
           )}
-          <button
-            type='button'
+          <Button
             onClick={() => handleModeChange('paste')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${inputMode === 'paste' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
-            `}
+            variant={inputMode === 'paste' ? 'default' : 'secondary'}
           >
-            <FileText className='w-4 h-4' />
+            <FileText />
             Paste Text
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
             onClick={() => handleModeChange('url')}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${inputMode === 'url' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
-            `}
+            variant={inputMode === 'url' ? 'default' : 'secondary'}
           >
             <Link className='w-4 h-4' />
             Enter URL
-          </button>
+          </Button>
         </div>
 
         {inputMode === 'page' && onUsePageContent ? (
@@ -151,14 +142,14 @@ export function ContentInput({
 
             {pageContentStatus === 'ready' && (
               <div className='flex items-center justify-center gap-2'>
-                <button
-                  type='button'
+                <Button
                   onClick={() => setShowReaderPreview((prev) => !prev)}
                   disabled={!pageContentFull}
-                  className='px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-sm disabled:opacity-60'
+                  variant='outline'
+                  size='sm'
                 >
-                  {showReaderPreview ? 'Hide parsed article' : 'View Content'}
-                </button>
+                  {showReaderPreview ? 'Hide Preview' : 'Show Preview'}
+                </Button>
               </div>
             )}
 
@@ -172,21 +163,23 @@ export function ContentInput({
           </div>
         ) : inputMode === 'paste' ? (
           <div className='space-y-4'>
-            <textarea
+            <Textarea
+              rows={10}
               value={content}
               onChange={(e) => onContentChange(e.target.value)}
               placeholder='Paste your text here...'
-              className='w-full h-64 p-4 bg-secondary/50 border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground'
+              className='w-full'
             />
             <div className='flex justify-between items-center'>
-              <button
+              <Button
                 type='button'
                 onClick={handlePaste}
-                className='flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-sm'
+                variant='outline'
+                size='sm'
               >
-                <Clipboard className='w-4 h-4' />
-                Paste from Clipboard
-              </button>
+                <Clipboard />
+                Paste
+              </Button>
               <span className='text-sm text-muted-foreground'>{wordCount} words</span>
             </div>
           </div>

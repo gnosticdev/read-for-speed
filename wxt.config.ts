@@ -9,7 +9,8 @@ export default defineConfig({
 
 	webExt: {
 		binaries: {
-			chrome: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+			chrome:
+				'/Users/divinelight/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
 		},
 		startUrls: [
 			'https://en.wikisource.org/wiki/Moby-Dick_(1851)_US_edition/Chapter_1',

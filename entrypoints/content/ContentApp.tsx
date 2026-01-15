@@ -23,9 +23,11 @@ type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
 export default function ContentApp({
   docClone,
   anchor,
+  isReadable,
 }: {
   docClone: Document
   anchor: HTMLElement
+  isReadable: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [pageContent, setPageContent] = useState<string | undefined>()
