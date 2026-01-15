@@ -1,7 +1,9 @@
 'use client'
 
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { browser } from 'wxt/browser'
 import { extractContent } from '../lib/content-extractor'
 import { ContentInput } from './content-input'
 import { ControlPanel } from './control-panel'
@@ -39,6 +41,9 @@ export interface RSVPReaderProps {
   containerClassName?: string
   controlsContainer?: RefObject<HTMLDivElement | null>
   controlPanelClassName?: string
+  settingsStorageKey?: string
+  settingsStorageArea?: 'local' | 'sync'
+  initialSettings?: Partial<ReaderSettings>
 }
 
 const DEFAULT_SETTINGS: ReaderSettings = {
@@ -67,6 +72,9 @@ export function RSVPReader({
   containerClassName,
   controlsContainer,
   controlPanelClassName,
+  settingsStorageKey,
+  settingsStorageArea = 'local',
+  initialSettings,
 }: RSVPReaderProps) {
   const [content, setContent] = useState(() => {
     // Prefer page content when available; otherwise fall back to sample text.
@@ -78,7 +86,10 @@ export function RSVPReader({
   const [words, setWords] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [state, setState] = useState<ReaderState>('idle')
-  const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState<ReaderSettings>(() => ({
+    ...DEFAULT_SETTINGS,
+    ...initialSettings,
+  }))
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>({
     wordsRead: 0,
@@ -91,6 +102,79 @@ export function RSVPReader({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sessionStartRef = useRef<number | null>(null)
   const wordsReadInSessionRef = useRef(0)
+  const hasLoadedStoredSettingsRef = useRef(false)
+
+  const getStorageArea = useCallback(() => {
+    if (!settingsStorageKey) return null
+    return browser?.storage?.[settingsStorageArea] ?? null
+  }, [settingsStorageArea, settingsStorageKey])
+
+  const normalizeStoredSettings = useCallback((value: unknown) => {
+    if (!value || typeof value !== 'object') return {}
+    const stored = value as Record<string, unknown>
+    const next: Partial<ReaderSettings> = {}
+
+    if (typeof stored.wpm === 'number') next.wpm = stored.wpm
+    if (typeof stored.chunkSize === 'number') next.chunkSize = stored.chunkSize
+    if (typeof stored.fontSize === 'number') next.fontSize = stored.fontSize
+    if (
+      stored.fontFamily === 'sans' ||
+      stored.fontFamily === 'mono' ||
+      stored.fontFamily === 'serif'
+    ) {
+      next.fontFamily = stored.fontFamily
+    }
+    if (typeof stored.showProgress === 'boolean') next.showProgress = stored.showProgress
+    if (typeof stored.focusAnimation === 'boolean') next.focusAnimation = stored.focusAnimation
+
+    return next
+  }, [])
+
+  useEffect(() => {
+    if (!settingsStorageKey) return
+    const storage = getStorageArea()
+    if (!storage) return
+
+    let isMounted = true
+
+    const loadStoredSettings = async () => {
+      try {
+        const stored = await storage.get(settingsStorageKey)
+        const storedSettings = normalizeStoredSettings(stored?.[settingsStorageKey])
+
+        if (isMounted) {
+          // Merge defaults + app-provided settings + stored preferences.
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...initialSettings,
+            ...storedSettings,
+          })
+        }
+      } catch (error) {
+        console.warn('Failed to load reader settings from storage.', error)
+      } finally {
+        hasLoadedStoredSettingsRef.current = true
+      }
+    }
+
+    loadStoredSettings()
+
+    return () => {
+      isMounted = false
+    }
+  }, [getStorageArea, initialSettings, normalizeStoredSettings, settingsStorageKey])
+
+  useEffect(() => {
+    if (!settingsStorageKey) return
+    if (!hasLoadedStoredSettingsRef.current) return
+    const storage = getStorageArea()
+    if (!storage) return
+
+    // Persist settings for the next reader session.
+    storage.set({ [settingsStorageKey]: settings }).catch((error) => {
+      console.warn('Failed to save reader settings to storage.', error)
+    })
+  }, [getStorageArea, settings, settingsStorageKey])
 
   const handleContentChange = useCallback(
     (nextContent: string) => {

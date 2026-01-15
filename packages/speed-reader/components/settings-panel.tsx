@@ -1,6 +1,10 @@
 'use client'
 
 import { X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface SettingsPanelProps {
@@ -29,13 +33,14 @@ export function SettingsPanel({
       <div className='bg-card border border-border rounded-xl shadow-xl w-full max-w-md'>
         <div className='flex items-center justify-between p-4 border-b border-border'>
           <h2 className='text-lg font-semibold'>Settings</h2>
-          <button
-            type='button'
+          <Button
             onClick={onClose}
-            className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors'
+            variant='ghost'
+            size='icon-sm'
+            aria-label='Close settings'
           >
             <X className='w-5 h-5' />
-          </button>
+          </Button>
         </div>
 
         <div className='p-4 space-y-6'>
@@ -47,17 +52,13 @@ export function SettingsPanel({
             >
               Font Size: {settings.fontSize}px
             </label>
-            <input
+            <Slider
               id='font-size-input'
-              type='range'
-              min='24'
-              max='96'
-              step='4'
+              min={24}
+              max={96}
+              step={4}
               value={settings.fontSize}
-              onChange={(e) =>
-                onSettingsChange({ ...settings, fontSize: Number.parseInt(e.target.value) })
-              }
-              className='w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-primary'
+              onValueChange={(value) => onSettingsChange({ ...settings, fontSize: value })}
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>24px</span>
@@ -73,32 +74,36 @@ export function SettingsPanel({
             >
               Font Family
             </label>
-            <div className='grid grid-cols-3 gap-2'>
+            <ToggleGroup
+              id='font-family-input'
+              value={[settings.fontFamily]}
+              onValueChange={(value) => {
+                const nextValue = value[0]
+                if (!nextValue) return
+                onSettingsChange({
+                  ...settings,
+                  fontFamily: nextValue as ReaderSettings['fontFamily'],
+                })
+              }}
+              className='w-full gap-2'
+              variant='outline'
+            >
               {(
                 [
-                  { value: 'sans', label: 'Sans' },
-                  { value: 'mono', label: 'Mono' },
-                  { value: 'serif', label: 'Serif' },
+                  { value: 'sans', label: 'Sans', className: 'font-sans' },
+                  { value: 'mono', label: 'Mono', className: 'font-mono' },
+                  { value: 'serif', label: 'Serif', className: 'font-serif' },
                 ] as const
               ).map((font) => (
-                <button
-                  type='button'
+                <ToggleGroupItem
                   key={font.value}
-                  onClick={() => onSettingsChange({ ...settings, fontFamily: font.value })}
-                  className={`
-                    px-3 py-2 rounded-lg text-sm transition-colors
-                    ${font.value === 'sans' ? 'font-sans' : font.value === 'mono' ? 'font-mono' : 'font-serif'}
-                    ${
-                      settings.fontFamily === font.value
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary hover:bg-secondary/80'
-                    }
-                  `}
+                  value={font.value}
+                  className={`${font.className} flex-1`}
                 >
                   {font.label}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
           </div>
 
           {/* Reading Speed */}
@@ -109,17 +114,13 @@ export function SettingsPanel({
             >
               Default Speed: {settings.wpm} WPM
             </label>
-            <input
+            <Slider
               id='speed-input'
-              type='range'
-              min='50'
-              max='1000'
-              step='25'
+              min={50}
+              max={1000}
+              step={25}
               value={settings.wpm}
-              onChange={(e) =>
-                onSettingsChange({ ...settings, wpm: Number.parseInt(e.target.value) })
-              }
-              className='w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-primary'
+              onValueChange={(value) => onSettingsChange({ ...settings, wpm: value })}
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>50 (Slow)</span>
@@ -129,59 +130,37 @@ export function SettingsPanel({
 
           {/* Toggles */}
           <div className='space-y-3'>
-            <label className='flex items-center justify-between cursor-pointer'>
+            <div className='flex items-center justify-between'>
               <span className='text-sm font-medium'>Show Progress Bar</span>
-              <button
-                type='button'
-                onClick={() =>
-                  onSettingsChange({ ...settings, showProgress: !settings.showProgress })
+              <Switch
+                checked={settings.showProgress}
+                onCheckedChange={(checked) =>
+                  onSettingsChange({ ...settings, showProgress: checked })
                 }
-                className={`
-                  relative w-11 h-6 rounded-full transition-colors
-                  ${settings.showProgress ? 'bg-primary' : 'bg-secondary'}
-                `}
-              >
-                <span
-                  className={`
-                    absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform
-                    ${settings.showProgress ? 'left-5.5' : 'left-0.5'}
-                  `}
-                  style={{ left: settings.showProgress ? '22px' : '2px' }}
-                />
-              </button>
-            </label>
+                aria-label='Toggle progress bar'
+              />
+            </div>
 
-            <label className='flex items-center justify-between cursor-pointer'>
+            <div className='flex items-center justify-between'>
               <span className='text-sm font-medium'>Focus Animation</span>
-              <button
-                type='button'
-                onClick={() =>
-                  onSettingsChange({ ...settings, focusAnimation: !settings.focusAnimation })
+              <Switch
+                checked={settings.focusAnimation}
+                onCheckedChange={(checked) =>
+                  onSettingsChange({ ...settings, focusAnimation: checked })
                 }
-                className={`
-                  relative w-11 h-6 rounded-full transition-colors
-                  ${settings.focusAnimation ? 'bg-primary' : 'bg-secondary'}
-                `}
-              >
-                <span
-                  className={`
-                    absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform
-                  `}
-                  style={{ left: settings.focusAnimation ? '22px' : '2px' }}
-                />
-              </button>
-            </label>
+                aria-label='Toggle focus animation'
+              />
+            </div>
           </div>
         </div>
 
         <div className='p-4 border-t border-border'>
-          <button
-            type='button'
+          <Button
             onClick={onClose}
-            className='w-full py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors'
+            className='w-full'
           >
             Done
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
+import { RSVPReader, type ReaderSettings } from '@/packages/speed-reader/components/rsvp-reader'
 
 type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
 
@@ -34,6 +34,9 @@ export default function ContentApp({
   openOnSelection,
   onSelectionHandled,
   onClearSelection,
+  settingsStorageKey = 'read-for-speed:settings',
+  settingsStorageArea = 'local',
+  initialSettings,
 }: {
   docClone: Document
   anchor: HTMLElement
@@ -41,6 +44,9 @@ export default function ContentApp({
   openOnSelection?: boolean
   onSelectionHandled?: () => void
   onClearSelection?: () => void
+  settingsStorageKey?: string
+  settingsStorageArea?: 'local' | 'sync'
+  initialSettings?: Partial<ReaderSettings>
 }) {
   const [open, setOpen] = useState(false)
   const [pageContent, setPageContent] = useState<string | undefined>()
@@ -134,6 +140,9 @@ export default function ContentApp({
             containerClassName='h-full'
             controlsContainer={controlsContainer}
             controlPanelClassName='w-full'
+            settingsStorageKey={settingsStorageKey}
+            settingsStorageArea={settingsStorageArea}
+            initialSettings={initialSettings}
           />
         </DialogPanel>
         <DialogFooter
