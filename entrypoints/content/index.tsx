@@ -14,15 +14,24 @@ type ContentAppShellProps = {
 function ContentAppShell({ docClone, anchor }: ContentAppShellProps) {
   const [selectionText, setSelectionText] = useState<string | null>(null)
   const [openOnSelection, setOpenOnSelection] = useState(false)
+  const [openOnPageAction, setOpenOnPageAction] = useState(false)
 
   const handleSelectionMessage = useCallback((message: CustomMessages) => {
-    if (message?.type !== 'RSVP_GET_SELECTION_TEXT') return
-    const nextSelection = message.payload?.trim() ?? ''
-    if (!nextSelection) return
+    if (!message) return
+    if (message.type === 'RSVP_GET_SELECTION_TEXT') {
+      const nextSelection = message.payload?.trim() ?? ''
+      if (!nextSelection) return
 
-    // Use the highlighted selection for the reader and open the UI.
-    setSelectionText(nextSelection)
-    setOpenOnSelection(true)
+      // Use the highlighted selection for the reader and open the UI.
+      setSelectionText(nextSelection)
+      setOpenOnSelection(true)
+      return
+    }
+
+    if (message.type === 'RSVP_MOUNT_UI') {
+      // Open the dialog when the toolbar action is clicked.
+      setOpenOnPageAction(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -36,6 +45,10 @@ function ContentAppShell({ docClone, anchor }: ContentAppShellProps) {
     setOpenOnSelection(false)
   }, [])
 
+  const handlePageActionHandled = useCallback(() => {
+    setOpenOnPageAction(false)
+  }, [])
+
   const handleClearSelection = useCallback(() => {
     setSelectionText(null)
   }, [])
@@ -46,7 +59,9 @@ function ContentAppShell({ docClone, anchor }: ContentAppShellProps) {
       anchor={anchor}
       selectionText={selectionText}
       openOnSelection={openOnSelection}
+      openOnPageAction={openOnPageAction}
       onSelectionHandled={handleSelectionHandled}
+      onPageActionHandled={handlePageActionHandled}
       onClearSelection={handleClearSelection}
     />
   )

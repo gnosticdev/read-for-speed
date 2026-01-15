@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
+import { Readability } from '@mozilla/readability'
 import { BookOpen, Clipboard, FileText, Link } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -56,8 +57,18 @@ export function ContentInput({
   const handleUrlFetch = async () => {
     if (!url) return
     setIsLoading(true)
-    // In a real extension, this would fetch and parse the URL content
-    // For the demo, we'll show a message
+    try {
+      const htmlContent = await fetch(url).then((res) => res.text())
+      const html = new DOMParser().parseFromString(htmlContent, 'text/html')
+      const article = new Readability(html).parse()
+      const content = article?.textContent?.trim() ?? ''
+      onContentChange(content)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+
     setTimeout(() => {
       onContentChange(
         `Content fetched from: ${url}\n\nIn a Safari extension, this would extract the main article content from the webpage using readability algorithms to strip navigation, ads, and other non-essential elements.`,

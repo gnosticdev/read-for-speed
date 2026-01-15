@@ -129,6 +129,26 @@ export function SettingsPanel({
           <div className='space-y-3'>
             <Label
               className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
+              htmlFor='use-page-action-input'
+              aria-label='Toggle toolbar button to open'
+            >
+              <div className='flex flex-col gap-1'>
+                <p>Open from Toolbar Button</p>
+                <p className='text-muted-foreground text-xs'>
+                  Hide the floating button and open from the browser toolbar instead.
+                </p>
+              </div>
+              <Switch
+                id='use-page-action-input'
+                checked={settings.usePageAction}
+                onCheckedChange={(checked) =>
+                  onSettingsChange({ ...settings, usePageAction: checked })
+                }
+              />
+            </Label>
+
+            <Label
+              className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
               htmlFor='show-progress-input'
               aria-label='Toggle progress bar'
             >

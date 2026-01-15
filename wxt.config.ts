@@ -31,6 +31,6 @@ export default defineConfig({
 		name:
 			process.env.NODE_ENV === 'development'
 				? 'Read for Speed (Dev)'
-				: 'Read for Speed',
+				: 'Read for Speed - RSVP Reader',
 	},
 })

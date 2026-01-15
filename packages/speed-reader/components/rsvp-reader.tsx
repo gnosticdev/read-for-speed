@@ -20,6 +20,7 @@ export interface ReaderSettings {
   fontFamily: 'sans' | 'mono' | 'serif'
   showProgress: boolean
   focusAnimation: boolean
+  usePageAction: boolean
 }
 
 export interface ReadingStats {
@@ -53,6 +54,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   fontFamily: 'sans',
   showProgress: true,
   focusAnimation: true,
+  usePageAction: false,
 }
 
 const SAMPLE_TEXT = `Speed reading is a collection of methods that attempt to increase rates of reading without significantly reducing comprehension or retention. Methods include chunking and minimizing subvocalization. The many speed reading training programs available include books, videos, software, and seminars.
@@ -126,6 +128,7 @@ export function RSVPReader({
     }
     if (typeof stored.showProgress === 'boolean') next.showProgress = stored.showProgress
     if (typeof stored.focusAnimation === 'boolean') next.focusAnimation = stored.focusAnimation
+    if (typeof stored.usePageAction === 'boolean') next.usePageAction = stored.usePageAction
 
     return next
   }, [])

@@ -9,6 +9,7 @@ import type { DialogRootActions } from '@base-ui/react'
 import { Readability } from '@mozilla/readability'
 import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { browser } from 'wxt/browser'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -35,7 +36,9 @@ export default function ContentApp({
   anchor,
   selectionText,
   openOnSelection,
+  openOnPageAction,
   onSelectionHandled,
+  onPageActionHandled,
   onClearSelection,
   settingsStorageKey = 'read-for-speed:settings',
   settingsStorageArea = 'local',
@@ -45,7 +48,9 @@ export default function ContentApp({
   anchor: HTMLElement
   selectionText?: string | null
   openOnSelection?: boolean
+  openOnPageAction?: boolean
   onSelectionHandled?: () => void
+  onPageActionHandled?: () => void
   onClearSelection?: () => void
   settingsStorageKey?: string
   settingsStorageArea?: 'local' | 'sync'
@@ -57,6 +62,7 @@ export default function ContentApp({
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [status, setStatus] = useState<PageContentStatus>('idle')
+  const [usePageAction, setUsePageAction] = useState(false)
   const selectedContent = selectionText?.trim()
   const selectionExcerpt = selectedContent ? buildExcerpt(selectedContent) : null
 
@@ -93,6 +99,46 @@ export default function ContentApp({
     onClearSelection?.()
   }, [loadPageContent, onClearSelection])
 
+  const normalizeStoredUsePageAction = useCallback((value: unknown) => {
+    if (!value || typeof value !== 'object') return false
+    const stored = value as Record<string, unknown>
+    return typeof stored.usePageAction === 'boolean' ? stored.usePageAction : false
+  }, [])
+
+  useEffect(() => {
+    if (!settingsStorageKey) return
+    const storage = browser?.storage?.[settingsStorageArea]
+    if (!storage) return
+    let isMounted = true
+
+    // Keep the launcher mode in sync with stored reader settings.
+    storage
+      .get(settingsStorageKey)
+      .then((stored) => {
+        if (!isMounted) return
+        setUsePageAction(normalizeStoredUsePageAction(stored?.[settingsStorageKey]))
+      })
+      .catch((error) => {
+        console.warn('Failed to load reader settings for the launcher UI.', error)
+      })
+
+    const handleStorageChange = (
+      changes: Record<string, { newValue?: unknown }>,
+      areaName: string,
+    ) => {
+      if (areaName !== settingsStorageArea) return
+      const change = changes[settingsStorageKey]
+      if (!change) return
+      setUsePageAction(normalizeStoredUsePageAction(change.newValue))
+    }
+
+    browser.storage.onChanged.addListener(handleStorageChange)
+    return () => {
+      isMounted = false
+      browser.storage.onChanged.removeListener(handleStorageChange)
+    }
+  }, [normalizeStoredUsePageAction, settingsStorageArea, settingsStorageKey])
+
   useEffect(() => {
     // Auto-load page content for the extension experience.
     if (status === 'idle') {
@@ -106,20 +152,32 @@ export default function ContentApp({
     onSelectionHandled?.()
   }, [openOnSelection, onSelectionHandled, selectedContent])
 
+  useEffect(() => {
+    if (!openOnPageAction) return
+    if (!usePageAction) {
+      onPageActionHandled?.()
+      return
+    }
+    setOpen(true)
+    onPageActionHandled?.()
+  }, [onPageActionHandled, openOnPageAction, usePageAction])
+
   return (
     <Dialog
       actionsRef={actionsRef}
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogTrigger
-        render={
-          <Button variant='default'>
-            <span className='sr-only'>Open Read For Speed</span>
-            <BookOpen className='w-4 h-4' />
-          </Button>
-        }
-      />
+      {!usePageAction && (
+        <DialogTrigger
+          render={
+            <Button variant='default'>
+              <span className='sr-only'>Open Read For Speed</span>
+              <BookOpen className='w-4 h-4' />
+            </Button>
+          }
+        />
+      )}
       <DialogPopup
         className='sm:max-w-3xl max-h-[85vh] overflow-hidden'
         container={anchor}
