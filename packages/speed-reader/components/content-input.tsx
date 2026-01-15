@@ -1,12 +1,13 @@
 'use client'
 
-import { Clipboard, FileText, Link } from 'lucide-react'
-import { useState } from 'react'
+import { BookOpen, Clipboard, FileText, Link } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ContentInputProps {
   content: string
   onContentChange: (content: string) => void
   onUsePageContent?: () => void
+  onSelectPageContent?: () => void
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
@@ -16,13 +17,22 @@ export function ContentInput({
   content,
   onContentChange,
   onUsePageContent,
+  onSelectPageContent,
   pageContentStatus = 'idle',
   pageContentTitle,
   pageContentError,
 }: ContentInputProps) {
-  const [inputMode, setInputMode] = useState<'paste' | 'url'>('paste')
+  const [inputMode, setInputMode] = useState<'page' | 'paste' | 'url'>(
+    onUsePageContent ? 'page' : 'paste',
+  )
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!onUsePageContent && inputMode === 'page') {
+      setInputMode('paste')
+    }
+  }, [onUsePageContent, inputMode])
 
   const handlePaste = async () => {
     try {
@@ -48,6 +58,17 @@ export function ContentInput({
     }, 1000)
   }
 
+  const handleModeChange = (mode: typeof inputMode) => {
+    setInputMode(mode)
+    if (mode === 'page') {
+      // Re-sync the reader with the latest parsed page content.
+      onSelectPageContent?.()
+      onUsePageContent?.()
+    }
+  }
+
+  const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length
+
   return (
     <div className='flex-1 flex flex-col items-center justify-center px-6 py-8'>
       <div className='w-full max-w-2xl space-y-6'>
@@ -58,30 +79,24 @@ export function ContentInput({
           </p>
         </div>
 
-        {onUsePageContent && (
-          <div className='flex flex-col items-center gap-2'>
-            <button
-              type='button'
-              onClick={onUsePageContent}
-              disabled={pageContentStatus === 'loading'}
-              className='px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60'
-            >
-              {pageContentStatus === 'loading' ? 'Loading page...' : 'Use current page content'}
-            </button>
-            {pageContentStatus === 'ready' && pageContentTitle && (
-              <p className='text-xs text-muted-foreground'>Using: {pageContentTitle}</p>
-            )}
-            {pageContentStatus === 'error' && pageContentError && (
-              <p className='text-xs text-destructive'>{pageContentError}</p>
-            )}
-          </div>
-        )}
-
         {/* Mode toggle */}
         <div className='flex justify-center gap-2'>
+          {onUsePageContent && (
+            <button
+              type='button'
+              onClick={() => handleModeChange('page')}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                ${inputMode === 'page' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
+              `}
+            >
+              <BookOpen className='w-4 h-4' />
+              This Page
+            </button>
+          )}
           <button
             type='button'
-            onClick={() => setInputMode('paste')}
+            onClick={() => handleModeChange('paste')}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
               ${inputMode === 'paste' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
@@ -92,7 +107,7 @@ export function ContentInput({
           </button>
           <button
             type='button'
-            onClick={() => setInputMode('url')}
+            onClick={() => handleModeChange('url')}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
               ${inputMode === 'url' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}
@@ -103,7 +118,23 @@ export function ContentInput({
           </button>
         </div>
 
-        {inputMode === 'paste' ? (
+        {inputMode === 'page' && onUsePageContent ? (
+          <div className='space-y-3 text-center'>
+            <p className='text-sm text-muted-foreground'>
+              {pageContentStatus === 'loading' && 'Loading page content...'}
+              {pageContentStatus === 'ready' && 'Using the current page content.'}
+              {pageContentStatus === 'idle' && 'Page content will load automatically.'}
+              {pageContentStatus === 'error' && 'Unable to read content from this page.'}
+            </p>
+            {pageContentTitle && <p className='text-sm font-medium'>Using: {pageContentTitle}</p>}
+            {pageContentStatus === 'error' && pageContentError && (
+              <p className='text-xs text-destructive'>{pageContentError}</p>
+            )}
+            {pageContentStatus === 'ready' && (
+              <p className='text-xs text-muted-foreground'>{wordCount} words detected</p>
+            )}
+          </div>
+        ) : inputMode === 'paste' ? (
           <div className='space-y-4'>
             <textarea
               value={content}
@@ -120,9 +151,7 @@ export function ContentInput({
                 <Clipboard className='w-4 h-4' />
                 Paste from Clipboard
               </button>
-              <span className='text-sm text-muted-foreground'>
-                {content.split(/\s+/).filter((w) => w.length > 0).length} words
-              </span>
+              <span className='text-sm text-muted-foreground'>{wordCount} words</span>
             </div>
           </div>
         ) : (

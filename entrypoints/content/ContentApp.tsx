@@ -3,7 +3,7 @@
 import '@/assets/tailwind.css'
 
 import { Readability } from '@mozilla/readability'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,8 +16,6 @@ import {
 import { RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
 
 type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
-
-type Article = NonNullable<ReturnType<(typeof Readability)['prototype']['parse']>>
 
 export default function ContentApp({
   docClone,
@@ -49,6 +47,13 @@ export default function ContentApp({
     setPageTitle(article.title ?? docClone.title)
     setStatus('ready')
   }, [docClone])
+
+  useEffect(() => {
+    // Auto-load page content for the extension experience.
+    if (status === 'idle') {
+      handleUsePageContent()
+    }
+  }, [handleUsePageContent, status])
 
   return (
     <div className='flex flex-col items-end gap-3'>

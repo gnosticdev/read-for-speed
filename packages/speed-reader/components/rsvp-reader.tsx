@@ -1,5 +1,6 @@
 'use client'
 
+import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { extractContent } from '../lib/content-extractor'
@@ -8,7 +9,6 @@ import { ControlPanel } from './control-panel'
 import { SettingsPanel } from './settings-panel'
 import { StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
-import { BookOpen } from 'lucide-react'
 
 export type ReaderState = 'idle' | 'playing' | 'paused'
 
@@ -67,7 +67,13 @@ export function RSVPReader({
   controlsContainer,
   controlPanelClassName,
 }: RSVPReaderProps) {
-  const [content, setContent] = useState(() => initialContent ?? SAMPLE_TEXT)
+  const [content, setContent] = useState(() => {
+    // Prefer page content when available; otherwise fall back to sample text.
+    if (typeof initialContent === 'string') {
+      return initialContent
+    }
+    return onUsePageContent ? '' : SAMPLE_TEXT
+  })
   const [words, setWords] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [state, setState] = useState<ReaderState>('idle')
@@ -93,6 +99,14 @@ export function RSVPReader({
     },
     [onContentChange],
   )
+
+  const handleSelectPageContent = useCallback(() => {
+    // Prefer the latest parsed page content when switching tabs.
+    if (typeof initialContent === 'string' && initialContent.trim()) {
+      setContent(initialContent)
+    }
+    onUsePageContent?.()
+  }, [initialContent, onUsePageContent])
 
   useEffect(() => {
     if (typeof initialContent !== 'string') return
@@ -298,6 +312,7 @@ export function RSVPReader({
             content={content}
             onContentChange={handleContentChange}
             onUsePageContent={onUsePageContent}
+            onSelectPageContent={handleSelectPageContent}
             pageContentStatus={pageContentStatus}
             pageContentTitle={pageContentTitle}
             pageContentError={pageContentError}
