@@ -1,0 +1,76 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+
+	"files": {
+		"includes": ["**", "!!**/storage", "!**/src/cloudflare.d.ts"]
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": true
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "asNeeded",
+			"jsxQuoteStyle": "single"
+		},
+	},
+	"json": {
+		"parser": {
+			"allowComments": true,
+			"allowTrailingCommas": false
+		}
+	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"defaultBranch": "main",
+		"useIgnoreFile": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"a11y": {
+				"useMediaCaption": "off"
+			},
+			"nursery": {
+				"recommended": true
+			},
+			"correctness": { "useJsxKeyInIterable": "off" }
+		}
+	},
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"css": {
+		"formatter": {
+			"enabled": true
+		},"linter": {
+            "enabled": true,
+        },
+        "parser": {
+            "tailwindDirectives": true
+        }
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.js"],
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
+			"includes": ["**/*.tsx"],
+			"formatter": {
+				"indentWidth": 2,
+				"indentStyle": "space",
+				"formatWithErrors": true,
+				"enabled": true,
+				"lineWidth": 100,
+				"attributePosition": "multiline"
+			}
+		}
+	]
+}
