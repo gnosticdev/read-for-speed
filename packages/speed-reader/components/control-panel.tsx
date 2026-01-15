@@ -3,8 +3,8 @@
 import { Minus, Pause, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { ReaderSettings, ReaderState } from './rsvp-reader'
 import { cn } from '@/lib/utils'
+import type { ReaderSettings, ReaderState } from './rsvp-reader'
 
 interface ControlPanelProps {
   state: ReaderState
@@ -31,6 +31,9 @@ export function ControlPanel({
   onSeek,
   className,
 }: ControlPanelProps) {
+  /**
+   * Adjust the reading speed by the given delta.
+   */
   const adjustWpm = (delta: number) => {
     onSettingsChange({
       ...settings,

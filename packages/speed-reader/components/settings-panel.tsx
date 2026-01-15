@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -68,12 +69,7 @@ export function SettingsPanel({
 
           {/* Font Family */}
           <div className='space-y-2'>
-            <label
-              htmlFor='font-family-input'
-              className='text-sm font-medium'
-            >
-              Font Family
-            </label>
+            <Label htmlFor='font-family-input'>Font Family</Label>
             <ToggleGroup
               id='font-family-input'
               value={[settings.fontFamily]}
@@ -85,7 +81,7 @@ export function SettingsPanel({
                   fontFamily: nextValue as ReaderSettings['fontFamily'],
                 })
               }}
-              className='w-full gap-2'
+              className='w-full'
               variant='outline'
             >
               {(
@@ -99,6 +95,7 @@ export function SettingsPanel({
                   key={font.value}
                   value={font.value}
                   className={`${font.className} flex-1`}
+                  aria-label={font.label}
                 >
                   {font.label}
                 </ToggleGroupItem>
@@ -130,27 +127,43 @@ export function SettingsPanel({
 
           {/* Toggles */}
           <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Show Progress Bar</span>
+            <Label
+              className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
+              htmlFor='show-progress-input'
+              aria-label='Toggle progress bar'
+            >
+              <div className='flex flex-col gap-1'>
+                <p>Show Progress Bar</p>
+                <p className='text-muted-foreground text-xs'>
+                  Show a progress bar at the bottom of the page.
+                </p>
+              </div>
               <Switch
+                id='show-progress-input'
                 checked={settings.showProgress}
                 onCheckedChange={(checked) =>
                   onSettingsChange({ ...settings, showProgress: checked })
                 }
-                aria-label='Toggle progress bar'
               />
-            </div>
+            </Label>
 
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Focus Animation</span>
+            <Label
+              className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
+              htmlFor='focus-animation-input'
+              aria-label='Toggle focus animation'
+            >
+              <div className='flex flex-col gap-1'>
+                <p>Focus Animation</p>
+                <p className='text-muted-foreground text-xs'>Animate the focus of the reader.</p>
+              </div>
               <Switch
+                id='focus-animation-input'
                 checked={settings.focusAnimation}
                 onCheckedChange={(checked) =>
                   onSettingsChange({ ...settings, focusAnimation: checked })
                 }
-                aria-label='Toggle focus animation'
               />
-            </div>
+            </Label>
           </div>
         </div>
 

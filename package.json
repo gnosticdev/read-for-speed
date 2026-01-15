@@ -33,6 +33,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
+    "@fontsource-variable/chivo-mono": "^5.2.8",
+    "@fontsource-variable/figtree": "^5.2.10",
+    "@fontsource-variable/merriweather": "^5.2.6",
     "@mozilla/readability": "^0.6.0",
     "@repo/speed-reader": "workspace:*",
     "class-variance-authority": "^0.7.1",

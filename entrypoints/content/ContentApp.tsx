@@ -1,10 +1,13 @@
 'use client'
 
-import { BookOpen } from 'lucide-react'
 import '@/assets/tailwind.css'
+import '@fontsource-variable/chivo-mono'
+import '@fontsource-variable/merriweather'
+import '@fontsource-variable/figtree'
 
 import type { DialogRootActions } from '@base-ui/react'
 import { Readability } from '@mozilla/readability'
+import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { RSVPReader, type ReaderSettings } from '@/packages/speed-reader/components/rsvp-reader'
+import { type ReaderSettings, RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
 
 type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
 
