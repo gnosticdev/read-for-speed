@@ -33,12 +33,20 @@ export interface ReadingStats {
 }
 
 export interface RSVPReaderProps {
+  /** Initial content for the page tab (e.g., extracted page content). */
   initialContent?: string
+  /** Callback when content changes. */
   onContentChange?: (content: string) => void
+  /** Handler to trigger page content extraction. */
   onUsePageContent?: () => void
+  /** Full page content for the page tab. */
   pageContentFull?: string
+  /** Title of the page content. */
   pageContentTitle?: string | null
+  /** Error message if page content extraction failed. */
   pageContentError?: string | null
+  /** Initial content for the paste tab (e.g., selection text from context menu). */
+  initialPastedContent?: string
   containerClassName?: string
   controlsContainer?: RefObject<HTMLDivElement | null>
   controlPanelClassName?: string
@@ -69,6 +77,7 @@ export function RSVPReader({
   pageContentFull,
   pageContentTitle,
   pageContentError,
+  initialPastedContent,
   containerClassName,
   controlsContainer,
   controlPanelClassName,
@@ -78,15 +87,25 @@ export function RSVPReader({
   /**
    * The currently active input mode determines which content source is used for reading.
    * - 'page': Uses the extracted page content (pageContentFull or initialContent).
-   * - 'paste': Uses user-provided pasted content.
+   * - 'paste': Uses user-provided pasted content (including selection text from context menu).
+   *
+   * Defaults to 'paste' if there's initial pasted content (e.g., selection text),
+   * otherwise defaults to 'page' if page content extraction is available.
    */
-  const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
+  const [inputMode, setInputMode] = useState<'page' | 'paste'>(() => {
+    // If there's initial pasted content (e.g., selection text), default to paste mode.
+    if (initialPastedContent?.trim()) {
+      return 'paste'
+    }
+    // Otherwise, default to page mode if page content extraction is available.
+    return onUsePageContent ? 'page' : 'paste'
+  })
 
   /**
    * User-provided pasted content, independent from page content.
-   * Starts empty so users can paste/type their own text.
+   * Initialized with selection text from context menu if provided.
    */
-  const [pastedContent, setPastedContent] = useState('')
+  const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
   /**
    * The content that will be used for reading, derived from the active input mode.
@@ -199,6 +218,24 @@ export function RSVPReader({
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
   }, [initialContent, inputMode])
+
+  /**
+   * Update pasted content and switch to paste mode when initialPastedContent changes.
+   * This handles new selection text from context menu while the reader is already open.
+   */
+  useEffect(() => {
+    if (!initialPastedContent?.trim()) return
+
+    // Update the pasted content with the new selection text.
+    setPastedContent(initialPastedContent)
+    // Switch to paste mode to show the selection.
+    setInputMode('paste')
+    // Reset reading position for the new content.
+    setCurrentIndex(0)
+    setState('idle')
+    wordsReadInSessionRef.current = 0
+    sessionStartRef.current = null
+  }, [initialPastedContent])
 
   // Parse content into words/chunks
   useEffect(() => {

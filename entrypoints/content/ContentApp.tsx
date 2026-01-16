@@ -171,11 +171,12 @@ export default function ContentApp({
         </DialogHeader>
         <DialogPanel className='p-0 flex-1 min-h-0'>
           <RSVPReader
-            initialContent={selectedContent || pageContent}
+            initialContent={pageContent}
             onUsePageContent={handleUsePageContent}
             pageContentFull={pageContent}
             pageContentTitle={pageTitle}
             pageContentError={pageError}
+            initialPastedContent={selectedContent}
             containerClassName='h-full'
             controlsContainer={controlsContainer}
             controlPanelClassName='w-full'
