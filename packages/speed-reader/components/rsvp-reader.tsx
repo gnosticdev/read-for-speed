@@ -39,7 +39,6 @@ export interface RSVPReaderProps {
   pageContentFull?: string
   pageContentTitle?: string | null
   pageContentError?: string | null
-  pageContentExcerpt?: string | null
   containerClassName?: string
   controlsContainer?: RefObject<HTMLDivElement | null>
   controlPanelClassName?: string
@@ -70,20 +69,30 @@ export function RSVPReader({
   pageContentFull,
   pageContentTitle,
   pageContentError,
-  pageContentExcerpt,
   containerClassName,
   controlsContainer,
   controlPanelClassName,
   settingsStorageKey,
   initialSettings,
 }: RSVPReaderProps) {
-  const [content, setContent] = useState(() => {
-    // Prefer page content when available; otherwise fall back to sample text.
-    if (typeof initialContent === 'string') {
-      return initialContent
-    }
-    return onUsePageContent ? '' : SAMPLE_TEXT
-  })
+  /**
+   * The currently active input mode determines which content source is used for reading.
+   * - 'page': Uses the extracted page content (pageContentFull or initialContent).
+   * - 'paste': Uses user-provided pasted content.
+   */
+  const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
+
+  /**
+   * User-provided pasted content, independent from page content.
+   * Starts empty so users can paste/type their own text.
+   */
+  const [pastedContent, setPastedContent] = useState('')
+
+  /**
+   * The content that will be used for reading, derived from the active input mode.
+   */
+  const content =
+    inputMode === 'page' ? (pageContentFull ?? initialContent ?? '') : pastedContent || SAMPLE_TEXT
   const [words, setWords] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [state, setState] = useState<ReaderState>('idle')
@@ -146,35 +155,50 @@ export function RSVPReader({
     })
   }, [settings, settingsStorageKey])
 
-  const handleContentChange = useCallback(
+  /**
+   * Handles changes to the pasted content from the textarea.
+   */
+  const handlePastedContentChange = useCallback(
     (nextContent: string) => {
-      setContent(nextContent)
+      setPastedContent(nextContent)
       onContentChange?.(nextContent)
     },
     [onContentChange],
   )
 
-  const handleSelectPageContent = useCallback(() => {
-    // Prefer the latest parsed page content when switching tabs.
-    if (typeof pageContentFull === 'string' && pageContentFull.trim()) {
-      setContent(pageContentFull)
-    } else if (typeof initialContent === 'string' && initialContent.trim()) {
-      setContent(initialContent)
-    }
-    onUsePageContent?.()
-  }, [initialContent, onUsePageContent, pageContentFull])
-
-  useEffect(() => {
-    if (typeof initialContent !== 'string') return
-    if (!initialContent.trim() || initialContent === content) return
-
-    // Reset reading state when external content is loaded.
-    setContent(initialContent)
+  /**
+   * Handles switching between page and paste input modes.
+   */
+  const handleInputModeChange = useCallback((mode: 'page' | 'paste') => {
+    setInputMode(mode)
+    // Reset reading position when switching modes.
     setCurrentIndex(0)
     setState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
-  }, [initialContent, content])
+  }, [])
+
+  /**
+   * Called when user switches to the page tab.
+   * Content is now derived automatically based on inputMode.
+   */
+  const handleSelectPageContent = useCallback(() => {
+    onUsePageContent?.()
+  }, [onUsePageContent])
+
+  /**
+   * Reset reading state when page content changes (e.g., navigating to a new page).
+   */
+  useEffect(() => {
+    if (inputMode !== 'page') return
+    if (typeof initialContent !== 'string' || !initialContent.trim()) return
+
+    // Reset reading position when page content is updated.
+    setCurrentIndex(0)
+    setState('idle')
+    wordsReadInSessionRef.current = 0
+    sessionStartRef.current = null
+  }, [initialContent, inputMode])
 
   // Parse content into words/chunks
   useEffect(() => {
@@ -374,14 +398,15 @@ export function RSVPReader({
         {activePanel === 'reader' &&
           (state === 'idle' && currentIndex === 0 ? (
             <ContentInput
-              pastedContent={content}
-              onContentChange={handleContentChange}
+              pastedContent={pastedContent}
+              onPastedContentChange={handlePastedContentChange}
               onUsePageContent={onUsePageContent}
               onSelectPageContent={handleSelectPageContent}
               pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
-              pageContentExcerpt={pageContentExcerpt}
               pageContent={pageContentFull ?? initialContent ?? ''}
+              activeMode={inputMode}
+              onModeChange={handleInputModeChange}
             />
           ) : (
             <WordDisplay

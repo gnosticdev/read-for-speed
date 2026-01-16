@@ -1,45 +1,48 @@
 'use client'
 
 import { Clipboard } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 
 interface ContentInputProps {
+  /** Content for the paste tab (user-provided text). */
   pastedContent: string
-  onContentChange: (content: string) => void
+  /** Callback when the pasted content changes. */
+  onPastedContentChange: (content: string) => void
+  /** Handler to trigger page content extraction (optional). */
   onUsePageContent?: () => void
+  /** Callback when user switches to the page tab. */
   onSelectPageContent?: () => void
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
-  /** @deprecated No longer displayed - full preview is shown instead */
-  pageContentExcerpt?: string | null
+  /** Full page content (read-only display). */
   pageContent?: string
+  /** Currently active input mode (controlled by parent). */
+  activeMode: 'page' | 'paste'
+  /** Callback when the input mode changes. */
+  onModeChange: (mode: 'page' | 'paste') => void
 }
 
 export function ContentInput({
   pastedContent,
-  onContentChange,
-  onUsePageContent,
+  onPastedContentChange,
+  onUsePageContent: _onUsePageContent,
   onSelectPageContent,
   pageContent = '',
+  activeMode,
+  onModeChange,
 }: ContentInputProps) {
-  const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
-
-  useEffect(() => {
-    if (!onUsePageContent && inputMode === 'page') {
-      setInputMode('paste')
-    }
-  }, [onUsePageContent, inputMode])
-
+  /**
+   * Handle pasting from clipboard into the paste textarea.
+   */
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText()
       if (text) {
-        onContentChange(text)
+        onPastedContentChange(text)
       }
     } catch {
       // Clipboard API not available or permission denied
@@ -48,19 +51,17 @@ export function ContentInput({
 
   /**
    * Handle tab switching between page and paste modes.
-   * Only calls onSelectPageContent to restore cached content - we do NOT
-   * call onUsePageContent here because Readability mutates the docClone
-   * and re-parsing would fail or return empty content.
+   * Notifies parent so it knows which content source to use for reading.
    */
-  const handleModeChange = (mode: typeof inputMode) => {
-    setInputMode(mode)
+  const handleModeChange = (mode: 'page' | 'paste') => {
+    onModeChange(mode)
     if (mode === 'page') {
-      // Restore the reader with the already-parsed page content from cache.
+      // Notify parent that page content is now the active source.
       onSelectPageContent?.()
     }
   }
 
-  const wordCount = pageContent.split(/\s+/).filter((w) => w.length > 0).length
+  const pastedWordCount = pastedContent.split(/\s+/).filter((w) => w.length > 0).length
   const pageWordCount = Intl.NumberFormat('en-US').format(
     pageContent.split(/\s+/).filter((w) => w.length > 0).length,
   )
@@ -75,7 +76,7 @@ export function ContentInput({
           </p>
         </div>
         <Tabs
-          value={inputMode}
+          value={activeMode}
           onValueChange={handleModeChange}
         >
           {/* Keep both panels mounted to preserve text state when switching tabs. */}
@@ -94,7 +95,7 @@ export function ContentInput({
                 data-page-content
                 className='w-full h-48 p-4 bg-background border border-border rounded-xl'
               >
-                <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
+                <pre className='text-left text-sm text-foreground whitespace-pre-line'>
                   {pageContent}
                 </pre>
               </ScrollArea>
@@ -105,13 +106,14 @@ export function ContentInput({
             value='paste'
             keepMounted
           >
-            <div className='space-y-4'>
+            <div className='space-y-4 text-center p-1'>
+              <p className='text-xs text-muted-foreground'>{pastedWordCount} words detected</p>
               <Textarea
                 rows={10}
                 value={pastedContent}
-                onChange={(e) => onContentChange(e.target.value)}
+                onChange={(e) => onPastedContentChange(e.target.value)}
                 placeholder='Paste your text here...'
-                className='w-full'
+                className='w-full h-48'
               />
               <div className='flex justify-between items-center'>
                 <Button
@@ -123,7 +125,7 @@ export function ContentInput({
                   <Clipboard />
                   Paste
                 </Button>
-                <span className='text-sm text-muted-foreground'>{wordCount} words</span>
+                <span className='text-sm text-muted-foreground'>{pastedWordCount} words</span>
               </div>
             </div>
           </TabsContent>

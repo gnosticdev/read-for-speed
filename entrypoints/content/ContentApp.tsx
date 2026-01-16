@@ -5,7 +5,7 @@ import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 
-import type { DialogRootActions } from '@base-ui/react'
+import { DialogRoot, type DialogRootActions } from '@base-ui/react'
 import { Readability } from '@mozilla/readability'
 import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -18,6 +18,7 @@ import {
   DialogPanel,
   DialogPopup,
   DialogTitle,
+  DialogCreateHandle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { type ReaderSettings, RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
@@ -30,6 +31,8 @@ const buildExcerpt = (text: string, maxLength = 240) => {
   if (trimmed.length <= maxLength) return trimmed
   return `${trimmed.slice(0, maxLength).trim()}...`
 }
+
+export const ContentAppTrigger = DialogCreateHandle()
 
 export default function ContentApp({
   docClone,
@@ -61,7 +64,7 @@ export default function ContentApp({
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [status, setStatus] = useState<PageContentStatus>('idle')
-  const [usePageAction, setUsePageAction] = useState(false)
+  const [isUsingPageAction, setIsUsingPageAction] = useState(true)
   const selectedContent = selectionText?.trim()
   const selectionExcerpt = selectedContent ? buildExcerpt(selectedContent) : null
 
@@ -99,9 +102,9 @@ export default function ContentApp({
   }, [loadPageContent, onClearSelection])
 
   const loadStoredUsePageAction = useCallback(async () => {
-    const stored = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
-    if (!stored) return
-    setUsePageAction(stored.usePageAction)
+    const storedSettings = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
+    if (!storedSettings) return
+    setIsUsingPageAction(storedSettings.usePageAction)
   }, [settingsStorageKey])
 
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function ContentApp({
     loadStoredUsePageAction()
 
     storage.watch<ReaderSettings>(`local:${settingsStorageKey}`, (value) => {
-      setUsePageAction(value?.usePageAction ?? false)
+      setIsUsingPageAction(value?.usePageAction ?? false)
     })
     return () => {
       storage.unwatch()
@@ -133,29 +136,26 @@ export default function ContentApp({
 
   useEffect(() => {
     if (!openOnPageAction) return
-    if (!usePageAction) {
+    if (!isUsingPageAction) {
       onPageActionHandled?.()
       return
     }
     setOpen(true)
     onPageActionHandled?.()
-  }, [onPageActionHandled, openOnPageAction, usePageAction])
+  }, [onPageActionHandled, openOnPageAction, isUsingPageAction])
 
   return (
     <Dialog
       actionsRef={actionsRef}
       open={open}
       onOpenChange={setOpen}
+      // handle={ContentAppTrigger}
     >
-      {!usePageAction && (
-        <DialogTrigger
-          render={
-            <Button variant='default'>
-              <span className='sr-only'>Open Read For Speed</span>
-              <BookOpen className='w-4 h-4' />
-            </Button>
-          }
-        />
+      {!isUsingPageAction && (
+        <DialogTrigger render={<Button variant='default' />}>
+          <span className='sr-only'>Open Read For Speed</span>
+          <BookOpen className='w-4 h-4' />
+        </DialogTrigger>
       )}
       <DialogPopup
         className='sm:max-w-3xl max-h-[85vh] overflow-hidden'
@@ -176,7 +176,6 @@ export default function ContentApp({
             pageContentFull={pageContent}
             pageContentTitle={pageTitle}
             pageContentError={pageError}
-            pageContentExcerpt={selectionExcerpt || pageExcerpt}
             containerClassName='h-full'
             controlsContainer={controlsContainer}
             controlPanelClassName='w-full'

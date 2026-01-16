@@ -1,7 +1,7 @@
 import { isProbablyReaderable } from '@mozilla/readability'
 import { useCallback, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import ContentApp from './ContentApp'
+import ContentApp, { ContentAppTrigger } from './ContentApp'
 
 import '@/assets/tailwind.css'
 import type { CustomMessages } from '@/lib/message-types'
