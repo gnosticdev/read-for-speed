@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 
 interface ContentInputProps {
-  content: string
+  pastedContent: string
   onContentChange: (content: string) => void
   onUsePageContent?: () => void
   onSelectPageContent?: () => void
@@ -17,15 +17,15 @@ interface ContentInputProps {
   pageContentError?: string | null
   /** @deprecated No longer displayed - full preview is shown instead */
   pageContentExcerpt?: string | null
-  pageContentFull?: string
+  pageContent?: string
 }
 
 export function ContentInput({
-  content,
+  pastedContent,
   onContentChange,
   onUsePageContent,
   onSelectPageContent,
-  pageContentFull = '',
+  pageContent = '',
 }: ContentInputProps) {
   const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
 
@@ -60,9 +60,9 @@ export function ContentInput({
     }
   }
 
-  const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length
+  const wordCount = pageContent.split(/\s+/).filter((w) => w.length > 0).length
   const pageWordCount = Intl.NumberFormat('en-US').format(
-    pageContentFull.split(/\s+/).filter((w) => w.length > 0).length,
+    pageContent.split(/\s+/).filter((w) => w.length > 0).length,
   )
 
   return (
@@ -95,7 +95,7 @@ export function ContentInput({
                 className='w-full h-48 p-4 bg-background border border-border rounded-xl'
               >
                 <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
-                  {pageContentFull}
+                  {pageContent}
                 </pre>
               </ScrollArea>
             </div>
@@ -108,7 +108,7 @@ export function ContentInput({
             <div className='space-y-4'>
               <Textarea
                 rows={10}
-                value={content}
+                value={pastedContent}
                 onChange={(e) => onContentChange(e.target.value)}
                 placeholder='Paste your text here...'
                 className='w-full'

@@ -374,14 +374,14 @@ export function RSVPReader({
         {activePanel === 'reader' &&
           (state === 'idle' && currentIndex === 0 ? (
             <ContentInput
-              content={content}
+              pastedContent={content}
               onContentChange={handleContentChange}
               onUsePageContent={onUsePageContent}
               onSelectPageContent={handleSelectPageContent}
               pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
               pageContentExcerpt={pageContentExcerpt}
-              pageContentFull={pageContentFull ?? initialContent ?? ''}
+              pageContent={pageContentFull ?? initialContent ?? ''}
             />
           ) : (
             <WordDisplay
