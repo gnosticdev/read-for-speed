@@ -5,20 +5,19 @@ import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 
-import { DialogRoot, type DialogRootActions } from '@base-ui/react'
+import type { DialogRootActions } from '@base-ui/react'
 import { Readability } from '@mozilla/readability'
 import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { browser } from 'wxt/browser'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogCreateHandle,
   DialogFooter,
   DialogHeader,
   DialogPanel,
   DialogPopup,
   DialogTitle,
-  DialogCreateHandle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { type ReaderSettings, RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
@@ -60,13 +59,12 @@ export default function ContentApp({
 }) {
   const [open, setOpen] = useState(false)
   const [pageContent, setPageContent] = useState<string | undefined>()
-  const [pageExcerpt, setPageExcerpt] = useState<string | null>(null)
+  const [, setPageExcerpt] = useState<string | null>(null)
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [status, setStatus] = useState<PageContentStatus>('idle')
   const [isUsingPageAction, setIsUsingPageAction] = useState(true)
   const selectedContent = selectionText?.trim()
-  const selectionExcerpt = selectedContent ? buildExcerpt(selectedContent) : null
 
   const actionsRef = useRef<DialogRootActions>({
     unmount: () => void 0,

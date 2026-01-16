@@ -1,4 +1,6 @@
+import tailwind from '@tailwindcss/vite'
 import { defineConfig } from 'wxt'
+import os from 'node:os'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -6,8 +8,7 @@ export default defineConfig({
 
 	webExt: {
 		binaries: {
-			chrome:
-				'/Users/divinelight/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
+			chrome: `${os.homedir()}/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
 		},
 		startUrls: [
 			'https://en.wikisource.org/wiki/Moby-Dick_(1851)_US_edition/Chapter_1',
@@ -16,7 +17,13 @@ export default defineConfig({
 	},
 	manifest: {
 		description:
-			'RSVP speed-reading overlay for webpages. Read text one word at a time with adjustable speed and focus controls.',
+			'Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect for books, articles, or any long form content.',
+		version: '1.0.0',
+		author: {
+			email: '64601257+gnosticdev@users.noreply.github.com',
+		},
+		homepage_url: 'https://github.com/gnosticdev/read-for-speed',
+		short_name: 'Read for Speed',
 
 		permissions: [
 			'activeTab',
@@ -34,4 +41,7 @@ export default defineConfig({
 				? 'Read for Speed (Dev)'
 				: 'Read for Speed - RSVP Reader',
 	},
+	vite: () => ({
+		plugins: [tailwind()],
+	}),
 })

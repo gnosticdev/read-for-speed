@@ -1,7 +1,7 @@
 import { isProbablyReaderable } from '@mozilla/readability'
 import { useCallback, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import ContentApp, { ContentAppTrigger } from './ContentApp'
+import ContentApp from './ContentApp'
 
 import '@/assets/tailwind.css'
 import type { CustomMessages } from '@/lib/message-types'
@@ -91,10 +91,6 @@ export default defineContentScript({
             '%c [Read For Speed] Page is not readable, skipping...',
             'color: red; font-weight: bold;',
           )
-          // make sure the overlay is removed
-          // uiContainer.remove()
-          // shadowHost.remove()
-          // return { root: null, wrapper: null }
         }
         // make the body transparent so no weird outline on button
         uiContainer.classList.add('bg-transparent')
@@ -141,14 +137,5 @@ export default defineContentScript({
     })
 
     ui.mount()
-
-    browser.runtime.onMessage.addListener((message) => {
-      if (message?.type !== 'RSVP_GET_PAGE_TEXT') return
-
-      return Promise.resolve({
-        text: document.body?.innerText ?? '',
-        title: document.title ?? '',
-      })
-    })
   },
 })

@@ -15,17 +15,23 @@ export default defineBackground(() => {
 			id: 'read-for-speed-context-menu',
 			title: 'Read for Speed',
 			type: 'normal',
-			contexts: ['all'],
+			contexts: ['selection', 'page'],
 		})
 		console.log('context menu created')
 		browser.contextMenus.onClicked.addListener(async (info, tab) => {
 			console.log('context menu clicked,', info, tab)
 			if (!tab?.id) return
 
-			await browser.tabs.sendMessage<CustomMessages>(tab.id, {
-				type: 'RSVP_GET_SELECTION_TEXT',
-				payload: info.selectionText ?? '',
-			})
+			if (info.selectionText) {
+				await browser.tabs.sendMessage<CustomMessages>(tab.id, {
+					type: 'RSVP_GET_SELECTION_TEXT',
+					payload: info.selectionText ?? '',
+				})
+			} else {
+				await browser.tabs.sendMessage<CustomMessages>(tab.id, {
+					type: 'RSVP_GET_PAGE_TEXT',
+				})
+			}
 		})
 	})
 })

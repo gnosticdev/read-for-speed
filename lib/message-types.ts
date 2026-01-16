@@ -3,7 +3,11 @@ type CustomMessage<T extends string, P> = {
 	payload?: P
 }
 
-type PageContentMessage = CustomMessage<'RSVP_GET_SELECTION_TEXT', string>
+type GetSelectedTextMessage = CustomMessage<'RSVP_GET_SELECTION_TEXT', string>
 type MountUIMessage = CustomMessage<'RSVP_MOUNT_UI', undefined>
+type GetPageTextMessage = CustomMessage<'RSVP_GET_PAGE_TEXT', undefined>
 
-export type CustomMessages = PageContentMessage | MountUIMessage
+export type CustomMessages =
+	| GetSelectedTextMessage
+	| MountUIMessage
+	| GetPageTextMessage
