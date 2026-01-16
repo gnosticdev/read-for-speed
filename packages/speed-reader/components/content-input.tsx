@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, Clipboard, FileText } from 'lucide-react'
+import { Clipboard } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -15,6 +15,7 @@ interface ContentInputProps {
   pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
+  /** @deprecated No longer displayed - full preview is shown instead */
   pageContentExcerpt?: string | null
   pageContentFull?: string
 }
@@ -24,15 +25,9 @@ export function ContentInput({
   onContentChange,
   onUsePageContent,
   onSelectPageContent,
-  pageContentStatus = 'idle',
-  pageContentTitle,
-  pageContentError,
-  pageContentExcerpt,
   pageContentFull = '',
 }: ContentInputProps) {
   const [inputMode, setInputMode] = useState<'page' | 'paste'>(onUsePageContent ? 'page' : 'paste')
-  const [showReaderPreview, setShowReaderPreview] = useState(false)
-  const showPageTab = Boolean(onUsePageContent)
 
   useEffect(() => {
     if (!onUsePageContent && inputMode === 'page') {
@@ -51,19 +46,24 @@ export function ContentInput({
     }
   }
 
+  /**
+   * Handle tab switching between page and paste modes.
+   * Only calls onSelectPageContent to restore cached content - we do NOT
+   * call onUsePageContent here because Readability mutates the docClone
+   * and re-parsing would fail or return empty content.
+   */
   const handleModeChange = (mode: typeof inputMode) => {
     setInputMode(mode)
-    setShowReaderPreview(false)
     if (mode === 'page') {
-      // Re-sync the reader with the latest parsed page content.
+      // Restore the reader with the already-parsed page content from cache.
       onSelectPageContent?.()
-      onUsePageContent?.()
     }
   }
 
   const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length
-  const pageWordCount = pageContentFull.split(/\s+/).filter((w) => w.length > 0).length
-  const previewText = pageContentExcerpt?.trim()
+  const pageWordCount = Intl.NumberFormat('en-US').format(
+    pageContentFull.split(/\s+/).filter((w) => w.length > 0).length,
+  )
 
   return (
     <div className='flex-1 flex flex-col items-center justify-center px-6 py-8'>
@@ -75,74 +75,31 @@ export function ContentInput({
           </p>
         </div>
         <Tabs
-          value={showPageTab ? inputMode : 'paste'}
+          value={inputMode}
           onValueChange={handleModeChange}
         >
           {/* Keep both panels mounted to preserve text state when switching tabs. */}
           <TabsList className='mx-auto'>
-            {showPageTab && (
-              <TabsTrigger value='page'>
-                <BookOpen />
-                On This Page
-              </TabsTrigger>
-            )}
-            <TabsTrigger value='paste'>
-              <FileText />
-              Paste Text
-            </TabsTrigger>
+            <TabsTrigger value='page'>Page</TabsTrigger>
+            <TabsTrigger value='paste'>Paste</TabsTrigger>
           </TabsList>
 
-          {showPageTab && (
-            <TabsContent
-              value='page'
-              keepMounted
-            >
-              <div className='space-y-4 text-center'>
-                <p className='text-sm text-muted-foreground'>
-                  {pageContentStatus === 'loading' && 'Loading page content...'}
-                  {pageContentStatus === 'ready' && 'Using the current page content.'}
-                  {pageContentStatus === 'idle' && 'Page content will load automatically.'}
-                  {pageContentStatus === 'error' && 'Unable to read content from this page.'}
-                </p>
-                {pageContentTitle && (
-                  <p className='text-sm font-medium'>Using: {pageContentTitle}</p>
-                )}
-                {pageContentStatus === 'error' && pageContentError && (
-                  <p className='text-xs text-destructive'>{pageContentError}</p>
-                )}
-                {pageContentStatus === 'ready' && (
-                  <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
-                )}
-
-                {pageContentStatus === 'ready' && previewText && (
-                  <div className='rounded-xl border border-border bg-secondary/30 p-4 text-left'>
-                    <p className='text-sm text-muted-foreground'>{previewText}</p>
-                  </div>
-                )}
-
-                {pageContentStatus === 'ready' && (
-                  <div className='flex items-center justify-center gap-2'>
-                    <Button
-                      onClick={() => setShowReaderPreview((prev) => !prev)}
-                      disabled={!pageContentFull}
-                      variant='outline'
-                      size='sm'
-                    >
-                      {showReaderPreview ? 'Hide Preview' : 'Show Preview'}
-                    </Button>
-                  </div>
-                )}
-
-                {showReaderPreview && (
-                  <ScrollArea className='w-full h-64 p-4 bg-secondary/50 border border-border rounded-xl'>
-                    <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
-                      {pageContentFull}
-                    </pre>
-                  </ScrollArea>
-                )}
-              </div>
-            </TabsContent>
-          )}
+          <TabsContent
+            value='page'
+            keepMounted
+          >
+            <div className='space-y-4 text-center p-1'>
+              <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
+              <ScrollArea
+                data-page-content
+                className='w-full h-48 p-4 bg-background border border-border rounded-xl'
+              >
+                <pre className='text-left text-sm text-foreground whitespace-pre-wrap'>
+                  {pageContentFull}
+                </pre>
+              </ScrollArea>
+            </div>
+          </TabsContent>
 
           <TabsContent
             value='paste'
@@ -175,14 +132,14 @@ export function ContentInput({
         {/* Instructions */}
         <div className='bg-secondary/30 rounded-xl p-4 space-y-2'>
           <h3 className='font-medium text-sm'>How RSVP Works</h3>
-          <ul className='text-sm text-muted-foreground space-y-1'>
-            <li>• Words appear one at a time in a fixed position</li>
+          <ul className='text-sm text-muted-foreground space-y-1 list-disc list-inside'>
+            <li>Words appear one at a time in a fixed position</li>
             <li>
-              • The <span className='text-red-500 font-semibold'>red letter</span> marks the optimal
+              The <span className='text-red-500 font-semibold'>red letter</span> marks the optimal
               recognition point
             </li>
-            <li>• Your eyes stay focused while words flow past</li>
-            <li>• Start at 250-300 WPM and gradually increase</li>
+            <li>Your eyes stay focused while words flow past</li>
+            <li>Start at 250-300 WPM and gradually increase</li>
           </ul>
         </div>
       </div>

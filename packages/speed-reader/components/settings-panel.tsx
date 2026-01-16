@@ -133,9 +133,10 @@ export function SettingsPanel({
               aria-label='Toggle toolbar button to open'
             >
               <div className='flex flex-col gap-1'>
-                <p>Open from Toolbar Button</p>
+                <p>Open from Extension Toolbar</p>
                 <p className='text-muted-foreground text-xs'>
-                  Hide the floating button and open from the browser toolbar instead.
+                  Use the Extension toolbar to launch the speed reader, instead of showing the
+                  floating button
                 </p>
               </div>
               <Switch

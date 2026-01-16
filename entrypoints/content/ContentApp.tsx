@@ -41,7 +41,6 @@ export default function ContentApp({
   onPageActionHandled,
   onClearSelection,
   settingsStorageKey = 'read-for-speed:settings',
-  settingsStorageArea = 'local',
   initialSettings,
 }: {
   docClone: Document
@@ -99,45 +98,25 @@ export default function ContentApp({
     onClearSelection?.()
   }, [loadPageContent, onClearSelection])
 
-  const normalizeStoredUsePageAction = useCallback((value: unknown) => {
-    if (!value || typeof value !== 'object') return false
-    const stored = value as Record<string, unknown>
-    return typeof stored.usePageAction === 'boolean' ? stored.usePageAction : false
-  }, [])
+  const loadStoredUsePageAction = useCallback(async () => {
+    const stored = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
+    if (!stored) return
+    setUsePageAction(stored.usePageAction)
+  }, [settingsStorageKey])
 
   useEffect(() => {
     if (!settingsStorageKey) return
-    const storage = browser?.storage?.[settingsStorageArea]
-    if (!storage) return
-    let isMounted = true
 
     // Keep the launcher mode in sync with stored reader settings.
-    storage
-      .get(settingsStorageKey)
-      .then((stored) => {
-        if (!isMounted) return
-        setUsePageAction(normalizeStoredUsePageAction(stored?.[settingsStorageKey]))
-      })
-      .catch((error) => {
-        console.warn('Failed to load reader settings for the launcher UI.', error)
-      })
+    loadStoredUsePageAction()
 
-    const handleStorageChange = (
-      changes: Record<string, { newValue?: unknown }>,
-      areaName: string,
-    ) => {
-      if (areaName !== settingsStorageArea) return
-      const change = changes[settingsStorageKey]
-      if (!change) return
-      setUsePageAction(normalizeStoredUsePageAction(change.newValue))
-    }
-
-    browser.storage.onChanged.addListener(handleStorageChange)
+    storage.watch<ReaderSettings>(`local:${settingsStorageKey}`, (value) => {
+      setUsePageAction(value?.usePageAction ?? false)
+    })
     return () => {
-      isMounted = false
-      browser.storage.onChanged.removeListener(handleStorageChange)
+      storage.unwatch()
     }
-  }, [normalizeStoredUsePageAction, settingsStorageArea, settingsStorageKey])
+  }, [loadStoredUsePageAction, settingsStorageKey])
 
   useEffect(() => {
     // Auto-load page content for the extension experience.
@@ -195,7 +174,6 @@ export default function ContentApp({
             initialContent={selectedContent || pageContent}
             onUsePageContent={handleUsePageContent}
             pageContentFull={pageContent}
-            pageContentStatus={status}
             pageContentTitle={pageTitle}
             pageContentError={pageError}
             pageContentExcerpt={selectionExcerpt || pageExcerpt}
@@ -203,7 +181,6 @@ export default function ContentApp({
             controlsContainer={controlsContainer}
             controlPanelClassName='w-full'
             settingsStorageKey={settingsStorageKey}
-            settingsStorageArea={settingsStorageArea}
             initialSettings={initialSettings}
           />
         </DialogPanel>

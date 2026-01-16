@@ -3,7 +3,8 @@
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { browser } from 'wxt/browser'
+import { storage } from '#imports'
+
 import { extractContent } from '../lib/content-extractor'
 import { ContentInput } from './content-input'
 import { ControlPanel } from './control-panel'
@@ -36,7 +37,6 @@ export interface RSVPReaderProps {
   onContentChange?: (content: string) => void
   onUsePageContent?: () => void
   pageContentFull?: string
-  pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
   pageContentTitle?: string | null
   pageContentError?: string | null
   pageContentExcerpt?: string | null
@@ -44,7 +44,6 @@ export interface RSVPReaderProps {
   controlsContainer?: RefObject<HTMLDivElement | null>
   controlPanelClassName?: string
   settingsStorageKey?: string
-  settingsStorageArea?: 'local' | 'sync'
   initialSettings?: Partial<ReaderSettings>
 }
 
@@ -69,7 +68,6 @@ export function RSVPReader({
   onContentChange,
   onUsePageContent,
   pageContentFull,
-  pageContentStatus,
   pageContentTitle,
   pageContentError,
   pageContentExcerpt,
@@ -77,7 +75,6 @@ export function RSVPReader({
   controlsContainer,
   controlPanelClassName,
   settingsStorageKey,
-  settingsStorageArea = 'local',
   initialSettings,
 }: RSVPReaderProps) {
   const [content, setContent] = useState(() => {
@@ -108,51 +105,21 @@ export function RSVPReader({
   const wordsReadInSessionRef = useRef(0)
   const hasLoadedStoredSettingsRef = useRef(false)
 
-  const getStorageArea = useCallback(() => {
-    if (!settingsStorageKey) return null
-    return browser?.storage?.[settingsStorageArea] ?? null
-  }, [settingsStorageArea, settingsStorageKey])
-
-  const normalizeStoredSettings = useCallback((value: unknown) => {
-    if (!value || typeof value !== 'object') return {}
-    const stored = value as Record<string, unknown>
-    const next: Partial<ReaderSettings> = {}
-
-    if (typeof stored.wpm === 'number') next.wpm = stored.wpm
-    if (typeof stored.chunkSize === 'number') next.chunkSize = stored.chunkSize
-    if (typeof stored.fontSize === 'number') next.fontSize = stored.fontSize
-    if (
-      stored.fontFamily === 'sans' ||
-      stored.fontFamily === 'mono' ||
-      stored.fontFamily === 'serif'
-    ) {
-      next.fontFamily = stored.fontFamily
-    }
-    if (typeof stored.showProgress === 'boolean') next.showProgress = stored.showProgress
-    if (typeof stored.focusAnimation === 'boolean') next.focusAnimation = stored.focusAnimation
-    if (typeof stored.usePageAction === 'boolean') next.usePageAction = stored.usePageAction
-
-    return next
-  }, [])
-
   useEffect(() => {
     if (!settingsStorageKey) return
-    const storage = getStorageArea()
-    if (!storage) return
 
     let isMounted = true
 
     const loadStoredSettings = async () => {
       try {
-        const stored = await storage.get(settingsStorageKey)
-        const storedSettings = normalizeStoredSettings(stored?.[settingsStorageKey])
+        const stored = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
 
         if (isMounted) {
           // Merge defaults + app-provided settings + stored preferences.
           setSettings({
             ...DEFAULT_SETTINGS,
             ...initialSettings,
-            ...storedSettings,
+            ...stored,
           })
         }
       } catch (error) {
@@ -167,19 +134,17 @@ export function RSVPReader({
     return () => {
       isMounted = false
     }
-  }, [getStorageArea, initialSettings, normalizeStoredSettings, settingsStorageKey])
+  }, [initialSettings, settingsStorageKey])
 
   useEffect(() => {
     if (!settingsStorageKey) return
     if (!hasLoadedStoredSettingsRef.current) return
-    const storage = getStorageArea()
-    if (!storage) return
 
     // Persist settings for the next reader session.
-    storage.set({ [settingsStorageKey]: settings }).catch((error) => {
+    storage.setItem(`local:${settingsStorageKey}`, settings).catch((error) => {
       console.warn('Failed to save reader settings to storage.', error)
     })
-  }, [getStorageArea, settings, settingsStorageKey])
+  }, [settings, settingsStorageKey])
 
   const handleContentChange = useCallback(
     (nextContent: string) => {
@@ -413,7 +378,6 @@ export function RSVPReader({
               onContentChange={handleContentChange}
               onUsePageContent={onUsePageContent}
               onSelectPageContent={handleSelectPageContent}
-              pageContentStatus={pageContentStatus}
               pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
               pageContentExcerpt={pageContentExcerpt}
