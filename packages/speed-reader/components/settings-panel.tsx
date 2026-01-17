@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -21,6 +22,9 @@ const MIN_WPM = 50
 const MAX_WPM = 1000
 const STEP_FONT_SIZE = 4
 const STEP_WPM = 25
+const MIN_SKIP_WORDS = 1
+const MAX_SKIP_WORDS = 100
+const STEP_SKIP_WORDS = 1
 
 export function SettingsPanel({
   settings,
@@ -44,31 +48,14 @@ export function SettingsPanel({
         </CardHeader>
 
         <CardContent className='space-y-6'>
-          {/* Font Size */}
-          <div className='space-y-3'>
-            <Label
-              htmlFor='font-size-input'
-              className='text-sm font-medium'
-            >
-              Font Size: {settings.fontSize}px
-            </Label>
-            <Slider
-              id='font-size-input'
-              min={MIN_FONT_SIZE}
-              max={MAX_FONT_SIZE}
-              step={STEP_FONT_SIZE}
-              value={settings.fontSize}
-              onValueChange={(value) => onSettingsChange({ ...settings, fontSize: value })}
-            />
-            <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>{MIN_FONT_SIZE}px</span>
-              <span>{MAX_FONT_SIZE}px</span>
-            </div>
-          </div>
-
           {/* Font Family */}
           <div className='space-y-3'>
-            <Label htmlFor='font-family-input'>Font Family</Label>
+            <div className='space-y-1'>
+              <Label htmlFor='font-family-input'>Font Family</Label>
+              <p className='text-xs text-muted-foreground'>
+                The font family to use for the reader.
+              </p>
+            </div>
             <ToggleGroup
               id='font-family-input'
               value={[settings.fontFamily]}
@@ -101,10 +88,36 @@ export function SettingsPanel({
               ))}
             </ToggleGroup>
           </div>
+          <Separator />
+
+          {/* Font Size */}
+          <div className='space-y-3'>
+            <Label
+              htmlFor='font-size-input'
+              className='text-sm font-medium'
+            >
+              Font Size: {settings.fontSize}px
+            </Label>
+            <Slider
+              id='font-size-input'
+              min={MIN_FONT_SIZE}
+              max={MAX_FONT_SIZE}
+              step={STEP_FONT_SIZE}
+              value={settings.fontSize}
+              onValueChange={(value) => onSettingsChange({ ...settings, fontSize: value })}
+            />
+            <div className='flex justify-between text-xs text-muted-foreground'>
+              <span>{MIN_FONT_SIZE}px</span>
+              <span>{MAX_FONT_SIZE}px</span>
+            </div>
+          </div>
 
           {/* Reading Speed */}
           <div className='space-y-3'>
             <Label htmlFor='speed-input'>Default Speed: {settings.wpm} WPM</Label>
+            <p className='text-xs text-muted-foreground'>
+              The default speed when starting a new reading session.
+            </p>
             <Slider
               id='speed-input'
               min={MIN_WPM}
@@ -118,6 +131,61 @@ export function SettingsPanel({
               <span>{MAX_WPM} (Fast)</span>
             </div>
           </div>
+
+          {/* Skip words */}
+          <div className='space-y-3'>
+            <div className='space-y-1'>
+              <Label
+                htmlFor='font-size-input'
+                className='text-sm font-medium'
+              >
+                Word Skip Size: {settings.skipWords}
+              </Label>
+              <p className='text-xs text-muted-foreground'>
+                The number of words to skip when using the skip buttons in the control panel.
+              </p>
+            </div>
+            <Slider
+              id='font-size-input'
+              min={MIN_SKIP_WORDS}
+              max={MAX_SKIP_WORDS}
+              step={STEP_SKIP_WORDS}
+              value={settings.skipWords}
+              onValueChange={(value) => onSettingsChange({ ...settings, skipWords: value })}
+            />
+            <div className='flex justify-between text-xs text-muted-foreground'>
+              <span>{MIN_SKIP_WORDS}</span>
+              <span>{MAX_SKIP_WORDS}</span>
+            </div>
+          </div>
+          {/* Skip words */}
+          <div className='space-y-3'>
+            <div className='space-y-1'>
+              <Label
+                htmlFor='font-size-input'
+                className='text-sm font-medium'
+              >
+                Word Skip Size: {settings.skipWords}
+              </Label>
+              <p className='text-xs text-muted-foreground'>
+                The number of words to skip when using the skip buttons in the control panel.
+              </p>
+            </div>
+            <Slider
+              id='font-size-input'
+              min={MIN_SKIP_WORDS}
+              max={MAX_SKIP_WORDS}
+              step={STEP_SKIP_WORDS}
+              value={settings.skipWords}
+              onValueChange={(value) => onSettingsChange({ ...settings, skipWords: value })}
+            />
+            <div className='flex justify-between text-xs text-muted-foreground'>
+              <span>{MIN_SKIP_WORDS}</span>
+              <span>{MAX_SKIP_WORDS}</span>
+            </div>
+          </div>
+
+          <Separator />
 
           {/* Toggles */}
           <div className='space-y-3'>
@@ -158,24 +226,6 @@ export function SettingsPanel({
                 checked={settings.showProgress}
                 onCheckedChange={(checked) =>
                   onSettingsChange({ ...settings, showProgress: checked })
-                }
-              />
-            </Label>
-
-            <Label
-              className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
-              htmlFor='focus-animation-input'
-              aria-label='Toggle focus animation'
-            >
-              <div className='flex flex-col gap-1'>
-                <p>Focus Animation</p>
-                <p className='text-muted-foreground text-xs'>Animate the focus of the reader.</p>
-              </div>
-              <Switch
-                id='focus-animation-input'
-                checked={settings.focusAnimation}
-                onCheckedChange={(checked) =>
-                  onSettingsChange({ ...settings, focusAnimation: checked })
                 }
               />
             </Label>

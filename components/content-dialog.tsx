@@ -41,7 +41,7 @@ export const ContentAppTrigger = DialogCreateHandle()
  * - Selection text from context menu
  * - Open/close triggers from browser extension messages
  */
-export default function ContentApp() {
+export default function ReaderDialog() {
   const {
     anchor,
     selectionText,
@@ -144,7 +144,9 @@ export default function ContentApp() {
     <Dialog
       actionsRef={actionsRef}
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(open) => {
+        setOpen(open)
+      }}
     >
       {!settings.usePageAction && (
         <DialogTrigger render={<Button variant='default' />}>

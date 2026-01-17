@@ -1,6 +1,6 @@
 import { isProbablyReaderable } from '@mozilla/readability'
 import ReactDOM from 'react-dom/client'
-import ContentApp from './ContentApp'
+import ReaderDialog from '../../components/content-dialog'
 
 import '@/assets/tailwind.css'
 import { ContentScriptProvider } from '@/components/provider'
@@ -76,7 +76,7 @@ export default defineContentScript({
             docClone={docClone}
             anchor={uiContainer}
           >
-            <ContentApp />
+            <ReaderDialog />
           </ContentScriptProvider>,
         )
 

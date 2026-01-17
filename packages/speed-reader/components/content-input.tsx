@@ -78,9 +78,9 @@ export function ContentInput({
                 data-page-content
                 className='w-full h-48'
               >
-                <pre className='text-left text-xs text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
+                <article className='text-left text-xs text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
                   {pageContent}
-                </pre>
+                </article>
               </ScrollArea>
               <span className='text-xs text-right text-muted-foreground'>
                 {pageWordCount} words

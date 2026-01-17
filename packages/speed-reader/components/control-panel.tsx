@@ -1,24 +1,25 @@
 'use client'
 
 import { Minus, Pause, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-react'
+import type React from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ReaderSettings, ReaderState } from './rsvp-reader'
-import { RefObject } from 'react'
-import { createPortal } from 'react-dom'
 
-interface ControlPanelProps {
-  state: ReaderState
-  settings: ReaderSettings
-  onPlay: () => void
-  onPause: () => void
-  onStop: () => void
-  onSettingsChange: (settings: ReaderSettings) => void
-  currentIndex: number
-  totalWords: number
-  onSeek: (index: number) => void
-  container?: Element
-}
+interface ControlPanelProps
+  extends React.PropsWithChildren<{
+    state: ReaderState
+    settings: ReaderSettings
+    onPlay: () => void
+    onPause: () => void
+    onStop: () => void
+    onSettingsChange: (settings: ReaderSettings) => void
+    currentIndex: number
+    totalWords: number
+    onSeek: (index: number) => void
+    container?: Element | null
+  }> {}
 
 export function ControlPanel({
   state,
@@ -31,6 +32,7 @@ export function ControlPanel({
   totalWords,
   onSeek,
   container,
+  children,
 }: ControlPanelProps) {
   /**
    * Adjust the reading speed by the given delta.
@@ -42,12 +44,20 @@ export function ControlPanel({
     })
   }
 
+  /**
+   * Skip backward by skipWords chunks.
+   * Since each chunk already contains chunkSize words, we just move by skipWords indices.
+   */
   const skipBack = () => {
-    onSeek(Math.max(0, currentIndex - settings.skipWords * 10))
+    onSeek(Math.max(0, currentIndex - settings.skipWords))
   }
 
+  /**
+   * Skip forward by skipWords chunks.
+   * Since each chunk already contains chunkSize words, we just move by skipWords indices.
+   */
   const skipForward = () => {
-    onSeek(Math.min(totalWords - 1, currentIndex + settings.skipWords * 10))
+    onSeek(Math.min(totalWords - 1, currentIndex + settings.skipWords))
   }
 
   const ControlPanelComponent = (
@@ -55,7 +65,8 @@ export function ControlPanel({
       className='px-6 py-4 border-t border-border w-full'
       data-control-panel
     >
-      <div className='flex items-center justify-between max-w-3xl mx-auto'>
+      {children}
+      <div className='flex items-center justify-between max-w-3xl mx-auto mt-4'>
         {/* WPM control */}
         <div className='flex items-center gap-3'>
           <span className='text-sm text-muted-foreground w-12'>WPM</span>
@@ -131,33 +142,24 @@ export function ControlPanel({
           </Button>
         </div>
 
-        {/* Chunk size control */}
+        {/* Chunk size control - Value set here is kept in storage (no settings panel) */}
         <div className='flex items-center gap-3'>
           <span className='text-sm text-muted-foreground'>Words</span>
           <ToggleGroup
-            value={[settings.skipWords.toString()]}
+            value={[settings.chunkSize.toString()]}
             onValueChange={(value) =>
-              onSettingsChange({ ...settings, skipWords: Number(value[0] ?? 1) })
+              onSettingsChange({ ...settings, chunkSize: Number(value[0] ?? 1) as 1 | 2 | 3 })
             }
           >
-            <ToggleGroupItem
-              aria-label='1 word'
-              value='1'
-            >
-              1
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              aria-label='2 words'
-              value='2'
-            >
-              2
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              aria-label='3 words'
-              value='3'
-            >
-              3
-            </ToggleGroupItem>
+            {[1, 2, 3].map((size) => (
+              <ToggleGroupItem
+                key={size}
+                aria-label={`${size} words`}
+                value={size.toString()}
+              >
+                {size}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
         </div>
       </div>

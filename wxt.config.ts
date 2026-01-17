@@ -1,6 +1,6 @@
+import os from 'node:os'
 import tailwind from '@tailwindcss/vite'
 import { defineConfig } from 'wxt'
-import os from 'node:os'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -11,7 +11,7 @@ export default defineConfig({
 			chrome: `${os.homedir()}/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
 		},
 		startUrls: [
-			'https://en.wikisource.org/wiki/Moby-Dick_(1851)_US_edition/Chapter_1',
+			'https://standardebooks.org/ebooks/herman-melville/moby-dick/text/single-page#chapter-28',
 		],
 		disabled: false,
 	},

@@ -1,17 +1,18 @@
 'use client'
 
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { extractContent } from '../lib/content-extractor'
+import { ReadingProgressBar } from '@/packages/speed-reader/components/reading-progress-bar'
+import { chunkText } from '../lib/content-utils'
 import { ContentInput } from './content-input'
 import { ControlPanel } from './control-panel'
 import { SettingsPanel } from './settings-panel'
 import { StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
 
-export type ReaderState = 'idle' | 'playing' | 'paused'
+export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
 
 /**
  * Settings for the RSVP reader display and behavior.
@@ -19,10 +20,10 @@ export type ReaderState = 'idle' | 'playing' | 'paused'
 export interface ReaderSettings {
   wpm: number
   skipWords: number
+  chunkSize: 1 | 2 | 3
   fontSize: number
   fontFamily: 'sans' | 'mono' | 'serif'
   showProgress: boolean
-  focusAnimation: boolean
   /** Extension-specific: whether to use toolbar action instead of floating button. */
   usePageAction: boolean
 }
@@ -72,11 +73,14 @@ export interface RSVPReaderConfig {
    */
   onSettingsChange: (settings: ReaderSettings) => void
   /**
-   * Option to show the control panel (default), or add the ControlPanel component manually
-   * by passing a ref to the container element.
-   * @default true
+   * Ref to the container element for the control panel.
+   * Control panel will be rendered at the bottom of the `reader` tab if no ref is provided.
    */
   controlPanelRef?: RefObject<HTMLDivElement | null>
+  /**
+   * Callback when reader state changes.
+   */
+  onReaderStateChange?: (state: ReaderState) => void
 }
 
 /**
@@ -85,11 +89,11 @@ export interface RSVPReaderConfig {
  */
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   wpm: 300,
-  skipWords: 1,
+  skipWords: 10,
+  chunkSize: 1,
   fontSize: 48,
   fontFamily: 'sans',
   showProgress: true,
-  focusAnimation: true,
   usePageAction: false,
 }
 
@@ -138,7 +142,8 @@ export function RSVPReader({
   onContentChange,
   settings,
   onSettingsChange,
-  controlPanelRef: showControlPanel,
+  controlPanelRef,
+  onReaderStateChange,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -166,9 +171,8 @@ export function RSVPReader({
    */
   const content = inputMode === 'page' ? (pageContent ?? '') : pastedContent || SAMPLE_TEXT
 
-  const [words, setWords] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [state, setState] = useState<ReaderState>('idle')
+  const [readerState, setReaderState] = useState<ReaderState>('idle')
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>({
     wordsRead: 0,
@@ -193,6 +197,10 @@ export function RSVPReader({
     [onContentChange],
   )
 
+  useEffect(() => {
+    onReaderStateChange?.(readerState)
+  }, [readerState])
+
   /**
    * Handles switching between page and paste input modes.
    */
@@ -200,7 +208,7 @@ export function RSVPReader({
     setInputMode(mode)
     // Reset reading position when switching modes.
     setCurrentIndex(0)
-    setState('idle')
+    setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
   }, [])
@@ -214,10 +222,19 @@ export function RSVPReader({
 
     // Reset reading position when page content is updated.
     setCurrentIndex(0)
-    setState('idle')
+    setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
   }, [pageContent, inputMode])
+
+  /**
+   * Memoized chunks of the content, split by chunkSize (1/2/3 words per chunk).
+   * This is memoized because content can be very large (200k+ words for books).
+   */
+  const chunks = useMemo(
+    () => chunkText(content, settings.chunkSize),
+    [content, settings.chunkSize],
+  )
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
@@ -229,27 +246,30 @@ export function RSVPReader({
     setPastedContent(initialPastedContent)
     setInputMode('paste')
     setCurrentIndex(0)
-    setState('idle')
+    setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
   }, [initialPastedContent])
 
-  // Parse content into words/chunks
+  /**
+   * Update total word count in stats when chunks change.
+   */
   useEffect(() => {
-    const extracted = extractContent(content)
-    const wordList = extracted.split(/\s+/).filter((w) => w.length > 0)
-    setWords(wordList)
-    setStats((prev) => ({ ...prev, totalWords: wordList.length }))
-  }, [content])
+    setStats((prev) => ({ ...prev, totalWords: chunks.length }))
+  }, [chunks.length])
 
   // Calculate interval based on WPM
   const getInterval = useCallback(() => {
     return 60000 / settings.wpm
   }, [settings.wpm])
 
-  // Handle word progression
+  /**
+   * Handle chunk progression during playback.
+   * Advances one chunk at a time based on WPM.
+   * Note: skipWords is only used for manual skip forward/back, not playback.
+   */
   useEffect(() => {
-    if (state === 'playing' && words.length > 0) {
+    if (readerState === 'playing' && chunks.length > 0) {
       if (sessionStartRef.current === null) {
         sessionStartRef.current = Date.now()
         wordsReadInSessionRef.current = 0
@@ -257,13 +277,13 @@ export function RSVPReader({
 
       intervalRef.current = setInterval(() => {
         setCurrentIndex((prev) => {
-          if (prev >= words.length - settings.skipWords) {
+          if (prev >= chunks.length - 1) {
             // Session complete
-            setState('idle')
+            setReaderState('done')
             const sessionTime = (Date.now() - (sessionStartRef.current || Date.now())) / 1000
             setStats((s) => ({
               ...s,
-              wordsRead: s.wordsRead + wordsReadInSessionRef.current + settings.skipWords,
+              wordsRead: s.wordsRead + wordsReadInSessionRef.current + 1,
               sessionsCompleted: s.sessionsCompleted + 1,
               totalTimeSeconds: s.totalTimeSeconds + sessionTime,
               averageWpm: Math.round(
@@ -275,8 +295,8 @@ export function RSVPReader({
             sessionStartRef.current = null
             return 0
           }
-          wordsReadInSessionRef.current += settings.skipWords
-          return prev + settings.skipWords
+          wordsReadInSessionRef.current += 1
+          return prev + 1
         })
       }, getInterval())
     }
@@ -286,15 +306,15 @@ export function RSVPReader({
         clearInterval(intervalRef.current)
       }
     }
-  }, [state, words.length, settings.skipWords, getInterval])
+  }, [readerState, chunks.length, getInterval])
 
   const handlePlay = () => {
-    if (words.length === 0) return
-    setState('playing')
+    if (chunks.length === 0) return
+    setReaderState('playing')
   }
 
   const handlePause = () => {
-    setState('paused')
+    setReaderState('paused')
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
       setStats((s) => ({
@@ -307,7 +327,7 @@ export function RSVPReader({
   }
 
   const handleStop = () => {
-    setState('idle')
+    setReaderState('idle')
     setCurrentIndex(0)
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
@@ -325,7 +345,13 @@ export function RSVPReader({
     setCurrentIndex(index)
   }
 
-  // Keyboard shortcuts
+  /**
+   * Keyboard shortcuts for reader control.
+   * - Space: Play/Pause
+   * - Arrow Up/Down: Adjust WPM
+   * - Arrow Left/Right: Skip backward/forward by skipWords chunks
+   * - Escape: Stop or close panels
+   */
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -333,7 +359,7 @@ export function RSVPReader({
       switch (e.code) {
         case 'Space':
           e.preventDefault()
-          if (state === 'playing') {
+          if (readerState === 'playing') {
             handlePause()
           } else {
             handlePlay()
@@ -349,18 +375,18 @@ export function RSVPReader({
           break
         case 'ArrowLeft':
           e.preventDefault()
-          setCurrentIndex((i) => Math.max(0, i - settings.skipWords * 5))
+          setCurrentIndex((i) => Math.max(0, i - settings.skipWords))
           break
         case 'ArrowRight':
           e.preventDefault()
-          setCurrentIndex((i) => Math.min(words.length - 1, i + settings.skipWords * 5))
+          setCurrentIndex((i) => Math.min(chunks.length - 1, i + settings.skipWords))
           break
         case 'Escape':
           e.preventDefault()
           e.stopPropagation()
           if (activePanel !== 'reader') {
             setActivePanel('reader')
-          } else if (state === 'playing') {
+          } else if (readerState === 'playing') {
             handlePause()
           } else {
             handleStop()
@@ -371,14 +397,16 @@ export function RSVPReader({
 
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [activePanel, state, settings, words.length, onSettingsChange])
+  }, [activePanel, readerState, settings, chunks.length, onSettingsChange])
 
-  const currentChunk = words.slice(currentIndex, currentIndex + settings.skipWords).join(' ')
+  /** The current chunk to display, retrieved from the memoized chunks array. */
+  const currentChunk = chunks[currentIndex] ?? ''
 
   return (
     <Tabs
       value={activePanel}
       onValueChange={(value) => setActivePanel(value as 'reader' | 'settings' | 'stats')}
+      className={'@container/reader-main'}
     >
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}
@@ -400,7 +428,7 @@ export function RSVPReader({
           value={'reader'}
           className='flex min-h-0 flex-1 flex-col'
         >
-          {state === 'idle' && currentIndex === 0 ? (
+          {readerState === 'idle' && currentIndex === 0 ? (
             <ContentInput
               pastedContent={pastedContent}
               onPastedContentChange={handlePastedContentChange}
@@ -415,10 +443,33 @@ export function RSVPReader({
             <WordDisplay
               word={currentChunk}
               settings={settings}
-              isPlaying={state === 'playing'}
+              isPlaying={readerState === 'playing'}
               onStop={handleStop}
             />
           )}
+          {/* Control panel shows on both overlay and page layouts */}
+
+          <div className='flex flex-col gap-2'>
+            <ControlPanel
+              state={readerState}
+              settings={settings}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onStop={handleStop}
+              onSettingsChange={onSettingsChange}
+              currentIndex={currentIndex}
+              totalWords={chunks.length}
+              onSeek={handleSeek}
+              container={controlPanelRef?.current}
+            >
+              {settings.showProgress && (
+                <ReadingProgressBar
+                  currentIndex={currentIndex}
+                  totalWords={chunks.length}
+                />
+              )}
+            </ControlPanel>
+          </div>
         </TabsPanel>
 
         <TabsPanel
@@ -443,22 +494,6 @@ export function RSVPReader({
             layout='page'
           />
         </TabsPanel>
-
-        {/* Control panel */}
-        {activePanel === 'reader' && showControlPanel && showControlPanel.current ? (
-          <ControlPanel
-            state={state}
-            settings={settings}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onStop={handleStop}
-            onSettingsChange={onSettingsChange}
-            currentIndex={currentIndex}
-            totalWords={words.length}
-            onSeek={handleSeek}
-            container={showControlPanel.current}
-          />
-        ) : null}
       </div>
     </Tabs>
   )

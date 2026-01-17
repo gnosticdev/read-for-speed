@@ -4,6 +4,8 @@ import { X } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getSingleWordORPIndex } from '../lib/orp-index'
+
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
@@ -13,22 +15,10 @@ interface WordDisplayProps {
   onStop?: () => void
 }
 
-// Calculate Optimal Recognition Point (ORP) - roughly 35% into the word
-function getORPIndex(word: string): number {
-  const trimmedWord = word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') // trim punctuation
-  const length = [...trimmedWord].length // Unicode-safe length
-  if (length <= 1) return 0
-  if (length <= 3) return 0
-  if (length <= 5) return 1
-  if (length <= 9) return 2
-  if (length <= 13) return 3
-  return Math.floor(length * 0.35)
-}
-
 export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = word.trim()
-    const idx = getORPIndex(cleanWord)
+    const idx = getSingleWordORPIndex(cleanWord)
     return {
       orpIndex: idx,
       beforeORP: cleanWord.slice(0, idx),
@@ -37,7 +27,7 @@ export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
     }
   }, [word])
 
-  const fontClass = {
+  const fontStyle = {
     sans: 'var(--font-sans)',
     mono: 'var(--font-mono)',
     serif: 'var(--font-serif)',
@@ -71,7 +61,7 @@ export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
         {/* Word container */}
         <div
           className={cn('relative flex items-center justify-center mb-1.5')}
-          style={{ fontSize: `${settings.fontSize}px`, fontFamily: fontClass }}
+          style={{ fontSize: `${settings.fontSize}px`, fontFamily: fontStyle }}
         >
           {/* Before ORP - align right */}
           <span className='text-foreground/70 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide'>
@@ -82,7 +72,7 @@ export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
           <span className={cn('text-red-500 font-semibold relative leading-relaxed tracking-wide')}>
             {orpChar}
             {/* Subtle underline indicator */}
-            <span className='absolute -bottom-1 left-0 right-0 h-0.5 bg-red-500/80 rounded-full' />
+            <span className='absolute -bottom-1 left-0 right-0 h-0.5 bg-red-500/50 rounded-full' />
           </span>
 
           {/* After ORP - align left */}
