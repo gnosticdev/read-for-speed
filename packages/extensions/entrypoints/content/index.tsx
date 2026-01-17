@@ -1,6 +1,6 @@
 import { isProbablyReaderable } from '@mozilla/readability'
 import ReactDOM from 'react-dom/client'
-import ReaderDialog from '../../components/content-dialog'
+import ReaderDialog from '@/components/content-dialog'
 
 import '@/assets/tailwind.css'
 import { ContentScriptProvider } from '@/components/provider'

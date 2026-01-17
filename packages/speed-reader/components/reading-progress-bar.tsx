@@ -6,7 +6,7 @@ import {
   ProgressLabel,
   ProgressTrack,
   ProgressValue,
-} from '@/components/ui/progress'
+} from '@read-for-speed/ui/components/progress'
 
 export function ReadingProgressBar({
   currentIndex,

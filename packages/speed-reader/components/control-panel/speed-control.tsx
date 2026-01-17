@@ -1,5 +1,5 @@
+import { Button } from '@read-for-speed/ui/components/button'
 import { Minus, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import type { ReaderSettings } from '../rsvp-reader'
 
 interface SpeedControlProps {

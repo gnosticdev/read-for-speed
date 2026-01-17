@@ -1,6 +1,6 @@
+import { Button } from '@read-for-speed/ui/components/button'
 import { Pause, Play, SkipBack, SkipForward, Square } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn } from '@read-for-speed/ui/utils'
 import type { ReaderState } from '../rsvp-reader'
 
 interface PlaybackControlsProps {

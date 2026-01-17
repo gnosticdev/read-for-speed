@@ -1,0 +1,45 @@
+{
+	"name": "@read-for-speed/extensions",
+	"description": "Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect for books, articles, or any long form content.",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "wxt",
+		"clean": "rm -rf node_modules .wxt .output",
+		"clean-install": "bun run clean && bun i --no-cache",
+		"dev:firefox": "wxt -b firefox",
+		"build": "wxt build",
+		"build:firefox": "wxt build -b firefox",
+		"zip": "wxt zip",
+		"zip:firefox": "wxt zip -b firefox",
+		"compile": "tsc --noEmit",
+		"postinstall": "wxt prepare"
+	},
+	"dependencies": {
+		"@base-ui/react": "catalog:",
+		"@read-for-speed/ui": "workspace:*",
+		"@read-for-speed/speed-reader": "workspace:*",
+		"@fontsource-variable/chivo-mono": "^5.2.8",
+		"@fontsource-variable/figtree": "^5.2.10",
+		"@fontsource-variable/merriweather": "^5.2.6",
+		"@mozilla/readability": "^0.6.0",
+		"class-variance-authority": "catalog:",
+		"clsx": "catalog:",
+		"lucide-react": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"tailwind-merge": "catalog:",
+		"tailwindcss": "catalog:",
+		"tw-animate-css": "catalog:"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"@types/react": "catalog:",
+		"@tailwindcss/vite": "catalog:",
+		"@types/react-dom": "catalog:",
+		"@wxt-dev/auto-icons": "^1.1.0",
+		"@wxt-dev/module-react": "^1.1.5",
+		"typescript": "catalog:",
+		"wxt": "^0.20.6"
+	}
+}

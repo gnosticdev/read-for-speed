@@ -1,8 +1,8 @@
 {
-	"name": "@read-for-speed/speed-reader",
-	"version": "0.1.0",
+	"name": "@read-for-speed/ui",
+	"description": "Shared utilities for the Read for Speed extension and speed reader app",
+	"version": "0.0.0",
 	"type": "module",
-	"description": "Speed reader component for the Read for Speed extension and speed reader app",
 	"private": true,
 	"scripts": {
 		"clean": "rm -rf node_modules dist",
@@ -14,17 +14,18 @@
 		"node": ">=24.11.0"
 	},
 	"exports": {
-		"./*": "./components/*.tsx"
+		"./components/*": "./src/components/*.tsx",
+		"./utils": "./src/lib/utils.ts",
+		"./theme.css": "./src/theme.css"
 	},
 	"dependencies": {
 		"@base-ui/react": "catalog:",
-		"@read-for-speed/ui": "workspace:*",
-		"class-variance-authority": "catalog:",
-		"clsx": "catalog:",
-		"lucide-react": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"tailwind-merge": "catalog:",
+		"clsx": "catalog:",
+		"class-variance-authority": "catalog:",
+		"lucide-react": "catalog:",
 		"tailwindcss": "catalog:",
 		"tw-animate-css": "catalog:"
 	},

@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ToggleGroup, ToggleGroupItem } from '@read-for-speed/ui/components/toggle-group'
 import type { ReaderSettings } from '../rsvp-reader'
 
 interface ChunkSizeControlProps {

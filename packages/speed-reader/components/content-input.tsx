@@ -1,9 +1,9 @@
 'use client'
 
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+import { ScrollArea } from '@read-for-speed/ui/components/scroll-area'
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
+import { Textarea } from '@read-for-speed/ui/components/textarea'
+import { cn } from '@read-for-speed/ui/utils'
 
 interface ContentInputProps {
   /** Content for the paste tab (user-provided text). */

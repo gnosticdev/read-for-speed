@@ -4,7 +4,7 @@
 		"jsx": "react-jsx",
 		"baseUrl": ".",
 		"paths": {
-			"@read-for-speed/speed-reader/*": ["./components/*"]
+			"@read-for-speed/ui/*": ["./src/*"]
 		}
 	},
 	"include": ["."],

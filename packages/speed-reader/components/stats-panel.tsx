@@ -1,8 +1,14 @@
 'use client'
 
+import { Button } from '@read-for-speed/ui/components/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@read-for-speed/ui/components/card'
 import { BookOpen, Clock, Trophy, Zap } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ReadingStats } from './rsvp-reader'
 
 interface StatsPanelProps {

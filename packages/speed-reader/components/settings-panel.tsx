@@ -1,12 +1,18 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Slider } from '@/components/ui/slider'
-import { Switch } from '@/components/ui/switch'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Button } from '@read-for-speed/ui/components/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@read-for-speed/ui/components/card'
+import { Label } from '@read-for-speed/ui/components/label'
+import { Separator } from '@read-for-speed/ui/components/separator'
+import { Slider } from '@read-for-speed/ui/components/slider'
+import { Switch } from '@read-for-speed/ui/components/switch'
+import { ToggleGroup, ToggleGroupItem } from '@read-for-speed/ui/components/toggle-group'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface SettingsPanelProps {

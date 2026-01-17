@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@read-for-speed/ui/theme.css";
+
+/* Scan extension + package sources for Tailwind classes. */
+@source "../packages/speed-reader/components";
+
+@layer base {
+	/* Custom scrollbar styling. Thanks @pranathiperii. */
+	:is(pre, textarea)::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	:is(pre, textarea)::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	:is(pre, textarea)::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 5px;
+	}
+	:is(pre, textarea) {
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	/* Leave off setting the background as the button will have its own background */
+	body {
+		@apply text-foreground;
+	}
+}

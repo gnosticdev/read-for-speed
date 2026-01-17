@@ -6,10 +6,12 @@ import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 
 import type { DialogRootActions } from '@base-ui/react'
-import { BookOpen } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useContentScriptContext } from '@/components/provider'
-import { Button } from '@/components/ui/button'
+import {
+  DEFAULT_READER_SETTINGS,
+  type ReaderSettings,
+  RSVPReader,
+} from '@read-for-speed/speed-reader/rsvp-reader'
+import { Button } from '@read-for-speed/ui/components/button'
 import {
   Dialog,
   DialogCreateHandle,
@@ -19,12 +21,10 @@ import {
   DialogPopup,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  DEFAULT_READER_SETTINGS,
-  type ReaderSettings,
-  RSVPReader,
-} from '@/packages/speed-reader/components/rsvp-reader'
+} from '@read-for-speed/ui/components/dialog'
+import { BookOpen } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useContentScriptContext } from '@/components/provider'
 
 export const ContentAppTrigger = DialogCreateHandle()
 

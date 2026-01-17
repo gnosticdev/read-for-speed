@@ -2,9 +2,9 @@
 
 import type React from 'react'
 import { createPortal } from 'react-dom'
-import { ChunkSizeControl } from '@/packages/speed-reader/components/control-panel/chunk-size-control'
-import { PlaybackControls } from '@/packages/speed-reader/components/control-panel/playback-controls'
-import { SpeedControl } from '@/packages/speed-reader/components/control-panel/speed-control'
+import { ChunkSizeControl } from './chunk-size-control'
+import { PlaybackControls } from './playback-controls'
+import { SpeedControl } from './speed-control'
 import type { ReaderSettings, ReaderState } from '../rsvp-reader'
 
 interface ControlPanelProps {

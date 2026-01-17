@@ -1,9 +1,9 @@
 'use client'
 
+import { Button } from '@read-for-speed/ui/components/button'
 import { X } from 'lucide-react'
 import { useMemo } from 'react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn } from '@read-for-speed/ui/utils'
 import { getSingleWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
