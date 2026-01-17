@@ -3,6 +3,7 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 interface ContentInputProps {
   /** Content for the paste tab (user-provided text). */
@@ -22,9 +23,12 @@ interface ContentInputProps {
   activeMode: 'page' | 'paste'
   /** Callback when the input mode changes. */
   onModeChange: (mode: 'page' | 'paste') => void
+  /** CSS classes for the content input component */
+  className?: string
 }
 
 export function ContentInput({
+  className,
   pastedContent,
   onPastedContentChange,
   onUsePageContent: _onUsePageContent,
@@ -51,7 +55,7 @@ export function ContentInput({
   )
 
   return (
-    <div className='flex-1 flex flex-col items-center justify-center px-6 py-8'>
+    <div className={cn('flex-1 flex flex-col items-center justify-center px-6 py-8', className)}>
       <div className='w-full max-w-2xl space-y-6'>
         <div className='text-center space-y-2'>
           <h2 className='text-2xl font-semibold'>Speed Read Any Content</h2>

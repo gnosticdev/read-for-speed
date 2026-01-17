@@ -9,15 +9,15 @@ import { getSingleWordORPIndex } from '../lib/orp-index'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
-  word: string
+  currentChunk: string
   settings: ReaderSettings
   isPlaying: boolean
   onStop?: () => void
 }
 
-export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
+export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps) {
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
-    const cleanWord = word.trim()
+    const cleanWord = currentChunk.trim()
     const idx = getSingleWordORPIndex(cleanWord)
     return {
       orpIndex: idx,
@@ -25,7 +25,7 @@ export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
       orpChar: cleanWord[idx] || '',
       afterORP: cleanWord.slice(idx + 1),
     }
-  }, [word])
+  }, [currentChunk])
 
   const fontStyle = {
     sans: 'var(--font-sans)',

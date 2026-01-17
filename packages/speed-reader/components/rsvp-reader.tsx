@@ -1,7 +1,8 @@
 'use client'
 
+import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { ReadingProgressBar } from '@/packages/speed-reader/components/reading-progress-bar'
@@ -54,8 +55,17 @@ export interface RSVPReaderConfig {
   pageContentTitle?: string | null
   /** Error message if page content extraction failed. */
   pageContentError?: string | null
-  /** CSS class for the container that wraps the reader. */
-  containerClassName?: string
+  /**
+   * CSS classes for the rsvp reader components
+   */
+  classNames?: {
+    container?: string
+    controlPanelContainer?: string
+    wordDisplayContainer?: string
+    contentInputContainer?: string
+    settingsPanelContainer?: string
+    statsPanelContainer?: string
+  }
   /**
    * Initial content for the "paste" tab.
    */
@@ -144,6 +154,7 @@ export function RSVPReader({
   onSettingsChange,
   controlPanelRef,
   onReaderStateChange,
+  classNames,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -406,7 +417,7 @@ export function RSVPReader({
     <Tabs
       value={activePanel}
       onValueChange={(value) => setActivePanel(value as 'reader' | 'settings' | 'stats')}
-      className={'@container/reader-main'}
+      className={cn('@container/reader-main', classNames?.container)}
     >
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}
@@ -417,9 +428,19 @@ export function RSVPReader({
             </h1>
           </div>
           <TabsList variant='underline'>
-            <TabsTrigger value='reader'>Reader</TabsTrigger>
-            <TabsTrigger value='settings'>Settings</TabsTrigger>
-            <TabsTrigger value='stats'>Stats</TabsTrigger>
+            {/* Only show icons on mobile */}
+            <TabsTrigger value='reader'>
+              <BookOpen className='size-4 @md/reader-main:hidden' />
+              <span className='@max-md/reader-main:hidden'>Reader</span>
+            </TabsTrigger>
+            <TabsTrigger value='settings'>
+              <Settings className='size-4 @md/reader-main:hidden' />
+              <span className='@max-md/reader-main:hidden'>Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value='stats'>
+              <ChartBar className='size-4 @md/reader-main:hidden' />
+              <span className='@max-md/reader-main:hidden'>Stats</span>
+            </TabsTrigger>
           </TabsList>
         </header>
 
@@ -438,10 +459,11 @@ export function RSVPReader({
               pageContent={pageContent ?? ''}
               activeMode={inputMode}
               onModeChange={handleInputModeChange}
+              className={classNames?.contentInputContainer}
             />
           ) : (
             <WordDisplay
-              word={currentChunk}
+              currentChunk={currentChunk}
               settings={settings}
               isPlaying={readerState === 'playing'}
               onStop={handleStop}

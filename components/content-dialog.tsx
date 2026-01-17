@@ -155,7 +155,7 @@ export default function ReaderDialog() {
         </DialogTrigger>
       )}
       <DialogPopup
-        className='sm:max-w-3xl max-h-[85svh] overflow-hidden'
+        className='sm:max-w-3xl overflow-hidden'
         container={anchor ?? undefined}
       >
         <DialogHeader>
@@ -174,7 +174,9 @@ export default function ReaderDialog() {
             initialPastedContent={selectedContent}
             settings={settings}
             onSettingsChange={handleSettingsChange}
-            containerClassName='h-full'
+            classNames={{
+              container: 'h-full',
+            }}
             controlPanelRef={controlsContainer}
           />
         </DialogPanel>
