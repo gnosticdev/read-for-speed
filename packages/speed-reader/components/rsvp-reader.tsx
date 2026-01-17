@@ -2,9 +2,8 @@
 
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { storage } from '#imports'
-
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import { extractContent } from '../lib/content-extractor'
 import { ContentInput } from './content-input'
 import { ControlPanel } from './control-panel'
@@ -14,16 +13,23 @@ import { WordDisplay } from './word-display'
 
 export type ReaderState = 'idle' | 'playing' | 'paused'
 
+/**
+ * Settings for the RSVP reader display and behavior.
+ */
 export interface ReaderSettings {
   wpm: number
-  chunkSize: number
+  skipWords: number
   fontSize: number
   fontFamily: 'sans' | 'mono' | 'serif'
   showProgress: boolean
   focusAnimation: boolean
+  /** Extension-specific: whether to use toolbar action instead of floating button. */
   usePageAction: boolean
 }
 
+/**
+ * Statistics tracked during reading sessions.
+ */
 export interface ReadingStats {
   wordsRead: number
   totalWords: number
@@ -32,31 +38,54 @@ export interface ReadingStats {
   totalTimeSeconds: number
 }
 
-export interface RSVPReaderProps {
-  /** Initial content for the page tab (e.g., extracted page content). */
-  initialContent?: string
-  /** Callback when content changes. */
-  onContentChange?: (content: string) => void
-  /** Handler to trigger page content extraction. */
-  onUsePageContent?: () => void
-  /** Full page content for the page tab. */
-  pageContentFull?: string
-  /** Title of the page content. */
+/**
+ * Configuration for the RSVPReader component.
+ * RSVPReader displays content using the RSVP (Rapid Serial Visual Presentation) technique.
+ */
+export interface RSVPReaderConfig {
+  /**
+   * Pre-extracted page content for the "page" tab.
+   * This should be extracted outside the component (e.g., via Readability)
+   * since extraction can be expensive.
+   */
+  pageContent?: string
+  /** Title of the page content for display. */
   pageContentTitle?: string | null
   /** Error message if page content extraction failed. */
   pageContentError?: string | null
-  /** Initial content for the paste tab (e.g., selection text from context menu). */
-  initialPastedContent?: string
+  /** CSS class for the container that wraps the reader. */
   containerClassName?: string
-  controlsContainer?: RefObject<HTMLDivElement | null>
-  controlPanelClassName?: string
-  settingsStorageKey?: string
-  initialSettings?: Partial<ReaderSettings>
+  /**
+   * Initial content for the "paste" tab.
+   */
+  initialPastedContent?: string
+  /**
+   * Callback when pasted content changes (from textarea input).
+   */
+  onContentChange?: (content: string) => void
+  /**
+   * Current reader settings. Settings updated from within the component will call `onSettingsChange`.
+   */
+  settings: ReaderSettings
+  /**
+   * Callback when settings change. Use to save settings in db/storage
+   */
+  onSettingsChange: (settings: ReaderSettings) => void
+  /**
+   * Option to show the control panel (default), or add the ControlPanel component manually
+   * by passing a ref to the container element.
+   * @default true
+   */
+  controlPanelRef?: RefObject<HTMLDivElement | null>
 }
 
-const DEFAULT_SETTINGS: ReaderSettings = {
+/**
+ * Default settings for the RSVP reader.
+ * Can be used by parent components as initial values.
+ */
+export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   wpm: 300,
-  chunkSize: 1,
+  skipWords: 1,
   fontSize: 48,
   fontFamily: 'sans',
   showProgress: true,
@@ -70,55 +99,76 @@ The scientific consensus is that reading faster results in reading less accurate
 
 RSVP, or Rapid Serial Visual Presentation, is a technique that displays text one word at a time in a fixed focal position. This eliminates the need for eye movement and can significantly increase reading speed while maintaining comprehension when properly implemented.`
 
+/**
+ * RSVP (Rapid Serial Visual Presentation) speed reader component.
+ *
+ * This is a pure, environment-agnostic component that accepts all configuration
+ * via props. It does not access browser storage or external contexts, making it
+ * suitable for use in browser extensions, web apps, or any React environment.
+ *
+ * @example
+ * ```tsx
+ * // In a browser extension
+ * <RSVPReader
+ *   pageContent={extractedContent}
+ *   pageContentTitle="Article Title"
+ *   settings={settings}
+ *   onSettingsChange={(newSettings) => {
+ *     setSettings(newSettings)
+ *     storage.setItem('settings', newSettings)
+ *   }}
+ * />
+ *
+ * // In a web app
+ * <RSVPReader
+ *   pageContent={articleText}
+ *   settings={userSettings}
+ *   onSettingsChange={async (newSettings) => {
+ *     setSettings(newSettings)
+ *     await saveSettingsToDatabase(newSettings)
+ *   }}
+ * />
+ * ```
+ */
 export function RSVPReader({
-  initialContent,
-  onContentChange,
-  onUsePageContent,
-  pageContentFull,
+  pageContent,
   pageContentTitle,
   pageContentError,
   initialPastedContent,
-  containerClassName,
-  controlsContainer,
-  controlPanelClassName,
-  settingsStorageKey,
-  initialSettings,
-}: RSVPReaderProps) {
+  onContentChange,
+  settings,
+  onSettingsChange,
+  controlPanelRef: showControlPanel,
+}: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
-   * - 'page': Uses the extracted page content (pageContentFull or initialContent).
-   * - 'paste': Uses user-provided pasted content (including selection text from context menu).
+   * - 'page': Uses the extracted page content.
+   * - 'paste': Uses user-provided pasted content (including selection text).
    *
    * Defaults to 'paste' if there's initial pasted content (e.g., selection text),
-   * otherwise defaults to 'page' if page content extraction is available.
+   * otherwise defaults to 'page'
    */
   const [inputMode, setInputMode] = useState<'page' | 'paste'>(() => {
-    // If there's initial pasted content (e.g., selection text), default to paste mode.
     if (initialPastedContent?.trim()) {
       return 'paste'
     }
-    // Otherwise, default to page mode if page content extraction is available.
-    return onUsePageContent ? 'page' : 'paste'
+    return 'page'
   })
 
   /**
    * User-provided pasted content, independent from page content.
-   * Initialized with selection text from context menu if provided.
+   * Initialized with selection text if provided.
    */
   const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
   /**
    * The content that will be used for reading, derived from the active input mode.
    */
-  const content =
-    inputMode === 'page' ? (pageContentFull ?? initialContent ?? '') : pastedContent || SAMPLE_TEXT
+  const content = inputMode === 'page' ? (pageContent ?? '') : pastedContent || SAMPLE_TEXT
+
   const [words, setWords] = useState<string[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [state, setState] = useState<ReaderState>('idle')
-  const [settings, setSettings] = useState<ReaderSettings>(() => ({
-    ...DEFAULT_SETTINGS,
-    ...initialSettings,
-  }))
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>({
     wordsRead: 0,
@@ -131,48 +181,6 @@ export function RSVPReader({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sessionStartRef = useRef<number | null>(null)
   const wordsReadInSessionRef = useRef(0)
-  const hasLoadedStoredSettingsRef = useRef(false)
-
-  useEffect(() => {
-    if (!settingsStorageKey) return
-
-    let isMounted = true
-
-    const loadStoredSettings = async () => {
-      try {
-        const stored = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
-
-        if (isMounted) {
-          // Merge defaults + app-provided settings + stored preferences.
-          setSettings({
-            ...DEFAULT_SETTINGS,
-            ...initialSettings,
-            ...stored,
-          })
-        }
-      } catch (error) {
-        console.warn('Failed to load reader settings from storage.', error)
-      } finally {
-        hasLoadedStoredSettingsRef.current = true
-      }
-    }
-
-    loadStoredSettings()
-
-    return () => {
-      isMounted = false
-    }
-  }, [initialSettings, settingsStorageKey])
-
-  useEffect(() => {
-    if (!settingsStorageKey) return
-    if (!hasLoadedStoredSettingsRef.current) return
-
-    // Persist settings for the next reader session.
-    storage.setItem(`local:${settingsStorageKey}`, settings).catch((error) => {
-      console.warn('Failed to save reader settings to storage.', error)
-    })
-  }, [settings, settingsStorageKey])
 
   /**
    * Handles changes to the pasted content from the textarea.
@@ -198,39 +206,28 @@ export function RSVPReader({
   }, [])
 
   /**
-   * Called when user switches to the page tab.
-   * Content is now derived automatically based on inputMode.
-   */
-  const handleSelectPageContent = useCallback(() => {
-    onUsePageContent?.()
-  }, [onUsePageContent])
-
-  /**
-   * Reset reading state when page content changes (e.g., navigating to a new page).
+   * Reset reading state when page content changes.
    */
   useEffect(() => {
     if (inputMode !== 'page') return
-    if (typeof initialContent !== 'string' || !initialContent.trim()) return
+    if (typeof pageContent !== 'string' || !pageContent.trim()) return
 
     // Reset reading position when page content is updated.
     setCurrentIndex(0)
     setState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
-  }, [initialContent, inputMode])
+  }, [pageContent, inputMode])
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
-   * This handles new selection text from context menu while the reader is already open.
+   * This handles new selection text while the reader is already open.
    */
   useEffect(() => {
     if (!initialPastedContent?.trim()) return
 
-    // Update the pasted content with the new selection text.
     setPastedContent(initialPastedContent)
-    // Switch to paste mode to show the selection.
     setInputMode('paste')
-    // Reset reading position for the new content.
     setCurrentIndex(0)
     setState('idle')
     wordsReadInSessionRef.current = 0
@@ -260,13 +257,13 @@ export function RSVPReader({
 
       intervalRef.current = setInterval(() => {
         setCurrentIndex((prev) => {
-          if (prev >= words.length - settings.chunkSize) {
+          if (prev >= words.length - settings.skipWords) {
             // Session complete
             setState('idle')
             const sessionTime = (Date.now() - (sessionStartRef.current || Date.now())) / 1000
             setStats((s) => ({
               ...s,
-              wordsRead: s.wordsRead + wordsReadInSessionRef.current + settings.chunkSize,
+              wordsRead: s.wordsRead + wordsReadInSessionRef.current + settings.skipWords,
               sessionsCompleted: s.sessionsCompleted + 1,
               totalTimeSeconds: s.totalTimeSeconds + sessionTime,
               averageWpm: Math.round(
@@ -278,8 +275,8 @@ export function RSVPReader({
             sessionStartRef.current = null
             return 0
           }
-          wordsReadInSessionRef.current += settings.chunkSize
-          return prev + settings.chunkSize
+          wordsReadInSessionRef.current += settings.skipWords
+          return prev + settings.skipWords
         })
       }, getInterval())
     }
@@ -289,7 +286,7 @@ export function RSVPReader({
         clearInterval(intervalRef.current)
       }
     }
-  }, [state, words.length, settings.chunkSize, getInterval])
+  }, [state, words.length, settings.skipWords, getInterval])
 
   const handlePlay = () => {
     if (words.length === 0) return
@@ -329,7 +326,6 @@ export function RSVPReader({
   }
 
   // Keyboard shortcuts
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ok
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -345,19 +341,19 @@ export function RSVPReader({
           break
         case 'ArrowUp':
           e.preventDefault()
-          setSettings((s) => ({ ...s, wpm: Math.min(1000, s.wpm + 25) }))
+          onSettingsChange({ ...settings, wpm: Math.min(1000, settings.wpm + 25) })
           break
         case 'ArrowDown':
           e.preventDefault()
-          setSettings((s) => ({ ...s, wpm: Math.max(50, s.wpm - 25) }))
+          onSettingsChange({ ...settings, wpm: Math.max(50, settings.wpm - 25) })
           break
         case 'ArrowLeft':
           e.preventDefault()
-          setCurrentIndex((i) => Math.max(0, i - settings.chunkSize * 5))
+          setCurrentIndex((i) => Math.max(0, i - settings.skipWords * 5))
           break
         case 'ArrowRight':
           e.preventDefault()
-          setCurrentIndex((i) => Math.min(words.length - 1, i + settings.chunkSize * 5))
+          setCurrentIndex((i) => Math.min(words.length - 1, i + settings.skipWords * 5))
           break
         case 'Escape':
           e.preventDefault()
@@ -375,73 +371,43 @@ export function RSVPReader({
 
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [activePanel, state, settings.chunkSize, words.length])
+  }, [activePanel, state, settings, words.length, onSettingsChange])
 
-  const currentChunk = words.slice(currentIndex, currentIndex + settings.chunkSize).join(' ')
-  const progress = words.length > 0 ? (currentIndex / words.length) * 100 : 0
-
-  const controlPanel = (
-    <ControlPanel
-      state={state}
-      settings={settings}
-      onPlay={handlePlay}
-      onPause={handlePause}
-      onStop={handleStop}
-      onSettingsChange={setSettings}
-      currentIndex={currentIndex}
-      totalWords={words.length}
-      onSeek={handleSeek}
-      className={controlPanelClassName}
-    />
-  )
+  const currentChunk = words.slice(currentIndex, currentIndex + settings.skipWords).join(' ')
 
   return (
-    <div
-      className={`flex min-h-0 flex-col ${
-        containerClassName ?? 'h-screen'
-      } bg-background text-foreground`}
+    <Tabs
+      value={activePanel}
+      onValueChange={(value) => setActivePanel(value as 'reader' | 'settings' | 'stats')}
     >
-      {/* Header */}
-      <header className='flex items-center justify-between px-6 py-4 border-b border-border'>
-        <div className='flex items-center gap-3'>
-          <h1 className='text-lg/tight font-semibold truncate max-w-[200px]'>{pageContentTitle}</h1>
-        </div>
-        <div className='flex items-center gap-2'>
-          <button
-            type='button'
-            onClick={() => setActivePanel((panel) => (panel === 'stats' ? 'reader' : 'stats'))}
-            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-              activePanel === 'stats' ? 'bg-secondary' : 'hover:bg-secondary'
-            }`}
-          >
-            Stats
-          </button>
-          <button
-            type='button'
-            onClick={() =>
-              setActivePanel((panel) => (panel === 'settings' ? 'reader' : 'settings'))
-            }
-            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-              activePanel === 'settings' ? 'bg-secondary' : 'hover:bg-secondary'
-            }`}
-          >
-            Settings
-          </button>
-        </div>
-      </header>
+      <div className={cn('flex min-h-0 flex-col')}>
+        {/* Header */}
+        <header className='flex items-center justify-between px-6 py-4 border-b'>
+          <div className='flex items-center gap-3'>
+            <h1 className='text-lg/tight font-semibold truncate max-w-[200px]'>
+              {pageContentTitle}
+            </h1>
+          </div>
+          <TabsList variant='underline'>
+            <TabsTrigger value='reader'>Reader</TabsTrigger>
+            <TabsTrigger value='settings'>Settings</TabsTrigger>
+            <TabsTrigger value='stats'>Stats</TabsTrigger>
+          </TabsList>
+        </header>
 
-      {/* Main content area */}
-      <div className='flex min-h-0 flex-1 flex-col'>
-        {activePanel === 'reader' &&
-          (state === 'idle' && currentIndex === 0 ? (
+        {/* Main content area */}
+        <TabsPanel
+          value={'reader'}
+          className='flex min-h-0 flex-1 flex-col'
+        >
+          {state === 'idle' && currentIndex === 0 ? (
             <ContentInput
               pastedContent={pastedContent}
               onPastedContentChange={handlePastedContentChange}
-              onUsePageContent={onUsePageContent}
-              onSelectPageContent={handleSelectPageContent}
+              onSelectPageContent={() => setInputMode('page')}
               pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
-              pageContent={pageContentFull ?? initialContent ?? ''}
+              pageContent={pageContent ?? ''}
               activeMode={inputMode}
               onModeChange={handleInputModeChange}
             />
@@ -452,52 +418,48 @@ export function RSVPReader({
               isPlaying={state === 'playing'}
               onStop={handleStop}
             />
-          ))}
+          )}
+        </TabsPanel>
 
-        {activePanel === 'settings' && (
+        <TabsPanel
+          value={'settings'}
+          className='flex min-h-0 flex-1 flex-col'
+        >
           <SettingsPanel
             settings={settings}
-            onSettingsChange={setSettings}
-            onClose={() => setActivePanel('reader')}
+            onSettingsChange={onSettingsChange}
+            onSave={() => setActivePanel('reader')}
             layout='page'
           />
-        )}
+        </TabsPanel>
 
-        {activePanel === 'stats' && (
+        <TabsPanel
+          value={'stats'}
+          className='flex min-h-0 flex-1 flex-col'
+        >
           <StatsPanel
             stats={stats}
             onClose={() => setActivePanel('reader')}
             layout='page'
           />
-        )}
+        </TabsPanel>
 
-        {/* Progress bar */}
-        {settings.showProgress && words.length > 0 && (
-          <div className='px-6 pb-4'>
-            <div className='relative h-1 bg-secondary rounded-full overflow-hidden'>
-              <div
-                className='absolute inset-y-0 left-0 bg-primary transition-all duration-100'
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className='flex justify-between mt-2 text-xs text-muted-foreground'>
-              <span>
-                {currentIndex + 1} / {words.length} words
-              </span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-          </div>
-        )}
+        {/* Control panel */}
+        {activePanel === 'reader' && showControlPanel && showControlPanel.current ? (
+          <ControlPanel
+            state={state}
+            settings={settings}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onStop={handleStop}
+            onSettingsChange={onSettingsChange}
+            currentIndex={currentIndex}
+            totalWords={words.length}
+            onSeek={handleSeek}
+            container={showControlPanel.current}
+          />
+        ) : null}
       </div>
-
-      {/* Control panel */}
-      {activePanel === 'reader' &&
-        (controlsContainer?.current
-          ? // Portal controls into dialog footer when provided.
-            createPortal(controlPanel, controlsContainer.current)
-          : controlPanel)}
-
-      {/* Settings/stats now render in-page to avoid nested dialog issues. */}
-    </div>
+    </Tabs>
   )
 }

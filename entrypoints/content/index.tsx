@@ -1,72 +1,18 @@
 import { isProbablyReaderable } from '@mozilla/readability'
-import { useCallback, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import ContentApp from './ContentApp'
 
 import '@/assets/tailwind.css'
-import type { CustomMessages } from '@/lib/message-types'
+import { ContentScriptProvider } from '@/components/provider'
 
-type ContentAppShellProps = {
-  docClone: Document
-  anchor: HTMLElement
-}
-
-function ContentAppShell({ docClone, anchor }: ContentAppShellProps) {
-  const [selectionText, setSelectionText] = useState<string | null>(null)
-  const [openOnSelection, setOpenOnSelection] = useState(false)
-  const [openOnPageAction, setOpenOnPageAction] = useState(false)
-
-  const handleSelectionMessage = useCallback((message: CustomMessages) => {
-    if (!message) return
-    if (message.type === 'RSVP_GET_SELECTION_TEXT') {
-      const nextSelection = message.payload?.trim() ?? ''
-      if (!nextSelection) return
-
-      // Use the highlighted selection for the reader and open the UI.
-      setSelectionText(nextSelection)
-      setOpenOnSelection(true)
-      return
-    }
-
-    if (message.type === 'RSVP_MOUNT_UI') {
-      // Open the dialog when the toolbar action is clicked.
-      setOpenOnPageAction(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    browser.runtime.onMessage.addListener(handleSelectionMessage)
-    return () => {
-      browser.runtime.onMessage.removeListener(handleSelectionMessage)
-    }
-  }, [handleSelectionMessage])
-
-  const handleSelectionHandled = useCallback(() => {
-    setOpenOnSelection(false)
-  }, [])
-
-  const handlePageActionHandled = useCallback(() => {
-    setOpenOnPageAction(false)
-  }, [])
-
-  const handleClearSelection = useCallback(() => {
-    setSelectionText(null)
-  }, [])
-
-  return (
-    <ContentApp
-      docClone={docClone}
-      anchor={anchor}
-      selectionText={selectionText}
-      openOnSelection={openOnSelection}
-      openOnPageAction={openOnPageAction}
-      onSelectionHandled={handleSelectionHandled}
-      onPageActionHandled={handlePageActionHandled}
-      onClearSelection={handleClearSelection}
-    />
-  )
-}
-
+/**
+ * Content script entry point for the Read For Speed extension.
+ *
+ * This script:
+ * 1. Evaluates page readability
+ * 2. Creates a shadow DOM for isolated styling
+ * 3. Mounts the React app with the ContentShellProvider
+ */
 export default defineContentScript({
   matches: ['*://*/*'],
   cssInjectionMode: 'ui',
@@ -92,27 +38,31 @@ export default defineContentScript({
             'color: red; font-weight: bold;',
           )
         }
-        // make the body transparent so no weird outline on button
+
+        // Make the body transparent so no weird outline on button.
         uiContainer.classList.add('bg-transparent')
-        // uiContainer is the body. use it to set 'dark' class on html element
+
+        // Set dark mode class if system prefers dark color scheme.
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           uiContainer.classList.add('dark')
         }
+
         shadowHost.setAttribute(
           'data-theme',
           window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
         )
-        // calculate where to show the button - either below header or 25% of viewport height
+
+        // Calculate where to show the button - either below header or 25% of viewport height.
         const headerHeight = document.querySelector('header')?.clientHeight ?? 0
         const top =
           headerHeight > window.innerHeight * 0.25 ? headerHeight : window.innerHeight * 0.25
         shadowRoot.querySelector('html')?.style.setProperty('right', '8px')
         shadowRoot.querySelector('html')?.style.setProperty('top', `${top}px`)
-        shadowRoot.querySelector('html')?.style.setProperty('left', 'auto') // center
-        shadowRoot.querySelector('html')?.style.setProperty('bottom', 'auto') // bottom
+        shadowRoot.querySelector('html')?.style.setProperty('left', 'auto')
+        shadowRoot.querySelector('html')?.style.setProperty('bottom', 'auto')
         shadowRoot.querySelector('html')?.style.setProperty('z-index', '1000')
 
-        // clone before we mount our app so we don't mutate the original document
+        // Clone before we mount our app so we don't mutate the original document.
         const docClone = document.cloneNode(true) as Document
 
         const wrapper = document.createElement('div')
@@ -120,13 +70,16 @@ export default defineContentScript({
 
         const root = ReactDOM.createRoot(wrapper)
 
-        // set our root theme to the system theme
+        // Render the app with the provider wrapping ContentApp.
         root.render(
-          <ContentAppShell
+          <ContentScriptProvider
             docClone={docClone}
             anchor={uiContainer}
-          />,
+          >
+            <ContentApp />
+          </ContentScriptProvider>,
         )
+
         return { root, wrapper }
       },
       onRemove: (mounted) => {

@@ -1,9 +1,7 @@
 'use client'
 
-import { Clipboard } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 
 interface ContentInputProps {
@@ -35,20 +33,6 @@ export function ContentInput({
   activeMode,
   onModeChange,
 }: ContentInputProps) {
-  /**
-   * Handle pasting from clipboard into the paste textarea.
-   */
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
-      if (text) {
-        onPastedContentChange(text)
-      }
-    } catch {
-      // Clipboard API not available or permission denied
-    }
-  }
-
   /**
    * Handle tab switching between page and paste modes.
    * Notifies parent so it knows which content source to use for reading.
@@ -85,50 +69,42 @@ export function ContentInput({
             <TabsTrigger value='paste'>Paste</TabsTrigger>
           </TabsList>
 
-          <TabsContent
+          <TabsPanel
             value='page'
             keepMounted
           >
-            <div className='space-y-4 text-center p-1'>
-              <p className='text-xs text-muted-foreground'>{pageWordCount} words detected</p>
+            <div className='space-y-4'>
               <ScrollArea
                 data-page-content
-                className='w-full h-48 p-4 bg-background border border-border rounded-xl'
+                className='w-full h-48'
               >
-                <pre className='text-left text-sm text-foreground whitespace-pre-line'>
+                <pre className='text-left text-xs text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
                   {pageContent}
                 </pre>
               </ScrollArea>
+              <span className='text-xs text-right text-muted-foreground'>
+                {pageWordCount} words
+              </span>
             </div>
-          </TabsContent>
+          </TabsPanel>
 
-          <TabsContent
+          <TabsPanel
             value='paste'
             keepMounted
           >
-            <div className='space-y-4 text-center p-1'>
-              <p className='text-xs text-muted-foreground'>{pastedWordCount} words detected</p>
+            <div className='space-y-4'>
               <Textarea
                 rows={10}
                 value={pastedContent}
                 onChange={(e) => onPastedContentChange(e.target.value)}
                 placeholder='Paste your text here...'
-                className='w-full h-48'
+                className='w-full h-48 resize-none!'
               />
-              <div className='flex justify-between items-center'>
-                <Button
-                  type='button'
-                  onClick={handlePaste}
-                  variant='outline'
-                  size='sm'
-                >
-                  <Clipboard />
-                  Paste
-                </Button>
-                <span className='text-sm text-muted-foreground'>{pastedWordCount} words</span>
-              </div>
+              <span className='text-xs text-right text-muted-foreground'>
+                {pastedWordCount} words
+              </span>
             </div>
-          </TabsContent>
+          </TabsPanel>
         </Tabs>
 
         {/* Instructions */}

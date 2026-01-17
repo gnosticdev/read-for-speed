@@ -3,6 +3,7 @@
 import { X } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
@@ -24,7 +25,7 @@ function getORPIndex(word: string): number {
   return Math.floor(length * 0.35)
 }
 
-export function WordDisplay({ word, settings, isPlaying, onStop }: WordDisplayProps) {
+export function WordDisplay({ word, settings, onStop }: WordDisplayProps) {
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = word.trim()
     const idx = getORPIndex(cleanWord)
@@ -37,9 +38,9 @@ export function WordDisplay({ word, settings, isPlaying, onStop }: WordDisplayPr
   }, [word])
 
   const fontClass = {
-    sans: 'font-sans',
-    mono: 'font-mono',
-    serif: 'font-serif',
+    sans: 'var(--font-sans)',
+    mono: 'var(--font-mono)',
+    serif: 'var(--font-serif)',
   }[settings.fontFamily]
 
   return (
@@ -69,33 +70,25 @@ export function WordDisplay({ word, settings, isPlaying, onStop }: WordDisplayPr
 
         {/* Word container */}
         <div
-          className={`
-            relative flex items-center justify-center
-            ${fontClass}
-            ${settings.focusAnimation && isPlaying ? 'animate-pulse-subtle' : ''}
-          `}
-          style={{ fontSize: `${settings.fontSize}px` }}
+          className={cn('relative flex items-center justify-center mb-1.5')}
+          style={{ fontSize: `${settings.fontSize}px`, fontFamily: fontClass }}
         >
           {/* Before ORP - align right */}
-          <span className='text-foreground/70 text-right min-w-[40%] flex justify-end'>
+          <span className='text-foreground/70 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide'>
             {beforeORP}
           </span>
 
           {/* ORP character - highlighted */}
-          <span
-            className={`
-              text-red-500 font-bold relative
-              ${settings.focusAnimation && isPlaying ? 'scale-110' : ''}
-              transition-transform duration-75
-            `}
-          >
+          <span className={cn('text-red-500 font-semibold relative leading-relaxed tracking-wide')}>
             {orpChar}
             {/* Subtle underline indicator */}
-            <span className='absolute -bottom-1 left-0 right-0 h-0.5 bg-red-500/50 rounded-full' />
+            <span className='absolute -bottom-1 left-0 right-0 h-0.5 bg-red-500/80 rounded-full' />
           </span>
 
           {/* After ORP - align left */}
-          <span className='text-foreground/70 text-left min-w-[40%]'>{afterORP}</span>
+          <span className='text-foreground/70 text-left min-w-[40%] leading-relaxed tracking-wide'>
+            {afterORP}
+          </span>
         </div>
 
         {/* Keyboard hints */}

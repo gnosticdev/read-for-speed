@@ -1,7 +1,7 @@
 'use client'
 
-import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -11,14 +11,21 @@ import type { ReaderSettings } from './rsvp-reader'
 interface SettingsPanelProps {
   settings: ReaderSettings
   onSettingsChange: (settings: ReaderSettings) => void
-  onClose: () => void
+  onSave: () => void
   layout?: 'overlay' | 'page'
 }
+
+const MIN_FONT_SIZE = 24
+const MAX_FONT_SIZE = 96
+const MIN_WPM = 50
+const MAX_WPM = 1000
+const STEP_FONT_SIZE = 4
+const STEP_WPM = 25
 
 export function SettingsPanel({
   settings,
   onSettingsChange,
-  onClose,
+  onSave,
   layout = 'overlay',
 }: SettingsPanelProps) {
   const isOverlay = layout === 'overlay'
@@ -31,44 +38,36 @@ export function SettingsPanel({
           : 'flex-1 flex items-center justify-center px-6 py-8'
       }
     >
-      <div className='bg-card border border-border rounded-xl shadow-xl w-full max-w-md'>
-        <div className='flex items-center justify-between p-4 border-b border-border'>
-          <h2 className='text-lg font-semibold'>Settings</h2>
-          <Button
-            onClick={onClose}
-            variant='ghost'
-            size='icon-sm'
-            aria-label='Close settings'
-          >
-            <X className='w-5 h-5' />
-          </Button>
-        </div>
+      <Card className='w-full max-w-md'>
+        <CardHeader>
+          <CardTitle>Settings</CardTitle>
+        </CardHeader>
 
-        <div className='p-4 space-y-6'>
+        <CardContent className='space-y-6'>
           {/* Font Size */}
-          <div className='space-y-2'>
-            <label
+          <div className='space-y-3'>
+            <Label
               htmlFor='font-size-input'
               className='text-sm font-medium'
             >
               Font Size: {settings.fontSize}px
-            </label>
+            </Label>
             <Slider
               id='font-size-input'
-              min={24}
-              max={96}
-              step={4}
+              min={MIN_FONT_SIZE}
+              max={MAX_FONT_SIZE}
+              step={STEP_FONT_SIZE}
               value={settings.fontSize}
               onValueChange={(value) => onSettingsChange({ ...settings, fontSize: value })}
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>24px</span>
-              <span>96px</span>
+              <span>{MIN_FONT_SIZE}px</span>
+              <span>{MAX_FONT_SIZE}px</span>
             </div>
           </div>
 
           {/* Font Family */}
-          <div className='space-y-2'>
+          <div className='space-y-3'>
             <Label htmlFor='font-family-input'>Font Family</Label>
             <ToggleGroup
               id='font-family-input'
@@ -104,24 +103,19 @@ export function SettingsPanel({
           </div>
 
           {/* Reading Speed */}
-          <div className='space-y-2'>
-            <label
-              htmlFor='speed-input'
-              className='text-sm font-medium'
-            >
-              Default Speed: {settings.wpm} WPM
-            </label>
+          <div className='space-y-3'>
+            <Label htmlFor='speed-input'>Default Speed: {settings.wpm} WPM</Label>
             <Slider
               id='speed-input'
-              min={50}
-              max={1000}
-              step={25}
+              min={MIN_WPM}
+              max={MAX_WPM}
+              step={STEP_WPM}
               value={settings.wpm}
               onValueChange={(value) => onSettingsChange({ ...settings, wpm: value })}
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>50 (Slow)</span>
-              <span>1000 (Fast)</span>
+              <span>{MIN_WPM} (Slow)</span>
+              <span>{MAX_WPM} (Fast)</span>
             </div>
           </div>
 
@@ -186,17 +180,16 @@ export function SettingsPanel({
               />
             </Label>
           </div>
-        </div>
-
-        <div className='p-4 border-t border-border'>
+        </CardContent>
+        <CardFooter>
           <Button
-            onClick={onClose}
+            onClick={onSave}
             className='w-full'
           >
-            Done
+            Save Settings
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

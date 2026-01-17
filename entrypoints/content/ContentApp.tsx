@@ -6,9 +6,9 @@ import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 
 import type { DialogRootActions } from '@base-ui/react'
-import { Readability } from '@mozilla/readability'
 import { BookOpen } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useContentScriptContext } from '@/components/provider'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,50 +20,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { type ReaderSettings, RSVPReader } from '@/packages/speed-reader/components/rsvp-reader'
-
-type PageContentStatus = 'idle' | 'loading' | 'error' | 'ready'
-
-const buildExcerpt = (text: string, maxLength = 240) => {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-  if (trimmed.length <= maxLength) return trimmed
-  return `${trimmed.slice(0, maxLength).trim()}...`
-}
+import {
+  DEFAULT_READER_SETTINGS,
+  type ReaderSettings,
+  RSVPReader,
+} from '@/packages/speed-reader/components/rsvp-reader'
 
 export const ContentAppTrigger = DialogCreateHandle()
 
-export default function ContentApp({
-  docClone,
-  anchor,
-  selectionText,
-  openOnSelection,
-  openOnPageAction,
-  onSelectionHandled,
-  onPageActionHandled,
-  onClearSelection,
-  settingsStorageKey = 'read-for-speed:settings',
-  initialSettings,
-}: {
-  docClone: Document
-  anchor: HTMLElement
-  selectionText?: string | null
-  openOnSelection?: boolean
-  openOnPageAction?: boolean
-  onSelectionHandled?: () => void
-  onPageActionHandled?: () => void
-  onClearSelection?: () => void
-  settingsStorageKey?: string
-  settingsStorageArea?: 'local' | 'sync'
-  initialSettings?: Partial<ReaderSettings>
-}) {
-  const [open, setOpen] = useState(false)
-  const [pageContent, setPageContent] = useState<string | undefined>()
-  const [, setPageExcerpt] = useState<string | null>(null)
-  const [pageTitle, setPageTitle] = useState<string | null>(null)
-  const [pageError, setPageError] = useState<string | null>(null)
-  const [status, setStatus] = useState<PageContentStatus>('idle')
-  const [isUsingPageAction, setIsUsingPageAction] = useState(true)
+/**
+ * Main content app component that renders the speed reader dialog.
+ *
+ * This component is responsible for:
+ * - Managing reader settings (load/save from browser storage)
+ * - Handling dialog open/close triggers from the extension
+ * - Passing props to the RSVPReader component
+ *
+ * Uses the ContentScriptProvider context for:
+ * - Page content and title (extracted via Readability)
+ * - Selection text from context menu
+ * - Open/close triggers from browser extension messages
+ */
+export default function ContentApp() {
+  const {
+    anchor,
+    selectionText,
+    openOnSelection,
+    openOnPageAction,
+    pageContent,
+    pageTitle,
+    pageError,
+    settingsStorageKey,
+    onSelectionHandled,
+    onPageActionHandled,
+  } = useContentScriptContext()
+
+  const [open, setOpen] = useState(() => openOnSelection || openOnPageAction)
+  const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_READER_SETTINGS)
+  const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const selectedContent = selectionText?.trim()
 
   const actionsRef = useRef<DialogRootActions>({
@@ -73,120 +67,120 @@ export default function ContentApp({
 
   const controlsContainer = useRef<HTMLDivElement>(null)
 
-  const loadPageContent = useCallback(() => {
-    setStatus('loading')
-    setPageError(null)
-
-    const article = new Readability(docClone).parse()
-    if (!article) {
-      setPageError('No readable text found on this page.')
-      setStatus('error')
+  /**
+   * Load settings from browser storage on mount.
+   */
+  useEffect(() => {
+    if (!settingsStorageKey) {
+      setHasLoadedSettings(true)
       return
     }
 
-    const articleText = article.textContent ?? ''
-    const excerptText = article.excerpt?.trim() || buildExcerpt(articleText)
+    let isMounted = true
 
-    // Store full content + excerpt for the reader UI.
-    setPageContent(articleText)
-    setPageExcerpt(excerptText)
-    setPageTitle(article.title ?? docClone.title)
-    setStatus('ready')
-  }, [docClone])
+    const loadSettings = async () => {
+      try {
+        const stored = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
+        if (isMounted && stored) {
+          setSettings({ ...DEFAULT_READER_SETTINGS, ...stored })
+        }
+      } catch (error) {
+        console.warn('Failed to load reader settings from storage.', error)
+      } finally {
+        if (isMounted) {
+          setHasLoadedSettings(true)
+        }
+      }
+    }
 
-  const handleUsePageContent = useCallback(() => {
-    loadPageContent()
-    onClearSelection?.()
-  }, [loadPageContent, onClearSelection])
+    loadSettings()
 
-  const loadStoredUsePageAction = useCallback(async () => {
-    const storedSettings = await storage.getItem<ReaderSettings>(`local:${settingsStorageKey}`)
-    if (!storedSettings) return
-    setIsUsingPageAction(storedSettings.usePageAction)
+    return () => {
+      isMounted = false
+    }
   }, [settingsStorageKey])
 
-  useEffect(() => {
-    if (!settingsStorageKey) return
+  /**
+   * Handle settings changes from RSVPReader.
+   * Updates local state and persists to browser storage.
+   */
+  const handleSettingsChange = useCallback(
+    (newSettings: ReaderSettings) => {
+      setSettings(newSettings)
 
-    // Keep the launcher mode in sync with stored reader settings.
-    loadStoredUsePageAction()
+      // Persist to browser storage
+      if (settingsStorageKey && hasLoadedSettings) {
+        storage.setItem(`local:${settingsStorageKey}`, newSettings).catch((error) => {
+          console.warn('Failed to save reader settings to storage.', error)
+        })
+      }
+    },
+    [settingsStorageKey, hasLoadedSettings],
+  )
 
-    storage.watch<ReaderSettings>(`local:${settingsStorageKey}`, (value) => {
-      setIsUsingPageAction(value?.usePageAction ?? false)
-    })
-    return () => {
-      storage.unwatch()
-    }
-  }, [loadStoredUsePageAction, settingsStorageKey])
-
-  useEffect(() => {
-    // Auto-load page content for the extension experience.
-    if (status === 'idle') {
-      loadPageContent()
-    }
-  }, [loadPageContent, status])
-
+  /**
+   * Open dialog when selection text is received.
+   */
   useEffect(() => {
     if (!openOnSelection || !selectedContent) return
     setOpen(true)
-    onSelectionHandled?.()
+    onSelectionHandled()
   }, [openOnSelection, onSelectionHandled, selectedContent])
 
+  /**
+   * Open dialog when page action is triggered (toolbar click).
+   */
   useEffect(() => {
     if (!openOnPageAction) return
-    if (!isUsingPageAction) {
-      onPageActionHandled?.()
+    if (!settings.usePageAction) {
+      onPageActionHandled()
       return
     }
     setOpen(true)
-    onPageActionHandled?.()
-  }, [onPageActionHandled, openOnPageAction, isUsingPageAction])
+    onPageActionHandled()
+  }, [onPageActionHandled, openOnPageAction, settings.usePageAction])
 
   return (
     <Dialog
       actionsRef={actionsRef}
       open={open}
       onOpenChange={setOpen}
-      // handle={ContentAppTrigger}
     >
-      {!isUsingPageAction && (
+      {!settings.usePageAction && (
         <DialogTrigger render={<Button variant='default' />}>
           <span className='sr-only'>Open Read For Speed</span>
-          <BookOpen className='w-4 h-4' />
+          <BookOpen />
         </DialogTrigger>
       )}
       <DialogPopup
-        className='sm:max-w-3xl max-h-[85vh] overflow-hidden'
-        container={anchor}
+        className='sm:max-w-3xl max-h-[85svh] overflow-hidden'
+        container={anchor ?? undefined}
       >
         <DialogHeader>
           <DialogTitle>
             <div className='flex items-center gap-2'>
-              <BookOpen className='w-4 h-4' />
+              <BookOpen className='size-4' />
               <span className='text-lg/tight font-semibold'>Read For Speed</span>
             </div>
           </DialogTitle>
         </DialogHeader>
-        <DialogPanel className='p-0 flex-1 min-h-0'>
+        <DialogPanel>
           <RSVPReader
-            initialContent={pageContent}
-            onUsePageContent={handleUsePageContent}
-            pageContentFull={pageContent}
+            pageContent={pageContent}
             pageContentTitle={pageTitle}
             pageContentError={pageError}
             initialPastedContent={selectedContent}
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
             containerClassName='h-full'
-            controlsContainer={controlsContainer}
-            controlPanelClassName='w-full'
-            settingsStorageKey={settingsStorageKey}
-            initialSettings={initialSettings}
+            controlPanelRef={controlsContainer}
           />
         </DialogPanel>
         <DialogFooter
-          className='p-0 bg-background'
+          // className='p-0'
           variant='bare'
           ref={controlsContainer}
-        ></DialogFooter>
+        />
       </DialogPopup>
     </Dialog>
   )
