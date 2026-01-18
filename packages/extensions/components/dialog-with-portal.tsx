@@ -1,10 +1,11 @@
 'use client'
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
+import type { PopoverPortalProps } from '@base-ui/react/popover'
 import { Button } from '@read-for-speed/ui/components/button'
 import { ScrollArea } from '@read-for-speed/ui/components/scroll-area'
-import { cn } from '@read-for-speed/ui/lib/utils'
 import { XIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const DialogCreateHandle = DialogPrimitive.createHandle
 
@@ -61,13 +62,15 @@ function DialogPopup({
   children,
   showCloseButton = true,
   bottomStickOnMobile = true,
+  portalContainer,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
   bottomStickOnMobile?: boolean
+  portalContainer?: PopoverPortalProps['container']
 }) {
   return (
-    <DialogPortal>
+    <DialogPortal container={portalContainer}>
       <DialogBackdrop />
       <DialogViewport
         className={cn(bottomStickOnMobile && 'max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12')}

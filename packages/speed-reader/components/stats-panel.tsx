@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from '@read-for-speed/ui/components/card'
 import { BookOpen, Clock, Trophy, Zap } from 'lucide-react'
-import type { ReadingStats } from './rsvp-reader'
 
 interface StatsPanelProps {
   stats: ReadingStats
@@ -34,7 +33,7 @@ export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelPro
       className={
         isOverlay
           ? 'fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'
-          : 'flex-1 flex items-center justify-center px-6 py-8'
+          : 'flex-1 flex items-center justify-center'
       }
     >
       <Card className='w-full max-w-md'>
@@ -44,7 +43,7 @@ export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelPro
 
         <CardContent>
           <div className='grid grid-cols-2 gap-4'>
-            <div className='bg-secondary/50 rounded-xl p-4 aspect-square'>
+            <div className='bg-secondary/50 rounded-xl p-4'>
               <div className='flex items-center gap-2 text-muted-foreground mb-2'>
                 <BookOpen className='w-4 h-4' />
                 <span className='text-xs uppercase tracking-wide'>Words Read</span>
@@ -106,4 +105,15 @@ export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelPro
       </Card>
     </div>
   )
+}
+/**
+ * Statistics tracked during reading sessions.
+ */
+
+export interface ReadingStats {
+  wordsRead: number
+  totalWords: number
+  sessionsCompleted: number
+  averageWpm: number
+  totalTimeSeconds: number
 }

@@ -1,13 +1,20 @@
+import type { PopoverPortalProps } from '@base-ui/react'
+import { MobileSpeedControlTrigger } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
 import { Button } from '@read-for-speed/ui/components/button'
+import { useIsMobile } from '@read-for-speed/ui/hooks/use-mobile'
+import { cn } from '@read-for-speed/ui/lib/utils'
 import { Minus, Plus } from 'lucide-react'
 import type { ReaderSettings } from '../rsvp-reader'
 
-interface SpeedControlProps {
+export interface SpeedControlProps {
   settings: ReaderSettings
   onSettingsChange: (settings: ReaderSettings) => void
+  className?: string
+  container?: PopoverPortalProps['container']
 }
 
-export const SpeedControl = ({ settings, onSettingsChange }: SpeedControlProps) => {
+export const SpeedControl = ({ settings, onSettingsChange, className }: SpeedControlProps) => {
+  const isMobile = useIsMobile()
   /**
    * Adjust the reading speed by the given delta.
    */
@@ -18,8 +25,12 @@ export const SpeedControl = ({ settings, onSettingsChange }: SpeedControlProps) 
     })
   }
 
+  if (isMobile) {
+    return <MobileSpeedControlTrigger />
+  }
+
   return (
-    <div className='flex items-center gap-3 order-1'>
+    <div className={cn('flex items-center gap-3', className)}>
       <span className='text-sm text-muted-foreground w-12 @max-md/control-panel:hidden'>WPM</span>
       <Button
         size='icon'

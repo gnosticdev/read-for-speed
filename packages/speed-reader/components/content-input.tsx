@@ -3,7 +3,7 @@
 import { ScrollArea } from '@read-for-speed/ui/components/scroll-area'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
 import { Textarea } from '@read-for-speed/ui/components/textarea'
-import { cn } from '@read-for-speed/ui/utils'
+import { cn } from '@read-for-speed/ui/lib/utils'
 
 interface ContentInputProps {
   /** Content for the paste tab (user-provided text). */
@@ -82,7 +82,7 @@ export function ContentInput({
                 data-page-content
                 className='w-full h-48'
               >
-                <article className='text-left text-xs text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
+                <article className='text-left text-sm text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
                   {pageContent}
                 </article>
               </ScrollArea>
@@ -102,7 +102,7 @@ export function ContentInput({
                 value={pastedContent}
                 onChange={(e) => onPastedContentChange(e.target.value)}
                 placeholder='Paste your text here...'
-                className='w-full h-48 resize-none!'
+                className='w-full h-48 resize-none! text-sm'
               />
               <span className='text-xs text-right text-muted-foreground'>
                 {pastedWordCount} words

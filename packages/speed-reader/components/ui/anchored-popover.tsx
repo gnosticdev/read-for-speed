@@ -1,10 +1,11 @@
 'use client'
 
-import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
+import { type PopoverPortalProps, Popover as PopoverPrimitive } from '@base-ui/react/popover'
 
 import { cn } from '@read-for-speed/ui/lib/utils'
 
 const PopoverCreateHandle = PopoverPrimitive.createHandle
+const PopoverHandle = PopoverPrimitive.Handle
 
 const Popover = PopoverPrimitive.Root
 
@@ -17,6 +18,9 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
   )
 }
 
+/**
+ * Same PopoverPopup, with optional portal props
+ */
 function PopoverPopup({
   children,
   className,
@@ -25,6 +29,7 @@ function PopoverPopup({
   sideOffset = 4,
   alignOffset = 0,
   tooltipStyle = false,
+  portalContainer,
   ...props
 }: PopoverPrimitive.Popup.Props & {
   side?: PopoverPrimitive.Positioner.Props['side']
@@ -32,9 +37,10 @@ function PopoverPopup({
   sideOffset?: PopoverPrimitive.Positioner.Props['sideOffset']
   alignOffset?: PopoverPrimitive.Positioner.Props['alignOffset']
   tooltipStyle?: boolean
+  portalContainer?: PopoverPortalProps['container']
 }) {
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={portalContainer}>
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}
@@ -108,4 +114,5 @@ export {
   PopoverTitle,
   PopoverDescription,
   PopoverClose,
+  PopoverHandle,
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
-import { cn } from '@read-for-speed/ui/utils'
+import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -10,7 +10,7 @@ import { ContentInput } from './content-input'
 import { ControlPanel } from './control-panel'
 import { ReadingProgressBar } from './reading-progress-bar'
 import { SettingsPanel } from './settings-panel'
-import { StatsPanel } from './stats-panel'
+import { type ReadingStats, StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
 
 export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
@@ -27,17 +27,6 @@ export interface ReaderSettings {
   showProgress: boolean
   /** Extension-specific: whether to use toolbar action instead of floating button. */
   usePageAction: boolean
-}
-
-/**
- * Statistics tracked during reading sessions.
- */
-export interface ReadingStats {
-  wordsRead: number
-  totalWords: number
-  sessionsCompleted: number
-  averageWpm: number
-  totalTimeSeconds: number
 }
 
 /**
@@ -337,6 +326,10 @@ export function RSVPReader({
     }
   }
 
+  const handleReset = () => {
+    setCurrentIndex(0)
+  }
+
   const handleStop = () => {
     setReaderState('idle')
     setCurrentIndex(0)
@@ -474,6 +467,7 @@ export function RSVPReader({
           <div className='flex flex-col gap-2'>
             <ControlPanel
               state={readerState}
+              onReset={handleReset}
               settings={settings}
               onPlay={handlePlay}
               onPause={handlePause}
@@ -499,6 +493,7 @@ export function RSVPReader({
           className='flex min-h-0 flex-1 flex-col'
         >
           <SettingsPanel
+            popoverAnchor={controlPanelRef?.current}
             settings={settings}
             onSettingsChange={onSettingsChange}
             onSave={() => setActivePanel('reader')}

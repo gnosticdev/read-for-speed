@@ -12,6 +12,9 @@ import {
   RSVPReader,
 } from '@read-for-speed/speed-reader/rsvp-reader'
 import { Button } from '@read-for-speed/ui/components/button'
+import { BookOpen } from 'lucide-react'
+import type React from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Dialog,
   DialogCreateHandle,
@@ -21,13 +24,24 @@ import {
   DialogPopup,
   DialogTitle,
   DialogTrigger,
-} from '@read-for-speed/ui/components/dialog'
-import { BookOpen } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useContentScriptContext } from '@/components/provider'
+} from '@/components/dialog-with-portal'
 
-export const ContentAppTrigger = DialogCreateHandle()
+const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
 
+const TriggerButton = ({ hide }: { hide?: boolean }) => (
+  <DialogTrigger
+    handle={contentDialogHandle}
+    render={
+      <Button
+        variant='default'
+        size='icon'
+        className={hide ? 'hidden' : undefined}
+      >
+        <BookOpen />
+      </Button>
+    }
+  />
+)
 /**
  * Main content app component that renders the speed reader dialog.
  *
@@ -144,19 +158,15 @@ export default function ReaderDialog() {
     <Dialog
       actionsRef={actionsRef}
       open={open}
+      handle={contentDialogHandle}
       onOpenChange={(open) => {
         setOpen(open)
       }}
     >
-      {!settings.usePageAction && (
-        <DialogTrigger render={<Button variant='default' />}>
-          <span className='sr-only'>Open Read For Speed</span>
-          <BookOpen />
-        </DialogTrigger>
-      )}
+      <TriggerButton hide={openOnPageAction} />
       <DialogPopup
         className='sm:max-w-3xl overflow-hidden'
-        container={anchor ?? undefined}
+        portalContainer={anchor}
       >
         <DialogHeader>
           <DialogTitle>

@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@read-for-speed/ui/theme.css";
+
+@source "../../extensions";
+@source "../";

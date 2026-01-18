@@ -1,12 +1,12 @@
 {
-  "extends": "./.wxt/tsconfig.json",
-  // dont add custom aliases here https://wxt.dev/guide/essentials/config/typescript.html#compiler-options
-  "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  }
+	"extends": "./.wxt/tsconfig.json",
+	// dont add custom aliases here https://wxt.dev/guide/essentials/config/typescript.html#compiler-options
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"jsx": "react-jsx",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./*"]
+		}
+	}
 }

@@ -28,6 +28,10 @@ type RsvpState = {
   toggle: () => void
 }
 
+/////////////////////////////////////////////
+// WIP: may use this if chunking is too slow
+/////////////////////////////////////////////
+
 /**
  * RSVP hook:
  * - Keeps `content` as one string

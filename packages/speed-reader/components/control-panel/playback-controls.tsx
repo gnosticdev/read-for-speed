@@ -1,6 +1,6 @@
 import { Button } from '@read-for-speed/ui/components/button'
-import { Pause, Play, SkipBack, SkipForward, Square } from 'lucide-react'
-import { cn } from '@read-for-speed/ui/utils'
+import { cn } from '@read-for-speed/ui/lib/utils'
+import { Pause, Play, RefreshCcw, SkipBack, SkipForward, Square } from 'lucide-react'
 import type { ReaderState } from '../rsvp-reader'
 
 interface PlaybackControlsProps {
@@ -10,6 +10,7 @@ interface PlaybackControlsProps {
   skipBack: () => void
   skipForward: () => void
   onStop: () => void
+  onReset: () => void
   className?: string
 }
 
@@ -20,15 +21,19 @@ export const PlaybackControls = ({
   skipBack,
   skipForward,
   onStop,
+  onReset,
   className,
 }: PlaybackControlsProps) => {
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2 @max-md/control-panel:order-3 grow justify-center',
-        className,
-      )}
-    >
+    <div className={cn('flex items-center gap-2 grow justify-center', className)}>
+      <Button
+        size='icon'
+        variant='outline'
+        onClick={onReset}
+        aria-label='Reset'
+      >
+        <RefreshCcw />
+      </Button>
       <Button
         size='icon'
         variant='outline'

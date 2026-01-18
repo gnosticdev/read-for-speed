@@ -1,5 +1,11 @@
 'use client'
 
+import {
+  Popover,
+  PopoverPopup,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@read-for-speed/speed-reader/ui/anchored-popover'
 import { Button } from '@read-for-speed/ui/components/button'
 import {
   Card,
@@ -13,6 +19,8 @@ import { Separator } from '@read-for-speed/ui/components/separator'
 import { Slider } from '@read-for-speed/ui/components/slider'
 import { Switch } from '@read-for-speed/ui/components/switch'
 import { ToggleGroup, ToggleGroupItem } from '@read-for-speed/ui/components/toggle-group'
+import { Info } from 'lucide-react'
+import { RefObject, useRef } from 'react'
 import type { ReaderSettings } from './rsvp-reader'
 
 interface SettingsPanelProps {
@@ -20,6 +28,10 @@ interface SettingsPanelProps {
   onSettingsChange: (settings: ReaderSettings) => void
   onSave: () => void
   layout?: 'overlay' | 'page'
+  /**
+   * Ref to the font size control button
+   */
+  popoverAnchor?: HTMLElement | null
 }
 
 const MIN_FONT_SIZE = 24
@@ -37,6 +49,7 @@ export function SettingsPanel({
   onSettingsChange,
   onSave,
   layout = 'overlay',
+  popoverAnchor,
 }: SettingsPanelProps) {
   const isOverlay = layout === 'overlay'
 
@@ -45,7 +58,7 @@ export function SettingsPanel({
       className={
         isOverlay
           ? 'fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'
-          : 'flex-1 flex items-center justify-center px-6 py-8'
+          : 'flex-1 flex items-center justify-center'
       }
     >
       <Card className='w-full max-w-md'>
@@ -98,19 +111,43 @@ export function SettingsPanel({
 
           {/* Font Size */}
           <div className='space-y-3'>
-            <Label
-              htmlFor='font-size-input'
-              className='text-sm font-medium'
-            >
-              Font Size: {settings.fontSize}px
-            </Label>
+            <div className='flex items-center justify-between'>
+              <Label
+                htmlFor='font-size-input'
+                className='text-sm font-medium'
+              >
+                Font Size: {settings.fontSize}px
+              </Label>
+              <Popover>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      size='icon-xs'
+                      variant='ghost'
+                    />
+                  }
+                >
+                  <Info />
+                </PopoverTrigger>
+                <PopoverPopup
+                  side='top'
+                  tooltipStyle
+                  portalContainer={popoverAnchor}
+                >
+                  <PopoverTitle>Font Size</PopoverTitle>
+                  The font size will be adjusted to fit the available space.
+                </PopoverPopup>
+              </Popover>
+            </div>
             <Slider
               id='font-size-input'
               min={MIN_FONT_SIZE}
               max={MAX_FONT_SIZE}
               step={STEP_FONT_SIZE}
               value={settings.fontSize}
-              onValueChange={(value) => onSettingsChange({ ...settings, fontSize: value })}
+              onValueChange={(value) =>
+                onSettingsChange({ ...settings, fontSize: value as number })
+              }
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_FONT_SIZE}px</span>
@@ -130,7 +167,7 @@ export function SettingsPanel({
               max={MAX_WPM}
               step={STEP_WPM}
               value={settings.wpm}
-              onValueChange={(value) => onSettingsChange({ ...settings, wpm: value })}
+              onValueChange={(value) => onSettingsChange({ ...settings, wpm: value as number })}
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_WPM} (Slow)</span>
@@ -157,7 +194,9 @@ export function SettingsPanel({
               max={MAX_SKIP_WORDS}
               step={STEP_SKIP_WORDS}
               value={settings.skipWords}
-              onValueChange={(value) => onSettingsChange({ ...settings, skipWords: value })}
+              onValueChange={(value) =>
+                onSettingsChange({ ...settings, skipWords: value as number })
+              }
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_SKIP_WORDS}</span>
@@ -183,7 +222,9 @@ export function SettingsPanel({
               max={MAX_SKIP_WORDS}
               step={STEP_SKIP_WORDS}
               value={settings.skipWords}
-              onValueChange={(value) => onSettingsChange({ ...settings, skipWords: value })}
+              onValueChange={(value) =>
+                onSettingsChange({ ...settings, skipWords: value as number })
+              }
             />
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_SKIP_WORDS}</span>

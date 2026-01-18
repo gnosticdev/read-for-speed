@@ -41,7 +41,7 @@ export interface ContentScriptContextValue {
   /** Status of page content extraction. */
   pageContentStatus: PageContentStatus
   /** Storage key for persisting reader settings. */
-  settingsStorageKey: string
+  settingsStorageKey: 'read-for-speed:settings'
   /** Callback to mark selection as handled (resets openOnSelection). */
   onSelectionHandled: () => void
   /** Callback to mark page action as handled (resets openOnPageAction). */
@@ -77,8 +77,6 @@ export interface ContentScriptProviderProps {
   docClone: Document
   /** Anchor element for dialogs/portals. */
   anchor: HTMLElement
-  /** Storage key for persisting reader settings. */
-  settingsStorageKey?: string
 }
 
 /**
@@ -106,22 +104,21 @@ const buildExcerpt = (text: string, maxLength = 240) => {
  * </ContentScriptProvider>
  * ```
  */
-export function ContentScriptProvider({
-  children,
-  docClone,
-  anchor,
-  settingsStorageKey = 'read-for-speed:settings',
-}: ContentScriptProviderProps) {
+export function ContentScriptProvider({ children, docClone, anchor }: ContentScriptProviderProps) {
   // Selection state
   const [selectionText, setSelectionText] = useState<string | null>(null)
   const [openOnSelection, setOpenOnSelection] = useState(false)
   const [openOnPageAction, setOpenOnPageAction] = useState(false)
 
   // Page content state
-  const [pageContent, setPageContent] = useState<string | undefined>()
+  // const [pageContent, setPageContent] = useState<string | undefined>()
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [pageContentStatus, setPageContentStatus] = useState<PageContentStatus>('idle')
+
+  const pageContent = useRef<string | undefined>(undefined)
+
+  const settingsStorageKey = 'read-for-speed:settings' as const
 
   /**
    * Handles incoming browser extension messages.
@@ -150,9 +147,8 @@ export function ContentScriptProvider({
    */
   useEffect(() => {
     browser.runtime.onMessage.addListener(handleSelectionMessage)
-    return () => {
-      browser.runtime.onMessage.removeListener(handleSelectionMessage)
-    }
+
+    return () => browser.runtime.onMessage.removeListener(handleSelectionMessage)
   }, [handleSelectionMessage])
 
   /**
@@ -174,7 +170,8 @@ export function ContentScriptProvider({
     buildExcerpt(articleText)
 
     // Store full content + title for the reader UI.
-    setPageContent(articleText)
+    // setPageContent(articleText)
+    pageContent.current = articleText
     setPageTitle(article.title ?? docClone.title)
     setPageContentStatus('ready')
   }, [docClone])
@@ -219,7 +216,7 @@ export function ContentScriptProvider({
       selectionText,
       openOnSelection,
       openOnPageAction,
-      pageContent,
+      pageContent: pageContent.current,
       pageTitle,
       pageError,
       pageContentStatus,
@@ -235,7 +232,6 @@ export function ContentScriptProvider({
       selectionText,
       openOnSelection,
       openOnPageAction,
-      pageContent,
       pageTitle,
       pageError,
       pageContentStatus,

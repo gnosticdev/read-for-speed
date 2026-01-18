@@ -1,9 +1,10 @@
 'use client'
 
 import { Button } from '@read-for-speed/ui/components/button'
+import { Kbd } from '@read-for-speed/ui/components/kbd'
+import { cn } from '@read-for-speed/ui/lib/utils'
 import { X } from 'lucide-react'
 import { useMemo } from 'react'
-import { cn } from '@read-for-speed/ui/utils'
 import { getSingleWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
@@ -82,19 +83,19 @@ export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps
         </div>
 
         {/* Keyboard hints */}
-        <div className='absolute -bottom-16 inset-x-0 flex justify-center gap-6 text-xs text-muted-foreground'>
-          <span>
-            <kbd className='px-1.5 py-0.5 bg-secondary rounded text-[10px]'>Space</kbd> Play/Pause
-          </span>
-          <span>
-            <kbd className='px-1.5 py-0.5 bg-secondary rounded text-[10px]'>↑↓</kbd> Speed
-          </span>
-          <span>
-            <kbd className='px-1.5 py-0.5 bg-secondary rounded text-[10px]'>←→</kbd> Skip
-          </span>
-          <span>
-            <kbd className='px-1.5 py-0.5 bg-secondary rounded text-[10px]'>Esc</kbd> Stop
-          </span>
+        <div className='absolute -bottom-16 inset-x-0 flex justify-between gap-6 text-xs text-muted-foreground'>
+          <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
+            <Kbd>Space</Kbd> Play/Pause
+          </div>
+          <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
+            <Kbd>↑↓</Kbd> Speed
+          </div>
+          <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
+            <Kbd>←→</Kbd> Skip
+          </div>
+          <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
+            <Kbd>Esc</Kbd> Stop
+          </div>
         </div>
       </div>
     </div>

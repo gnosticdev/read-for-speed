@@ -8,7 +8,8 @@
 		"clean": "rm -rf node_modules dist",
 		"clean-install": "bun run clean && bun i --no-cache",
 		"lint": "biome check .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"engines": {
 		"node": ">=24.11.0"
@@ -17,7 +18,7 @@
 		"./*": "./components/*.tsx"
 	},
 	"dependencies": {
-		"@base-ui/react": "catalog:",
+		"@base-ui/react": "^1.1.0",
 		"@read-for-speed/ui": "workspace:*",
 		"class-variance-authority": "catalog:",
 		"clsx": "catalog:",

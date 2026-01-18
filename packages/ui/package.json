@@ -8,24 +8,26 @@
 		"clean": "rm -rf node_modules dist",
 		"clean-install": "bun run clean && bun i --no-cache",
 		"lint": "biome check .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"engines": {
 		"node": ">=24.11.0"
 	},
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
-		"./utils": "./src/lib/utils.ts",
-		"./theme.css": "./src/theme.css"
+		"./lib/*": "./src/lib/*.ts",
+		"./theme.css": "./src/theme.css",
+		"./hooks/*": "./src/hooks/*.ts"
 	},
 	"dependencies": {
-		"@base-ui/react": "catalog:",
+		"@base-ui/react": "^1.1.0",
+		"class-variance-authority": "catalog:",
+		"clsx": "catalog:",
+		"lucide-react": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"tailwind-merge": "catalog:",
-		"clsx": "catalog:",
-		"class-variance-authority": "catalog:",
-		"lucide-react": "catalog:",
 		"tailwindcss": "catalog:",
 		"tw-animate-css": "catalog:"
 	},

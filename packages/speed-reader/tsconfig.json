@@ -7,6 +7,6 @@
 			"@read-for-speed/speed-reader/*": ["./components/*"]
 		}
 	},
-	"include": ["."],
+	"include": [".", "../ui/src/hooks/use-mobile.ts"],
 	"exclude": ["node_modules", "dist"]
 }

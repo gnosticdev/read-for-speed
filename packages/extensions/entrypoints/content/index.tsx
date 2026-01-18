@@ -31,14 +31,6 @@ export default defineContentScript({
       anchor: document.body,
       append: 'last',
       onMount: (uiContainer, shadowRoot, shadowHost) => {
-        const isReadable = isProbablyReaderable(document)
-        if (!isReadable) {
-          console.log(
-            '%c [Read For Speed] Page is not readable, skipping...',
-            'color: red; font-weight: bold;',
-          )
-        }
-
         // Make the body transparent so no weird outline on button.
         uiContainer.classList.add('bg-transparent')
 

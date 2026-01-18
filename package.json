@@ -32,9 +32,15 @@
 	"scripts": {
 		"clean": "rm -rf packages/*/node_modules packages/*/dist bun.lock",
 		"clean-install": "bun run clean && bun i --no-cache",
+		"dev:extensions": "bun --filter './packages/extensions' dev",
+		"dev:speed-reader": "bun --filter './packages/speed-reader' dev",
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"build:extensions": "bun --filter './packages/extensions' build",
 		"build:speed-reader": "bun --filter './packages/speed-reader' build"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.11",
+		"lefthook": "^2.0.15"
 	}
 }

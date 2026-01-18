@@ -1,11 +1,13 @@
 'use client'
 
+import { MobileControlPopover } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
+import { PopoverCreateHandle } from '@read-for-speed/speed-reader/ui/anchored-popover'
 import type React from 'react'
 import { createPortal } from 'react-dom'
+import type { ReaderSettings, ReaderState } from '../rsvp-reader'
 import { ChunkSizeControl } from './chunk-size-control'
 import { PlaybackControls } from './playback-controls'
 import { SpeedControl } from './speed-control'
-import type { ReaderSettings, ReaderState } from '../rsvp-reader'
 
 interface ControlPanelProps {
   state: ReaderState
@@ -17,7 +19,8 @@ interface ControlPanelProps {
   currentIndex: number
   totalWords: number
   onSeek: (index: number) => void
-  container?: Element | null
+  onReset: () => void
+  container?: HTMLElement | null
   children?: React.ReactNode
 }
 
@@ -30,6 +33,7 @@ export function ControlPanel({
   currentIndex,
   totalWords,
   onSeek,
+  onReset,
   container,
   onSettingsChange,
   children,
@@ -52,15 +56,16 @@ export function ControlPanel({
 
   const ControlPanelComponent = (
     <div
-      className='border-t border-border w-full @container/control-panel'
+      className='border-t border-border w-full @container/control-panel space-y-4 py-4'
       data-control-panel
     >
       {children}
-      <div className='flex items-center justify-between mt-4 @max-md/control-panel:flex-wrap @max-md/control-panel:gap-3'>
+      <div className='flex items-center justify-between'>
         {/* WPM control */}
         <SpeedControl
           settings={settings}
           onSettingsChange={onSettingsChange}
+          container={container}
         />
 
         {/* Playback controls */}
@@ -71,12 +76,19 @@ export function ControlPanel({
           skipBack={skipBack}
           skipForward={skipForward}
           onStop={onStop}
+          onReset={onReset}
         />
 
         {/* Chunk size control - Value set here is kept in storage (no settings panel) */}
         <ChunkSizeControl
           settings={settings}
           onSettingsChange={onSettingsChange}
+          container={container}
+        />
+        <MobileControlPopover
+          container={container}
+          onSettingsChange={onSettingsChange}
+          settings={settings}
         />
       </div>
     </div>
