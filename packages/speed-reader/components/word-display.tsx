@@ -4,7 +4,8 @@ import { Button } from '@read-for-speed/ui/components/button'
 import { Kbd } from '@read-for-speed/ui/components/kbd'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { X } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { calculateFontSize } from '../lib/content-utils'
 import { getSingleWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
@@ -16,7 +17,39 @@ interface WordDisplayProps {
   onStop?: () => void
 }
 
+/**
+ * Displays a single word/chunk using the RSVP technique with ORP highlighting.
+ * Font size is calculated dynamically based on container width to ensure
+ * text always fits on a single line.
+ */
 export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  /**
+   * Measure container width and update on resize.
+   * Uses ResizeObserver for efficient resize detection.
+   */
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const updateWidth = () => {
+      setContainerWidth(container.clientWidth)
+    }
+
+    // Initial measurement
+    updateWidth()
+
+    // Observe resize events
+    const resizeObserver = new ResizeObserver(updateWidth)
+    resizeObserver.observe(container)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
+
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = currentChunk.trim()
     const idx = getSingleWordORPIndex(cleanWord)
@@ -34,9 +67,20 @@ export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps
     serif: 'var(--font-serif)',
   }[settings.fontFamily]
 
+  /**
+   * Calculate the optimal font size based on container width and preset.
+   * Memoized to avoid recalculation on every render.
+   */
+  const fontSize = useMemo(() => {
+    return calculateFontSize(containerWidth, settings.fontSizePreset, settings.fontFamily)
+  }, [containerWidth, settings.fontSizePreset, settings.fontFamily])
+
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
-      <div className='relative w-full max-w-4xl'>
+      <div
+        ref={containerRef}
+        className='relative w-full max-w-4xl'
+      >
         {/* Quick exit button so users can return to the main screen. */}
         {onStop && (
           <Button
@@ -62,7 +106,7 @@ export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps
         {/* Word container */}
         <div
           className={cn('relative flex items-center justify-center mb-1.5')}
-          style={{ fontSize: `${settings.fontSize}px`, fontFamily: fontStyle }}
+          style={{ fontSize: `${fontSize}px`, fontFamily: fontStyle }}
         >
           {/* Before ORP - align right */}
           <span className='text-foreground/70 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide'>

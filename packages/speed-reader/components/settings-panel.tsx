@@ -20,8 +20,7 @@ import { Slider } from '@read-for-speed/ui/components/slider'
 import { Switch } from '@read-for-speed/ui/components/switch'
 import { ToggleGroup, ToggleGroupItem } from '@read-for-speed/ui/components/toggle-group'
 import { Info } from 'lucide-react'
-import { RefObject, useRef } from 'react'
-import type { ReaderSettings } from './rsvp-reader'
+import type { FontSizePreset, ReaderSettings } from './rsvp-reader'
 
 interface SettingsPanelProps {
   settings: ReaderSettings
@@ -34,15 +33,21 @@ interface SettingsPanelProps {
   popoverAnchor?: HTMLElement | null
 }
 
-const MIN_FONT_SIZE = 24
-const MAX_FONT_SIZE = 96
 const MIN_WPM = 50
 const MAX_WPM = 1000
-const STEP_FONT_SIZE = 4
 const STEP_WPM = 25
 const MIN_SKIP_WORDS = 1
 const MAX_SKIP_WORDS = 100
 const STEP_SKIP_WORDS = 1
+
+/**
+ * Font size preset options with display labels.
+ */
+const FONT_SIZE_PRESETS: { value: FontSizePreset; label: string }[] = [
+  { value: 'sm', label: 'Small' },
+  { value: 'md', label: 'Medium' },
+  { value: 'lg', label: 'Large' },
+]
 
 export function SettingsPanel({
   settings,
@@ -116,7 +121,7 @@ export function SettingsPanel({
                 htmlFor='font-size-input'
                 className='text-sm font-medium'
               >
-                Font Size: {settings.fontSize}px
+                Font Size
               </Label>
               <Popover>
                 <PopoverTrigger
@@ -134,25 +139,41 @@ export function SettingsPanel({
                   tooltipStyle
                   portalContainer={popoverAnchor}
                 >
-                  <PopoverTitle>Font Size</PopoverTitle>
-                  The font size will be adjusted to fit the available space.
+                  <PopoverTitle className='text-sm mb-3'>Font Size</PopoverTitle>
+                  The font size is automatically calculated to fit the display width. Choose a
+                  preset to adjust the relative size.
                 </PopoverPopup>
               </Popover>
             </div>
-            <Slider
+            <ToggleGroup
               id='font-size-input'
-              min={MIN_FONT_SIZE}
-              max={MAX_FONT_SIZE}
-              step={STEP_FONT_SIZE}
-              value={settings.fontSize}
-              onValueChange={(value) =>
-                onSettingsChange({ ...settings, fontSize: value as number })
-              }
-            />
-            <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>{MIN_FONT_SIZE}px</span>
-              <span>{MAX_FONT_SIZE}px</span>
-            </div>
+              value={[settings.fontSizePreset]}
+              onValueChange={(value) => {
+                const nextValue = value[0]
+                if (!nextValue) return
+                onSettingsChange({
+                  ...settings,
+                  fontSizePreset: nextValue as FontSizePreset,
+                })
+              }}
+              className='w-full'
+              variant='outline'
+            >
+              {FONT_SIZE_PRESETS.map((preset) => (
+                <ToggleGroupItem
+                  key={preset.value}
+                  value={preset.value}
+                  className='flex-1'
+                  style={{
+                    fontSize:
+                      preset.value === 'sm' ? '12px' : preset.value === 'md' ? '14px' : '16px',
+                  }}
+                  aria-label={preset.label}
+                >
+                  {preset.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
 
           {/* Reading Speed */}
@@ -179,7 +200,7 @@ export function SettingsPanel({
           <div className='space-y-3'>
             <div className='space-y-1'>
               <Label
-                htmlFor='font-size-input'
+                htmlFor='skip-words-input'
                 className='text-sm font-medium'
               >
                 Word Skip Size: {settings.skipWords}
@@ -189,35 +210,7 @@ export function SettingsPanel({
               </p>
             </div>
             <Slider
-              id='font-size-input'
-              min={MIN_SKIP_WORDS}
-              max={MAX_SKIP_WORDS}
-              step={STEP_SKIP_WORDS}
-              value={settings.skipWords}
-              onValueChange={(value) =>
-                onSettingsChange({ ...settings, skipWords: value as number })
-              }
-            />
-            <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>{MIN_SKIP_WORDS}</span>
-              <span>{MAX_SKIP_WORDS}</span>
-            </div>
-          </div>
-          {/* Skip words */}
-          <div className='space-y-3'>
-            <div className='space-y-1'>
-              <Label
-                htmlFor='font-size-input'
-                className='text-sm font-medium'
-              >
-                Word Skip Size: {settings.skipWords}
-              </Label>
-              <p className='text-xs text-muted-foreground'>
-                The number of words to skip when using the skip buttons in the control panel.
-              </p>
-            </div>
-            <Slider
-              id='font-size-input'
+              id='skip-words-input'
               min={MIN_SKIP_WORDS}
               max={MAX_SKIP_WORDS}
               step={STEP_SKIP_WORDS}

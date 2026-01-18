@@ -16,13 +16,23 @@ import { WordDisplay } from './word-display'
 export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
 
 /**
+ * Font size preset options for the RSVP reader.
+ * The actual pixel size is calculated dynamically based on container width.
+ */
+export type FontSizePreset = 'sm' | 'md' | 'lg'
+
+/**
  * Settings for the RSVP reader display and behavior.
  */
 export interface ReaderSettings {
   wpm: number
   skipWords: number
   chunkSize: 1 | 2 | 3
-  fontSize: number
+  /**
+   * Font size preset - the actual pixel size is calculated dynamically
+   * based on container width to ensure text fits on a single line.
+   */
+  fontSizePreset: FontSizePreset
   fontFamily: 'sans' | 'mono' | 'serif'
   showProgress: boolean
   /** Extension-specific: whether to use toolbar action instead of floating button. */
@@ -90,7 +100,7 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   wpm: 300,
   skipWords: 10,
   chunkSize: 1,
-  fontSize: 48,
+  fontSizePreset: 'md',
   fontFamily: 'sans',
   showProgress: true,
   usePageAction: false,
