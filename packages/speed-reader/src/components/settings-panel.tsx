@@ -231,21 +231,20 @@ export function SettingsPanel({
           <div className='space-y-3'>
             <Label
               className='flex items-center gap-6 rounded-lg border p-3 hover:bg-accent/50 justify-between'
-              htmlFor='use-page-action-input'
-              aria-label='Toggle toolbar button to open'
+              htmlFor='show-floating-button-input'
+              aria-label='Toggle floating button'
             >
               <div className='flex flex-col gap-1'>
-                <p>Open from Extension Toolbar</p>
+                <p>Show Floating Button</p>
                 <p className='text-muted-foreground text-xs'>
-                  Use the Extension toolbar to launch the speed reader, instead of showing the
-                  floating button
+                  Show a floating button on the page to open the speed reader.
                 </p>
               </div>
               <Switch
-                id='use-page-action-input'
-                checked={settings.usePageAction}
+                id='show-floating-button-input'
+                checked={settings.showFloatingButton}
                 onCheckedChange={(checked) =>
-                  onSettingsChange({ ...settings, usePageAction: checked })
+                  onSettingsChange({ ...settings, showFloatingButton: checked })
                 }
               />
             </Label>

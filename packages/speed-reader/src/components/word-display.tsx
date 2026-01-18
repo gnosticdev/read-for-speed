@@ -5,13 +5,15 @@ import { Kbd } from '@read-for-speed/ui/components/kbd'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { calculateFontSize } from '../lib/content-utils'
+import { calculateFontSize, findLargestChunkLength } from '../lib/content-utils'
 import { getSingleWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
   currentChunk: string
+  /** All chunks - used to calculate the largest chunk for font sizing */
+  chunks: string[]
   settings: ReaderSettings
   isPlaying: boolean
   onStop?: () => void
@@ -22,7 +24,7 @@ interface WordDisplayProps {
  * Font size is calculated dynamically based on container width to ensure
  * text always fits on a single line.
  */
-export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps) {
+export function WordDisplay({ currentChunk, chunks, settings, onStop }: WordDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
@@ -50,6 +52,14 @@ export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps
     }
   }, [])
 
+  /**
+   * Calculate the largest chunk length from all chunks.
+   * Only recalculates when chunks change (i.e., when content or chunkSize changes).
+   */
+  const largestChunkLength = useMemo(() => {
+    return findLargestChunkLength(chunks)
+  }, [chunks])
+
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = currentChunk.trim()
     const idx = getSingleWordORPIndex(cleanWord)
@@ -68,12 +78,18 @@ export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps
   }[settings.fontFamily]
 
   /**
-   * Calculate the optimal font size based on container width and preset.
-   * Memoized to avoid recalculation on every render.
+   * Calculate the optimal font size based on container width, preset,
+   * and the largest chunk length in the content.
+   * Recalculates when container width, font settings, or chunks change.
    */
   const fontSize = useMemo(() => {
-    return calculateFontSize(containerWidth, settings.fontSizePreset, settings.fontFamily)
-  }, [containerWidth, settings.fontSizePreset, settings.fontFamily])
+    return calculateFontSize({
+      containerWidth,
+      preset: settings.fontSizePreset,
+      fontFamily: settings.fontFamily,
+      largestChunkLength,
+    })
+  }, [containerWidth, settings.fontSizePreset, settings.fontFamily, largestChunkLength])
 
   return (
     <div className='flex-1 flex items-center justify-center px-6'>

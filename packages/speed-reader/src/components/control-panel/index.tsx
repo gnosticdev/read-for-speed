@@ -1,8 +1,8 @@
 'use client'
 
 import { MobileControlPopover } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
-import { PopoverCreateHandle } from '@read-for-speed/speed-reader/ui/anchored-popover'
 import type React from 'react'
+import type { RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import type { ReaderSettings, ReaderState } from '../rsvp-reader'
 import { ChunkSizeControl } from './chunk-size-control'
@@ -13,15 +13,43 @@ interface ControlPanelProps {
   state: ReaderState
   settings: ReaderSettings
   onPlay: () => void
+  /**
+   * Callback to pause the reader.
+   */
   onPause: () => void
+  /**
+   * Callback to stop the reader.
+   */
   onStop: () => void
+  /**
+   * Callback to change the reader settings.
+   */
   onSettingsChange: (settings: ReaderSettings) => void
+  /**
+   * Current word index.
+   */
   currentIndex: number
+  /**
+   * Total number of words in the reader.
+   */
   totalWords: number
+  /**
+   * Callback to seek to a specific word index.
+   */
   onSeek: (index: number) => void
+  /**
+   * Callback to reset the reader to the beginning.
+   */
   onReset: () => void
-  container?: HTMLElement | null
-  children?: React.ReactNode
+  /**
+   * Ref to the container element for the control panel.
+   * Control panel will be rendered at the bottom of the `reader` tab if no ref is provided.
+   */
+  containerRef?: RefObject<HTMLDivElement | null>
+  /**
+   * Optional progress bar component to display at the top of the control panel.
+   */
+  progressBar?: React.ReactNode | null
 }
 
 export function ControlPanel({
@@ -34,9 +62,9 @@ export function ControlPanel({
   totalWords,
   onSeek,
   onReset,
-  container,
+  containerRef: container,
   onSettingsChange,
-  children,
+  progressBar,
 }: ControlPanelProps) {
   /**
    * Skip backward by skipWords chunks.
@@ -59,7 +87,7 @@ export function ControlPanel({
       className='border-t border-border w-full @container/control-panel space-y-4 py-4'
       data-control-panel
     >
-      {children}
+      {progressBar}
       <div className='flex items-center justify-between'>
         {/* WPM control */}
         <SpeedControl
@@ -94,8 +122,8 @@ export function ControlPanel({
     </div>
   )
 
-  if (container) {
-    return createPortal(ControlPanelComponent, container)
+  if (container?.current) {
+    return createPortal(ControlPanelComponent, container.current)
   }
 
   return ControlPanelComponent

@@ -28,11 +28,11 @@ const MIN_FONT_SIZE = 16
 const MAX_FONT_SIZE = 120
 
 /**
- * The maximum word length to consider when calculating font size.
+ * Default maximum word length to consider when calculating font size.
  * Based on common long words in English (e.g., "Internationalization" = 20 chars).
- * This ensures the longest typical words will fit on a single line.
+ * This is used as a fallback when no actual chunk length is provided.
  */
-const MAX_WORD_LENGTH = 20
+const DEFAULT_MAX_CHUNK_LENGTH = 20
 
 /**
  * Character width ratio - approximate average character width relative to font size.
@@ -56,14 +56,28 @@ const CHAR_WIDTH_RATIO = 0.55
  * const fontSizeLg = calculateFontSize(800, 'lg', 'sans') // ~100px
  * ```
  */
-export function calculateFontSize(
-	containerWidth: number,
-	preset: FontSizePreset,
-	fontFamily: 'sans' | 'mono' | 'serif' = 'sans',
-): number {
+export function calculateFontSize({
+	containerWidth,
+	preset,
+	fontFamily = 'sans',
+	largestChunkLength,
+}: {
+	containerWidth: number
+	preset: FontSizePreset
+	fontFamily?: 'sans' | 'mono' | 'serif'
+	/**
+	 * The length of the largest chunk in characters.
+	 * If not provided, uses a default value suitable for typical English words.
+	 */
+	largestChunkLength?: number
+}): number {
 	if (containerWidth <= 0) {
 		return MIN_FONT_SIZE
 	}
+
+	// Use the actual largest chunk length if provided, otherwise use default
+	// Ensure a minimum length to avoid division issues or overly large fonts
+	const maxLength = Math.max(largestChunkLength ?? DEFAULT_MAX_CHUNK_LENGTH, 5)
 
 	// Adjust character width ratio based on font family
 	let charWidthRatio = CHAR_WIDTH_RATIO
@@ -73,10 +87,10 @@ export function calculateFontSize(
 		charWidthRatio = 0.52 // Serif fonts are slightly narrower on average
 	}
 
-	// Calculate base font size that would fit the max word length
-	// Formula: containerWidth = maxWordLength * charWidthRatio * fontSize
-	// Therefore: fontSize = containerWidth / (maxWordLength * charWidthRatio)
-	const baseFontSize = containerWidth / (MAX_WORD_LENGTH * charWidthRatio)
+	// Calculate base font size that would fit the largest chunk
+	// Formula: containerWidth = maxLength * charWidthRatio * fontSize
+	// Therefore: fontSize = containerWidth / (maxLength * charWidthRatio)
+	const baseFontSize = containerWidth / (maxLength * charWidthRatio)
 
 	// Apply the preset multiplier
 	const multiplier = FONT_SIZE_MULTIPLIERS[preset]
@@ -100,4 +114,22 @@ export function chunkText(text: string, chunkSize: number): string[] {
 	}
 
 	return chunks
+}
+
+/**
+ * Find the length of the largest chunk in the array.
+ * Used to calculate the optimal font size that will fit all chunks on a single line.
+ *
+ * @param chunks - Array of text chunks
+ * @returns The length of the longest chunk in characters
+ *
+ * @example
+ * ```ts
+ * const chunks = ['hello', 'world', 'internationalization']
+ * findLargestChunkLength(chunks) // 20
+ * ```
+ */
+export function findLargestChunkLength(chunks: string[]): number {
+	if (chunks.length === 0) return 0
+	return Math.max(...chunks.map((chunk) => chunk.length))
 }

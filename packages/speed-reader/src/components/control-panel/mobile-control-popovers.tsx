@@ -114,7 +114,12 @@ export function MobileControlPopover({ container, onSettingsChange, settings }: 
     <Popover handle={mobileControlHandle}>
       {({ payload: Payload }) => (
         <>
-          <PopoverPopup portalContainer={container}>
+          <PopoverPopup
+            portalContainer={container}
+            side='top'
+            align='center'
+            className={'absolute'}
+          >
             {Payload !== undefined && (
               <Payload
                 settings={settings}

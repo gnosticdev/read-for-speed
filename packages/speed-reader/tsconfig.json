@@ -4,9 +4,11 @@
 		"jsx": "react-jsx",
 		"baseUrl": ".",
 		"paths": {
-			"@read-for-speed/speed-reader/*": ["./components/*"]
+			"@read-for-speed/speed-reader/*": ["./src/components/*"],
+			"@read-for-speed/speed-reader/lib/*": ["./src/lib/*"],
+			"@read-for-speed/speed-reader/hooks/*": ["./src/hooks/*"]
 		}
 	},
-	"include": [".", "../ui/src/hooks/use-mobile.ts"],
+	"include": ["."],
 	"exclude": ["node_modules", "dist"]
 }

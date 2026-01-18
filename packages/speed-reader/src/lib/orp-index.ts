@@ -3,17 +3,26 @@ type MultiORP = {
 	orpCharIndex: number // pivot char index within the trimmed anchor word (Unicode codepoint index)
 }
 
+/**
+ * Stop words that should not be used as anchor words.
+ */
 // biome-ignore format: long set
 const STOP = new Set([
     "a","an","the","and","or","but","to","of","in","on","at","for","from","by","with","as","is","are","was","were","be","been","being",
     "it","its","that","this","these","those","i","you","he","she","we","they","them","me","him","her","us","my","your","his","our","their",
   ]);
 
-function trimEdgePunct(s: string) {
+/**
+ * Trim leading and trailing punctuation from a string.
+ */
+function trimEdgePunct(s: string): string {
 	return s.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 }
 
-function codepoints(s: string) {
+/**
+ * Split a string into an array of Unicode codepoints.
+ */
+function codepoints(s: string): string[] {
 	return [...s]
 }
 
@@ -47,9 +56,13 @@ export function getSingleWordORPIndex(word: string): number {
  */
 export function getMultiWordORPIndex(words: string[]): MultiORP {
 	const n = words.length
-	if (n <= 0) return { anchorWordIndex: 0, orpCharIndex: 0 }
+	if (n === 0) return { anchorWordIndex: 0, orpCharIndex: 0 }
 	if (n === 1)
-		return { anchorWordIndex: 0, orpCharIndex: getSingleWordORPIndex(words[0]) }
+		// guaranteed to have at least one word
+		return {
+			anchorWordIndex: 0,
+			orpCharIndex: getSingleWordORPIndex(words[0] as string),
+		}
 
 	const trimmed = words.map(trimEdgePunct)
 	const lower = trimmed.map((w) => w.toLowerCase())
@@ -62,12 +75,12 @@ export function getMultiWordORPIndex(words: string[]): MultiORP {
 
 	for (let i = 0; i < n; i++) {
 		const w = trimmed[i]
-		const len = lens[i]
+		const len = lens[i] ?? 0
 
 		if (len === 0) continue
 
-		const isStop = STOP.has(lower[i])
-		const hasLetter = /\p{L}/u.test(w)
+		const isStop = STOP.has(lower[i] ?? '')
+		const hasLetter = /\p{L}/u.test(w ?? '')
 
 		let score = 0
 
@@ -93,6 +106,9 @@ export function getMultiWordORPIndex(words: string[]): MultiORP {
 		}
 	}
 
-	const orp = getSingleWordORPIndex(words[bestIdx])
+	const bestWord = words[bestIdx]
+	if (!bestWord) return { anchorWordIndex: 0, orpCharIndex: 0 }
+
+	const orp = getSingleWordORPIndex(bestWord)
 	return { anchorWordIndex: bestIdx, orpCharIndex: orp }
 }

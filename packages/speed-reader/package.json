@@ -15,7 +15,7 @@
 		"node": ">=24.11.0"
 	},
 	"exports": {
-		"./*": "./components/*.tsx"
+		"./*": "./src/components/*.tsx"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.1.0",
@@ -27,7 +27,8 @@
 		"react-dom": "catalog:",
 		"tailwind-merge": "catalog:",
 		"tailwindcss": "catalog:",
-		"tw-animate-css": "catalog:"
+		"tw-animate-css": "catalog:",
+		"usehooks-ts": "^3.1.1"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",

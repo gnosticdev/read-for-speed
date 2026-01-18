@@ -35,8 +35,8 @@ export interface ReaderSettings {
   fontSizePreset: FontSizePreset
   fontFamily: 'sans' | 'mono' | 'serif'
   showProgress: boolean
-  /** Extension-specific: whether to use toolbar action instead of floating button. */
-  usePageAction: boolean
+  /** Show a floating button - usefule when mounting the reader to a dialog */
+  showFloatingButton: boolean
 }
 
 /**
@@ -103,7 +103,7 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   fontSizePreset: 'md',
   fontFamily: 'sans',
   showProgress: true,
-  usePageAction: false,
+  showFloatingButton: true,
 }
 
 const SAMPLE_TEXT = `Speed reading is a collection of methods that attempt to increase rates of reading without significantly reducing comprehension or retention. Methods include chunking and minimizing subvocalization. The many speed reading training programs available include books, videos, software, and seminars.
@@ -426,9 +426,7 @@ export function RSVPReader({
         {/* Header */}
         <header className='flex items-center justify-between px-6 py-4 border-b'>
           <div className='flex items-center gap-3'>
-            <h1 className='text-lg/tight font-semibold truncate max-w-[200px]'>
-              {pageContentTitle}
-            </h1>
+            <h1 className='text-lg/tight font-semibold truncate max-w-1/3'>{pageContentTitle}</h1>
           </div>
           <TabsList variant='underline'>
             {/* Only show icons on mobile */}
@@ -467,6 +465,7 @@ export function RSVPReader({
           ) : (
             <WordDisplay
               currentChunk={currentChunk}
+              chunks={chunks}
               settings={settings}
               isPlaying={readerState === 'playing'}
               onStop={handleStop}
@@ -486,15 +485,16 @@ export function RSVPReader({
               currentIndex={currentIndex}
               totalWords={chunks.length}
               onSeek={handleSeek}
-              container={controlPanelRef?.current}
-            >
-              {settings.showProgress && (
-                <ReadingProgressBar
-                  currentIndex={currentIndex}
-                  totalWords={chunks.length}
-                />
-              )}
-            </ControlPanel>
+              containerRef={controlPanelRef}
+              progressBar={
+                settings.showProgress && (
+                  <ReadingProgressBar
+                    currentIndex={currentIndex}
+                    totalWords={chunks.length}
+                  />
+                )
+              }
+            />
           </div>
         </TabsPanel>
 
