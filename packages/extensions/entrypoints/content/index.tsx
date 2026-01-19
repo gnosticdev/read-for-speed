@@ -5,7 +5,6 @@ import {
   DEFAULT_READER_SETTINGS,
   type ReaderSettings,
 } from '@read-for-speed/speed-reader/rsvp-reader'
-import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
 import ContentApp from '@/entrypoints/content/app'
 import { sessionStats } from '@/lib/session-start-time'
 import { SETTINGS_STORAGE_KEY } from './app'
@@ -22,11 +21,6 @@ export default defineContentScript({
   matches: ['*://*/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
-    console.log(
-      '%c Evaluating page for readability...',
-      'color: var(--primary); font-weight: bold;',
-    )
-
     const initialSettings = await storage.getItem<ReaderSettings>(`local:${SETTINGS_STORAGE_KEY}`, {
       fallback: DEFAULT_READER_SETTINGS,
     })
@@ -67,13 +61,12 @@ export default defineContentScript({
 
         const root = ReactDOM.createRoot(wrapper)
 
-        console.log('rendering content dialog', docClone.title)
-
         // Render the app with the provider wrapping ContentApp.
         root.render(
           <>
             {initialSettings.showFloatingButton && <TriggerButton />}
             <ContentApp
+              ctx={ctx}
               docClone={docClone}
               initialSettings={initialSettings}
               uiContainer={uiContainer}

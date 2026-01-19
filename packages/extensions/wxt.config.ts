@@ -18,7 +18,7 @@ export default defineConfig({
 	},
 	manifest: {
 		description:
-			'Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect for books, articles, or any long form content.',
+			'Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect any long form content.',
 		version: '1.0.0',
 		author: {
 			email: '64601257+gnosticdev@users.noreply.github.com',

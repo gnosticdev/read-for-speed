@@ -1,9 +1,7 @@
 'use client'
 
-import { Button } from '@read-for-speed/ui/components/button'
 import { Kbd } from '@read-for-speed/ui/components/kbd'
 import { cn } from '@read-for-speed/ui/lib/utils'
-import { X } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { getMultiWordORPIndex } from '../lib/orp-index'
 
@@ -82,7 +80,7 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
           className={cn(
             'relative flex items-center justify-center mb-1.5 @container/word-display min-h-12',
           )}
-          style={{ fontSize: `calc(max(4cqi, 16px) * ${fontSizeMultiple})`, fontFamily: fontStyle }}
+          style={{ fontSize: `calc(max(5cqi, 16px) * ${fontSizeMultiple})`, fontFamily: fontStyle }}
           ref={containerRef}
         >
           {/* Before ORP - align right */}

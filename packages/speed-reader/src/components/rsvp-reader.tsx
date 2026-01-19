@@ -124,7 +124,7 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   fontSizePreset: 'md',
   fontFamily: 'sans',
   showProgress: true,
-  showFloatingButton: true,
+  showFloatingButton: false,
 }
 
 /**
@@ -195,10 +195,9 @@ export function RSVPReader({
    */
   const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
-  const { words: chunkWords, wordIndex, wordCountIndexed } = useRSVPView()
+  const { words: chunkWords, wordIndex, wordCountIndexed, readerState } = useRSVPView()
   const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
 
-  const [readerState, setReaderState] = useState<ReaderState>('idle')
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>(initialStats)
 
@@ -297,10 +296,10 @@ export function RSVPReader({
       setInputMode(mode)
       // Reset reading position when switching modes.
       setWordIndex(0)
-      setReaderState('idle')
+      stop()
       resetSessionTracking()
     },
-    [resetSessionTracking, setInputMode, setReaderState, setWordIndex],
+    [resetSessionTracking, setInputMode, setWordIndex, stop],
   )
 
   /**
@@ -311,10 +310,9 @@ export function RSVPReader({
     if (typeof pageContent !== 'string' || !pageContent.trim()) return
 
     // Reset reading position when page content is updated.
-    setWordIndex(0)
-    setReaderState('idle')
+    stop()
     resetSessionTracking()
-  }, [pageContent, inputMode, resetSessionTracking, setReaderState, setWordIndex])
+  }, [pageContent, inputMode, resetSessionTracking, setWordIndex, stop])
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
@@ -326,14 +324,13 @@ export function RSVPReader({
     setPastedContent(initialPastedContent)
     setInputMode('paste')
     setWordIndex(0)
-    setReaderState('idle')
+    stop()
     resetSessionTracking()
-  }, [initialPastedContent, resetSessionTracking, setReaderState, setWordIndex])
+  }, [initialPastedContent, resetSessionTracking, setWordIndex, stop])
 
   const handlePlay = () => {
     if (wordCountIndexed === 0) return
     play()
-    setReaderState('playing')
     if (sessionStartRef.current == null) {
       sessionStartRef.current = Date.now()
     }
@@ -341,7 +338,6 @@ export function RSVPReader({
 
   const handlePause = () => {
     pause()
-    setReaderState('paused')
     if (sessionStartRef.current) {
       sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
       sessionStartRef.current = null
@@ -354,8 +350,7 @@ export function RSVPReader({
   }
 
   const handleStop = () => {
-    setReaderState('idle')
-    setWordIndex(0)
+    stop()
     if (sessionStartRef.current) {
       sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
       sessionStartRef.current = null
@@ -441,7 +436,9 @@ export function RSVPReader({
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}
         <header className='flex items-center justify-between px-6 py-4 border-b'>
-          <h1 className='text-lg/tight font-semibold truncate grow'>{pageContentTitle}</h1>
+          <h1 className='text-lg/tight @max-md/reader-main:text-sm font-semibold truncate max-w-1/2'>
+            {pageContentTitle}
+          </h1>
           <TabsList variant='underline'>
             {/* Only show icons on mobile */}
             <TabsTrigger value='reader'>

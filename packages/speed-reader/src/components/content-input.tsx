@@ -82,7 +82,7 @@ export function ContentInput({
                 data-page-content
                 className='w-full h-48'
               >
-                <article className='text-left text-sm text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input'>
+                <article className='text-left text-sm text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input h-fit min-h-full'>
                   {pageContent}
                 </article>
               </ScrollArea>

@@ -1,3 +1,4 @@
+import type { ReaderState } from '@read-for-speed/speed-reader/rsvp-reader'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type UseRSVPParams = {
@@ -27,7 +28,7 @@ export type RSVPState = {
   /** How many words have offsets indexed so far */
   wordCountIndexed: number
   /** Playback state */
-  isPlaying: boolean
+  readerState: ReaderState
   /** Set current word index */
 
   /** Manually set current word index */
@@ -47,6 +48,8 @@ export type RSVPState = {
   pause: () => void
   /** Toggle playback state */
   toggle: () => void
+  /** Stop the reader */
+  stop: () => void
 }
 
 /////////////////////////////////////////////
@@ -73,7 +76,7 @@ export function useRSVPReader({
   parseBatchMs = 8,
 }: UseRSVPParams): RSVPState {
   // Playback state
-  const [isPlaying, setIsPlaying] = useState<boolean>(autoplay)
+  const [readerState, setReaderState] = useState<ReaderState>(autoplay ? 'playing' : 'idle')
   const [wordIndex, _setWordIndex] = useState<number>(0)
   const [wordCountIndexed, setWordCountIndexed] = useState<number>(0)
 
@@ -96,7 +99,6 @@ export function useRSVPReader({
     indexedCountRef.current = 0
     parsingRef.current = false
     _setWordIndex(0)
-    setIsPlaying(autoplay)
     setWordCountIndexed(0)
 
     // kick indexing for initial viewport
@@ -123,7 +125,6 @@ export function useRSVPReader({
       parsingRef.current = true
 
       const runBatch = (deadline?: IdleDeadline) => {
-        console.log('running batch', deadline)
         const text = textRef.current
         let re = reRef.current
         if (!re) re = reRef.current = /\S+/g
@@ -230,7 +231,8 @@ export function useRSVPReader({
       timerIdRef.current = null
     }
 
-    if (!isPlaying) return
+    // only advance if playing
+    if (readerState !== 'playing') return
 
     const safeWpm = Math.min(1000, Math.max(50, wpm | 0))
     const perWordMs = 60000 / safeWpm
@@ -247,7 +249,7 @@ export function useRSVPReader({
         timerIdRef.current = null
       }
     }
-  }, [isPlaying, wpm, chunkSize])
+  }, [readerState, wpm, chunkSize])
 
   // Cleanup idle work on unmount
   useEffect(() => {
@@ -257,15 +259,25 @@ export function useRSVPReader({
     }
   }, [])
 
-  const play = useCallback(() => setIsPlaying(true), [])
-  const pause = useCallback(() => setIsPlaying(false), [])
-  const toggle = useCallback(() => setIsPlaying((p) => !p), [])
+  const play = useCallback(() => setReaderState('playing'), [])
+  const pause = useCallback(() => setReaderState('paused'), [])
+  const toggle = useCallback(
+    () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing')),
+    [],
+  )
+  const stop = useCallback(() => {
+    if (readerState === 'playing') {
+      pause()
+    }
+    setReaderState('idle')
+    setWordIndex(0)
+  }, [pause, setWordIndex])
 
   return {
     words,
     wordIndex,
     wordCountIndexed,
-    isPlaying,
+    readerState,
     setWordIndex,
     next,
     prev,
@@ -274,5 +286,6 @@ export function useRSVPReader({
     play,
     pause,
     toggle,
+    stop,
   }
 }

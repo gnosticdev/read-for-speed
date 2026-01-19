@@ -1,10 +1,13 @@
-import { Readability } from '@mozilla/readability'
+import { isProbablyReaderable, Readability } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
+import type { ContentScriptContext, WxtWindowEventMap } from '#imports'
 import ContentDialog from '@/components/content-dialog'
 import type { RSVPReaderMessage } from '@/lib/message-types'
 import { sessionStats } from '@/lib/session-start-time'
+
+type WxtLocationChangeEvent = WxtWindowEventMap['wxt:locationchange']
 
 export const SETTINGS_STORAGE_KEY = 'read-for-speed:settings' as const
 
@@ -13,11 +16,13 @@ export default function ContentApp({
   initialSettings,
   initialStats,
   uiContainer,
+  ctx,
 }: {
   docClone: Document
   initialSettings: ReaderSettings
   initialStats: ReadingStats
   uiContainer: HTMLElement
+  ctx: ContentScriptContext
 }) {
   const [settings, setSettings] = useState<ReaderSettings>(initialSettings)
   const [pastedText, setPastedText] = useState<string | undefined>(undefined)
@@ -31,13 +36,21 @@ export default function ContentApp({
 
   const controlsContainer = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const article = new Readability(docClone).parse() // returns { textContent, ... }
+  const parseWebPageContent = useCallback((newDoc: Document) => {
+    const article = new Readability(newDoc).parse() // returns { textContent, ... }
 
     setPageContent(article?.textContent ?? '')
-    setTitle(article?.title ?? docClone.title)
+    setTitle(article?.title ?? newDoc.title)
     setError(article ? null : 'No readable text found on this page.')
     setTotalWords(article?.textContent?.split(/\s+/).length ?? 0)
+  }, [])
+
+  useEffect(() => {
+    if (isProbablyReaderable(docClone)) {
+      parseWebPageContent(docClone)
+    } else {
+      setError('Page is not reader mode compatible.')
+    }
   }, [])
 
   /**

@@ -4,7 +4,7 @@ import '@/assets/tailwind.css'
 import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
-
+import { Logo } from '@read-for-speed/speed-reader/logo'
 import { Button } from '@read-for-speed/ui/components/button'
 import { BookOpen } from 'lucide-react'
 import type React from 'react'
@@ -81,7 +81,7 @@ export default function ContentDialog({
         <DialogHeader>
           <DialogTitle>
             <div className='flex items-center gap-2'>
-              <BookOpen className='size-4' />
+              <Logo className='size-4' />
               <span className='text-lg/tight font-semibold'>Read For Speed</span>
             </div>
           </DialogTitle>
