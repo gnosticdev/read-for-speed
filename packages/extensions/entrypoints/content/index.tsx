@@ -5,8 +5,9 @@ import {
   DEFAULT_READER_SETTINGS,
   type ReaderSettings,
 } from '@read-for-speed/speed-reader/rsvp-reader'
+import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
 import ContentApp from '@/entrypoints/content/app'
-import type { RSVPReaderMessage } from '@/lib/message-types'
+import { sessionStats } from '@/lib/session-start-time'
 import { SETTINGS_STORAGE_KEY } from './app'
 
 /**
@@ -29,6 +30,8 @@ export default defineContentScript({
     const initialSettings = await storage.getItem<ReaderSettings>(`local:${SETTINGS_STORAGE_KEY}`, {
       fallback: DEFAULT_READER_SETTINGS,
     })
+
+    const initialStats = await sessionStats.getValue()
 
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
@@ -74,23 +77,10 @@ export default defineContentScript({
               docClone={docClone}
               initialSettings={initialSettings}
               uiContainer={uiContainer}
+              initialStats={initialStats}
             />
           </>,
         )
-
-        ctx.addEventListener(window, 'wxt:locationchange', async (e) => {
-          console.log('locationchange', e.oldUrl.toString(), e.newUrl.toString())
-          if (e.oldUrl.toString() !== e.newUrl.toString()) {
-            const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true })
-            if (!activeTab?.id) return
-            await browser.tabs.sendMessage<RSVPReaderMessage>(activeTab.id, {
-              type: 'PARSE_PAGE_CONTENT',
-              payload: {
-                docClone: (e.currentTarget as Window).document.cloneNode(true) as Document,
-              },
-            })
-          }
-        })
 
         return { root, wrapper }
       },

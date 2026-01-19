@@ -81,7 +81,7 @@ export interface RSVPReaderConfig {
   /**
    * Callback when pasted content changes (from textarea input).
    */
-  onContentChange?: (content: string) => void
+  onPastedContentChange?: (content: string) => void
   /**
    * Current reader settings. Settings updated from within the component will call `onSettingsChange`.
    */
@@ -103,6 +103,14 @@ export interface RSVPReaderConfig {
    * Total number of words in the reader.
    */
   totalWords: number
+  /**
+   * Callback when session stats change.
+   */
+  onSessionStatsChange?: (stats: ReadingStats) => void
+  /**
+   * Initial stats.
+   */
+  initialStats: ReadingStats
 }
 
 /**
@@ -155,7 +163,7 @@ export function RSVPReader({
   pageContentTitle,
   pageContentError,
   initialPastedContent,
-  onContentChange,
+  onPastedContentChange,
   settings,
   onSettingsChange,
   controlPanelRef,
@@ -164,6 +172,8 @@ export function RSVPReader({
   totalWords,
   contentMode,
   onContentModeChange,
+  onSessionStatsChange,
+  initialStats,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -190,13 +200,22 @@ export function RSVPReader({
 
   const [readerState, setReaderState] = useState<ReaderState>('idle')
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
-  const [stats, setStats] = useState<ReadingStats>({
-    wordsRead: 0,
-    totalWords: 0,
-    sessionsCompleted: 0,
-    averageWpm: 0,
-    totalTimeSeconds: 0,
-  })
+  const [stats, setStats] = useState<ReadingStats>(initialStats)
+
+  const handleSaveStats = useCallback(
+    (newStats: Partial<ReadingStats>) => {
+      console.log('handleSaveStats', newStats)
+      setStats((s) => ({
+        ...s,
+        ...newStats,
+      }))
+      onSessionStatsChange?.({
+        ...stats,
+        ...newStats,
+      })
+    },
+    [stats, onSessionStatsChange],
+  )
 
   const sessionStartRef = useRef<number | null>(null)
   const wordsReadInSessionRef = useRef(0)
@@ -207,9 +226,9 @@ export function RSVPReader({
   const handlePastedContentChange = useCallback(
     (nextContent: string) => {
       setPastedContent(nextContent)
-      onContentChange?.(nextContent)
+      onPastedContentChange?.(nextContent)
     },
-    [onContentChange],
+    [onPastedContentChange],
   )
 
   useEffect(() => {
@@ -261,6 +280,7 @@ export function RSVPReader({
     if (wordCountIndexed === 0) return
     play()
     setReaderState('playing')
+    sessionStartRef.current = Date.now()
   }
 
   const handlePause = () => {
@@ -268,12 +288,10 @@ export function RSVPReader({
     setReaderState('paused')
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
-      setStats((s) => ({
-        ...s,
-        wordsRead: s.wordsRead + wordsReadInSessionRef.current,
-        totalTimeSeconds: s.totalTimeSeconds + sessionTime,
-      }))
-      sessionStartRef.current = null
+      handleSaveStats({
+        wordsRead: wordsReadInSessionRef.current,
+        totalTimeSeconds: sessionTime,
+      })
     }
   }
 
@@ -286,11 +304,10 @@ export function RSVPReader({
     setWordIndex(0)
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
-      setStats((s) => ({
-        ...s,
-        wordsRead: s.wordsRead + wordsReadInSessionRef.current,
-        totalTimeSeconds: s.totalTimeSeconds + sessionTime,
-      }))
+      handleSaveStats({
+        wordsRead: wordsReadInSessionRef.current,
+        totalTimeSeconds: sessionTime,
+      })
       sessionStartRef.current = null
     }
     wordsReadInSessionRef.current = 0

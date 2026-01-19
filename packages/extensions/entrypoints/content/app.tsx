@@ -1,18 +1,22 @@
 import { Readability } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
+import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
 import ContentDialog from '@/components/content-dialog'
 import type { RSVPReaderMessage } from '@/lib/message-types'
+import { sessionStats } from '@/lib/session-start-time'
 
 export const SETTINGS_STORAGE_KEY = 'read-for-speed:settings' as const
 
 export default function ContentApp({
   docClone,
   initialSettings,
+  initialStats,
   uiContainer,
 }: {
   docClone: Document
   initialSettings: ReaderSettings
+  initialStats: ReadingStats
   uiContainer: HTMLElement
 }) {
   const [settings, setSettings] = useState<ReaderSettings>(initialSettings)
@@ -47,6 +51,10 @@ export default function ContentApp({
     },
     [settings],
   )
+
+  const saveSessionStats = useCallback((stats: ReadingStats) => {
+    void sessionStats.setValue(stats)
+  }, [])
 
   const handleMessageEvent = useCallback((message: RSVPReaderMessage) => {
     if (!message) return
@@ -90,6 +98,9 @@ export default function ContentApp({
       >
         <RSVPReader
           pageContent={pageContent}
+          onPastedContentChange={setPastedText}
+          initialStats={initialStats}
+          onSessionStatsChange={saveSessionStats}
           contentMode={inputMode}
           onContentModeChange={setInputMode}
           pageContentTitle={title}
