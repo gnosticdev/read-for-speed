@@ -1,6 +1,7 @@
 'use client'
 
 import { MobileControlPopover } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
+import { useRSVPControls } from '@read-for-speed/speed-reader/provider'
 import type React from 'react'
 import type { RefObject } from 'react'
 import { createPortal } from 'react-dom'
@@ -26,14 +27,6 @@ interface ControlPanelProps {
    */
   onSettingsChange: (settings: ReaderSettings) => void
   /**
-   * Current word index.
-   */
-  currentIndex: number
-  /**
-   * Total number of words in the reader.
-   */
-  totalWords: number
-  /**
    * Callback to seek to a specific word index.
    */
   onSeek: (index: number) => void
@@ -58,29 +51,12 @@ export function ControlPanel({
   onPlay,
   onPause,
   onStop,
-  currentIndex,
-  totalWords,
-  onSeek,
   onReset,
-  containerRef: container,
+  containerRef,
   onSettingsChange,
   progressBar,
 }: ControlPanelProps) {
-  /**
-   * Skip backward by skipWords chunks.
-   * Since each chunk already contains chunkSize words, we just move by skipWords indices.
-   */
-  const skipBack = () => {
-    onSeek(Math.max(0, currentIndex - settings.skipWords))
-  }
-
-  /**
-   * Skip forward by skipWords chunks.
-   * Since each chunk already contains chunkSize words, we just move by skipWords indices.
-   */
-  const skipForward = () => {
-    onSeek(Math.min(totalWords - 1, currentIndex + settings.skipWords))
-  }
+  const { skipBack, skipForward } = useRSVPControls()
 
   const ControlPanelComponent = (
     <div
@@ -93,7 +69,7 @@ export function ControlPanel({
         <SpeedControl
           settings={settings}
           onSettingsChange={onSettingsChange}
-          container={container}
+          container={containerRef}
         />
 
         {/* Playback controls */}
@@ -111,10 +87,9 @@ export function ControlPanel({
         <ChunkSizeControl
           settings={settings}
           onSettingsChange={onSettingsChange}
-          container={container}
         />
         <MobileControlPopover
-          container={container}
+          container={containerRef}
           onSettingsChange={onSettingsChange}
           settings={settings}
         />
@@ -122,8 +97,8 @@ export function ControlPanel({
     </div>
   )
 
-  if (container?.current) {
-    return createPortal(ControlPanelComponent, container.current)
+  if (containerRef?.current) {
+    return createPortal(ControlPanelComponent, containerRef.current)
   }
 
   return ControlPanelComponent

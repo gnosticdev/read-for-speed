@@ -1,12 +1,26 @@
 {
 	"name": "root",
-	"private": true,
 	"version": "0.0.0",
-	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.11",
+		"lefthook": "^2.0.15"
+	},
+	"description": "Monorepo for the Read for Speed extension and speed reader app",
 	"engines": {
 		"node": ">=24.11.0"
 	},
-	"description": "Monorepo for the Read for Speed extension and speed reader app",
+	"private": true,
+	"scripts": {
+		"clean": "rm -rf packages/*/node_modules packages/*/dist bun.lock",
+		"clean-install": "bun run clean && bun i --no-cache",
+		"dev:extensions": "bun --filter './packages/extensions' dev",
+		"dev:speed-reader": "bun --filter './packages/speed-reader' dev",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"build:extensions": "bun --filter './packages/extensions' build",
+		"build:speed-reader": "bun --filter './packages/speed-reader' build"
+	},
+	"type": "module",
 	"workspaces": {
 		"packages": [
 			"packages/*"
@@ -28,19 +42,5 @@
 			"@types/react": "^19.2.3",
 			"@types/react-dom": "^19.2.3"
 		}
-	},
-	"scripts": {
-		"clean": "rm -rf packages/*/node_modules packages/*/dist bun.lock",
-		"clean-install": "bun run clean && bun i --no-cache",
-		"dev:extensions": "bun --filter './packages/extensions' dev",
-		"dev:speed-reader": "bun --filter './packages/speed-reader' dev",
-		"lint": "biome check .",
-		"format": "biome format --write .",
-		"build:extensions": "bun --filter './packages/extensions' build",
-		"build:speed-reader": "bun --filter './packages/speed-reader' build"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.3.11",
-		"lefthook": "^2.0.15"
 	}
 }

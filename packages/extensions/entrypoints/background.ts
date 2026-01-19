@@ -1,12 +1,12 @@
-import type { CustomMessages } from '@/lib/message-types'
+import type { RSVPReaderMessage } from '@/lib/message-types'
 
 export default defineBackground(() => {
 	console.log('Hello background!', { id: browser.runtime.id })
 
 	browser.action.onClicked.addListener(async (tab) => {
 		if (!tab?.id) return
-		await browser.tabs.sendMessage<CustomMessages>(tab.id, {
-			type: 'RSVP_MOUNT_UI',
+		await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
+			type: 'SHOW_READER',
 		})
 	})
 
@@ -23,13 +23,13 @@ export default defineBackground(() => {
 			if (!tab?.id) return
 
 			if (info.selectionText) {
-				await browser.tabs.sendMessage<CustomMessages>(tab.id, {
-					type: 'RSVP_GET_SELECTION_TEXT',
+				await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
+					type: 'SHOW_READER_WITH_SELECTED_TEXT',
 					payload: info.selectionText ?? '',
 				})
 			} else {
-				await browser.tabs.sendMessage<CustomMessages>(tab.id, {
-					type: 'RSVP_GET_PAGE_TEXT',
+				await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
+					type: 'SHOW_READER',
 				})
 			}
 		})

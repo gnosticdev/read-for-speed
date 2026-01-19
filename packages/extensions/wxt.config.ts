@@ -10,6 +10,7 @@ export default defineConfig({
 		binaries: {
 			chrome: `${os.homedir()}/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
 		},
+		chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
 		startUrls: [
 			'https://standardebooks.org/ebooks/herman-melville/moby-dick/text/single-page#chapter-28',
 		],

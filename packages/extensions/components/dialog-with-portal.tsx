@@ -63,14 +63,19 @@ function DialogPopup({
   showCloseButton = true,
   bottomStickOnMobile = true,
   portalContainer,
+  keepMounted = false,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
   bottomStickOnMobile?: boolean
   portalContainer?: PopoverPortalProps['container']
+  keepMounted?: boolean
 }) {
   return (
-    <DialogPortal container={portalContainer}>
+    <DialogPortal
+      container={portalContainer}
+      keepMounted={keepMounted}
+    >
       <DialogBackdrop />
       <DialogViewport
         className={cn(bottomStickOnMobile && 'max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12')}

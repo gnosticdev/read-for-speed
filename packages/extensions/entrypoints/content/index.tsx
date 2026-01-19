@@ -1,9 +1,13 @@
-import { isProbablyReaderable } from '@mozilla/readability'
 import ReactDOM from 'react-dom/client'
-import ReaderDialog from '@/components/content-dialog'
 
 import '@/assets/tailwind.css'
-import { ContentScriptProvider } from '@/components/provider'
+import {
+  DEFAULT_READER_SETTINGS,
+  type ReaderSettings,
+} from '@read-for-speed/speed-reader/rsvp-reader'
+import ContentApp from '@/entrypoints/content/app'
+import type { RSVPReaderMessage } from '@/lib/message-types'
+import { SETTINGS_STORAGE_KEY } from './app'
 
 /**
  * Content script entry point for the Read For Speed extension.
@@ -22,27 +26,25 @@ export default defineContentScript({
       'color: var(--primary); font-weight: bold;',
     )
 
+    const initialSettings = await storage.getItem<ReaderSettings>(`local:${SETTINGS_STORAGE_KEY}`, {
+      fallback: DEFAULT_READER_SETTINGS,
+    })
+
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
       position: 'modal',
       zIndex: 1000,
       isolateEvents: true,
-
       anchor: document.body,
       append: 'last',
-      onMount: (uiContainer, shadowRoot, shadowHost) => {
-        // Make the body transparent so no weird outline on button.
-        uiContainer.classList.add('bg-transparent')
+      onMount: (uiContainer, shadowRoot, _shadowHost) => {
+        // // Make the body transparent so no weird outline on button.
+        // uiContainer.classList.add('bg-transparent')
 
         // Set dark mode class if system prefers dark color scheme.
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           uiContainer.classList.add('dark')
         }
-
-        shadowHost.setAttribute(
-          'data-theme',
-          window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-        )
 
         // Calculate where to show the button - either below header or 25% of viewport height.
         const headerHeight = document.querySelector('header')?.clientHeight ?? 0
@@ -62,15 +64,33 @@ export default defineContentScript({
 
         const root = ReactDOM.createRoot(wrapper)
 
+        console.log('rendering content dialog', docClone.title)
+
         // Render the app with the provider wrapping ContentApp.
         root.render(
-          <ContentScriptProvider
-            docClone={docClone}
-            anchor={uiContainer}
-          >
-            <ReaderDialog />
-          </ContentScriptProvider>,
+          <>
+            {initialSettings.showFloatingButton && <TriggerButton />}
+            <ContentApp
+              docClone={docClone}
+              initialSettings={initialSettings}
+              uiContainer={uiContainer}
+            />
+          </>,
         )
+
+        ctx.addEventListener(window, 'wxt:locationchange', async (e) => {
+          console.log('locationchange', e.oldUrl.toString(), e.newUrl.toString())
+          if (e.oldUrl.toString() !== e.newUrl.toString()) {
+            const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true })
+            if (!activeTab?.id) return
+            await browser.tabs.sendMessage<RSVPReaderMessage>(activeTab.id, {
+              type: 'PARSE_PAGE_CONTENT',
+              payload: {
+                docClone: (e.currentTarget as Window).document.cloneNode(true) as Document,
+              },
+            })
+          }
+        })
 
         return { root, wrapper }
       },

@@ -1,30 +1,51 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-type UseRsvpParams = {
-  content: string // full text from Readability
-  chunkSize: number // words shown at once
-  skipWords: number // nav step for buttons
-  wpm: number // 50..1000
+export type UseRSVPParams = {
+  /**
+   * Full text from Readability
+   */
+  content: string
+  /** Number of words to show at once */
+  chunkSize: number
+  /** Number of words to skip forward or backward */
+  skipWords: number
+  /** Number of words to display per minute */
+  wpm: number
+  /** Autoplay on mount */
   autoplay?: boolean
-  bufferWords?: number // how far ahead to index (default 2000)
-  parseBatchMs?: number // idle time budget per batch (default 8)
+  /** Number of words to buffer ahead of the current position (default 2000) */
+  bufferWords?: number
+  /** Time budget per batch in milliseconds (default 8) */
+  parseBatchMs?: number
 }
 
-type RsvpState = {
-  words: string[] // current chunk words
-  wordIndex: number // current start word index
-  wordCountIndexed: number // how many words have offsets indexed so far
-  approxTotalWords?: number // optional (not computed here)
+export type RSVPState = {
+  /** Current chunk words */
+  words: string[]
+  /** Current start word index */
+  wordIndex: number
+  /** How many words have offsets indexed so far */
+  wordCountIndexed: number
+  /** Playback state */
   isPlaying: boolean
+  /** Set current word index */
 
+  /** Manually set current word index */
   setWordIndex: (i: number) => void
+  /** Next word */
   next: () => void
+  /** Previous word */
   prev: () => void
+  /** Skip forward */
   skipForward: () => void
+  /** Skip back */
   skipBack: () => void
 
+  /** Play the reader at the provided word index and speed */
   play: () => void
+  /** Pause */
   pause: () => void
+  /** Toggle playback state */
   toggle: () => void
 }
 
@@ -33,13 +54,16 @@ type RsvpState = {
 /////////////////////////////////////////////
 
 /**
+ * **NOTE** you should use `useRSVP`
  * RSVP hook:
  * - Keeps `content` as one string
  * - Builds word start/end offsets incrementally during idle time
  * - Never materializes all "pages"/chunks as strings
  * - Slices only the active chunk words for display
+ * - This is a low-level hook that is used to power the RSVPReader component
+ * @internal
  */
-export function useRsvpReader({
+export function useRSVPReader({
   content,
   chunkSize,
   skipWords,
@@ -47,7 +71,7 @@ export function useRsvpReader({
   autoplay = false,
   bufferWords = 2000,
   parseBatchMs = 8,
-}: UseRsvpParams): RsvpState {
+}: UseRSVPParams): RSVPState {
   // Playback state
   const [isPlaying, setIsPlaying] = useState<boolean>(autoplay)
   const [wordIndex, _setWordIndex] = useState<number>(0)
@@ -64,20 +88,18 @@ export function useRsvpReader({
 
   // Reset when content changes
   useEffect(() => {
-    textRef.current = content || ''
+    textRef.current = content
     reRef.current = /\S+/g // words = non-whitespace runs
     startsRef.current = []
     endsRef.current = []
     indexedCountRef.current = 0
     parsingRef.current = false
-
     _setWordIndex(0)
     setIsPlaying(autoplay)
 
     // kick indexing for initial viewport
     // (do not block; schedule via idle)
     scheduleEnsure(0 + Math.max(1, chunkSize) + bufferWords)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content])
 
   const clamp = (v: number, lo: number) => (v < lo ? lo : v)
@@ -125,6 +147,8 @@ export function useRsvpReader({
           }
         }
 
+        console.log('indexedCountRef.current', indexedCountRef.current)
+
         // Done?
         if (indexedCountRef.current >= target || re.lastIndex >= text.length) {
           parsingRef.current = false
@@ -147,6 +171,7 @@ export function useRsvpReader({
 
   // Maintain buffer ahead of current position
   useEffect(() => {
+    // keep the index up to date with the current word index
     const needUpTo = wordIndex + Math.max(1, chunkSize) + bufferWords
     scheduleEnsure(needUpTo)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +250,9 @@ export function useRsvpReader({
       if (timerIdRef.current != null) window.clearInterval(timerIdRef.current)
     }
   }, [])
+
+  console.log('words', words.slice(0, 10))
+  console.log('total words', indexedCountRef.current)
 
   const play = useCallback(() => setIsPlaying(true), [])
   const pause = useCallback(() => setIsPlaying(false), [])

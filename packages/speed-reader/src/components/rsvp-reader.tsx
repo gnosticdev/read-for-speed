@@ -1,14 +1,15 @@
 'use client'
 
+import { ContentInput } from '@read-for-speed/speed-reader/content-input'
+import { ControlPanel } from '@read-for-speed/speed-reader/control-panel'
+import { useRSVPControls, useRSVPView } from '@read-for-speed/speed-reader/provider'
+import { ReadingProgressBar } from '@read-for-speed/speed-reader/reading-progress-bar'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { chunkText } from '../lib/content-utils'
-import { ContentInput } from './content-input'
-import { ControlPanel } from './control-panel'
-import { ReadingProgressBar } from './reading-progress-bar'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
 import { type ReadingStats, StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
@@ -66,6 +67,14 @@ export interface RSVPReaderConfig {
     statsPanelContainer?: string
   }
   /**
+   * Controlled input mode.
+   */
+  contentMode?: 'page' | 'paste'
+  /**
+   * Callback when content mode changes.
+   */
+  onContentModeChange?: (mode: 'page' | 'paste') => void
+  /**
    * Initial content for the "paste" tab.
    */
   initialPastedContent?: string
@@ -90,6 +99,10 @@ export interface RSVPReaderConfig {
    * Callback when reader state changes.
    */
   onReaderStateChange?: (state: ReaderState) => void
+  /**
+   * Total number of words in the reader.
+   */
+  totalWords: number
 }
 
 /**
@@ -105,12 +118,6 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   showProgress: true,
   showFloatingButton: true,
 }
-
-const SAMPLE_TEXT = `Speed reading is a collection of methods that attempt to increase rates of reading without significantly reducing comprehension or retention. Methods include chunking and minimizing subvocalization. The many speed reading training programs available include books, videos, software, and seminars.
-
-The scientific consensus is that reading faster results in reading less accurately and that the average college-level reader reads at about 200 to 400 words per minute. The concept of speed reading challenges some of these assumptions by proposing techniques that suppress subvocalization and use peripheral vision more efficiently.
-
-RSVP, or Rapid Serial Visual Presentation, is a technique that displays text one word at a time in a fixed focal position. This eliminates the need for eye movement and can significantly increase reading speed while maintaining comprehension when properly implemented.`
 
 /**
  * RSVP (Rapid Serial Visual Presentation) speed reader component.
@@ -154,6 +161,9 @@ export function RSVPReader({
   controlPanelRef,
   onReaderStateChange,
   classNames,
+  totalWords,
+  contentMode,
+  onContentModeChange,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -163,11 +173,10 @@ export function RSVPReader({
    * Defaults to 'paste' if there's initial pasted content (e.g., selection text),
    * otherwise defaults to 'page'
    */
-  const [inputMode, setInputMode] = useState<'page' | 'paste'>(() => {
-    if (initialPastedContent?.trim()) {
-      return 'paste'
-    }
-    return 'page'
+  const [inputMode, setInputMode] = useControllableState<'page' | 'paste'>({
+    value: contentMode,
+    defaultValue: 'page',
+    onChange: onContentModeChange,
   })
 
   /**
@@ -176,12 +185,9 @@ export function RSVPReader({
    */
   const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
-  /**
-   * The content that will be used for reading, derived from the active input mode.
-   */
-  const content = inputMode === 'page' ? (pageContent ?? '') : pastedContent || SAMPLE_TEXT
+  const { words, wordIndex, wordCountIndexed, isPlaying } = useRSVPView()
+  const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
 
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [readerState, setReaderState] = useState<ReaderState>('idle')
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>({
@@ -192,7 +198,6 @@ export function RSVPReader({
     totalTimeSeconds: 0,
   })
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sessionStartRef = useRef<number | null>(null)
   const wordsReadInSessionRef = useRef(0)
 
@@ -217,7 +222,7 @@ export function RSVPReader({
   const handleInputModeChange = useCallback((mode: 'page' | 'paste') => {
     setInputMode(mode)
     // Reset reading position when switching modes.
-    setCurrentIndex(0)
+    setWordIndex(0)
     setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
@@ -231,20 +236,11 @@ export function RSVPReader({
     if (typeof pageContent !== 'string' || !pageContent.trim()) return
 
     // Reset reading position when page content is updated.
-    setCurrentIndex(0)
+    setWordIndex(0)
     setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
   }, [pageContent, inputMode])
-
-  /**
-   * Memoized chunks of the content, split by chunkSize (1/2/3 words per chunk).
-   * This is memoized because content can be very large (200k+ words for books).
-   */
-  const chunks = useMemo(
-    () => chunkText(content, settings.chunkSize),
-    [content, settings.chunkSize],
-  )
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
@@ -255,7 +251,7 @@ export function RSVPReader({
 
     setPastedContent(initialPastedContent)
     setInputMode('paste')
-    setCurrentIndex(0)
+    setWordIndex(0)
     setReaderState('idle')
     wordsReadInSessionRef.current = 0
     sessionStartRef.current = null
@@ -265,65 +261,66 @@ export function RSVPReader({
    * Update total word count in stats when chunks change.
    */
   useEffect(() => {
-    setStats((prev) => ({ ...prev, totalWords: chunks.length }))
-  }, [chunks.length])
+    setStats((prev) => ({ ...prev, totalWords: words.length }))
+  }, [words.length])
 
   // Calculate interval based on WPM
-  const getInterval = useCallback(() => {
-    return 60000 / settings.wpm
-  }, [settings.wpm])
+  // const getInterval = useCallback(() => {
+  //   return 60000 / settings.wpm
+  // }, [settings.wpm])
 
-  /**
-   * Handle chunk progression during playback.
-   * Advances one chunk at a time based on WPM.
-   * Note: skipWords is only used for manual skip forward/back, not playback.
-   */
-  useEffect(() => {
-    if (readerState === 'playing' && chunks.length > 0) {
-      if (sessionStartRef.current === null) {
-        sessionStartRef.current = Date.now()
-        wordsReadInSessionRef.current = 0
-      }
+  // /**
+  //  * Handle chunk progression during playback.
+  //  * Advances one chunk at a time based on WPM.
+  //  * Note: skipWords is only used for manual skip forward/back, not playback.
+  //  */
+  // useEffect(() => {
+  //   if (readerState !== 'playing') return
 
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex((prev) => {
-          if (prev >= chunks.length - 1) {
-            // Session complete
-            setReaderState('done')
-            const sessionTime = (Date.now() - (sessionStartRef.current || Date.now())) / 1000
-            setStats((s) => ({
-              ...s,
-              wordsRead: s.wordsRead + wordsReadInSessionRef.current + 1,
-              sessionsCompleted: s.sessionsCompleted + 1,
-              totalTimeSeconds: s.totalTimeSeconds + sessionTime,
-              averageWpm: Math.round(
-                ((s.wordsRead + wordsReadInSessionRef.current) /
-                  (s.totalTimeSeconds + sessionTime)) *
-                  60,
-              ),
-            }))
-            sessionStartRef.current = null
-            return 0
-          }
-          wordsReadInSessionRef.current += 1
-          return prev + 1
-        })
-      }, getInterval())
-    }
+  //   if (sessionStartRef.current === null) {
+  //     sessionStartRef.current = Date.now()
+  //     wordsReadInSessionRef.current = 0
+  //   }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [readerState, chunks.length, getInterval])
+  //   intervalRef.current = setInterval(() => {
+  //     setWordIndex((prev) => {
+  //       if (prev >= words.length - 1) {
+  //         // Session complete
+  //         setReaderState('done')
+  //         const sessionTime = (Date.now() - (sessionStartRef.current || Date.now())) / 1000
+  //         setStats((s) => ({
+  //           ...s,
+  //           wordsRead: s.wordsRead + wordsReadInSessionRef.current + 1,
+  //           sessionsCompleted: s.sessionsCompleted + 1,
+  //           totalTimeSeconds: s.totalTimeSeconds + sessionTime,
+  //           averageWpm: Math.round(
+  //             ((s.wordsRead + wordsReadInSessionRef.current) / (s.totalTimeSeconds + sessionTime)) *
+  //               60,
+  //           ),
+  //         }))
+  //         sessionStartRef.current = null
+  //         return 0
+  //       }
+  //       wordsReadInSessionRef.current += 1
+  //       return prev + 1
+  //     })
+  //   }, getInterval())
+
+  //   return () => {
+  //     if (intervalRef.current) {
+  //       clearInterval(intervalRef.current)
+  //     }
+  //   }
+  // }, [readerState, words.length, getInterval])
 
   const handlePlay = () => {
-    if (chunks.length === 0) return
+    if (words.length === 0) return
+    play()
     setReaderState('playing')
   }
 
   const handlePause = () => {
+    pause()
     setReaderState('paused')
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
@@ -337,12 +334,12 @@ export function RSVPReader({
   }
 
   const handleReset = () => {
-    setCurrentIndex(0)
+    setWordIndex(0)
   }
 
   const handleStop = () => {
     setReaderState('idle')
-    setCurrentIndex(0)
+    setWordIndex(0)
     if (sessionStartRef.current) {
       const sessionTime = (Date.now() - sessionStartRef.current) / 1000
       setStats((s) => ({
@@ -356,7 +353,7 @@ export function RSVPReader({
   }
 
   const handleSeek = (index: number) => {
-    setCurrentIndex(index)
+    setWordIndex(index)
   }
 
   /**
@@ -389,11 +386,11 @@ export function RSVPReader({
           break
         case 'ArrowLeft':
           e.preventDefault()
-          setCurrentIndex((i) => Math.max(0, i - settings.skipWords))
+          skipBack()
           break
         case 'ArrowRight':
           e.preventDefault()
-          setCurrentIndex((i) => Math.min(chunks.length - 1, i + settings.skipWords))
+          skipForward()
           break
         case 'Escape':
           e.preventDefault()
@@ -411,10 +408,10 @@ export function RSVPReader({
 
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [activePanel, readerState, settings, chunks.length, onSettingsChange])
+  }, [activePanel, readerState, settings, words.length, onSettingsChange])
 
   /** The current chunk to display, retrieved from the memoized chunks array. */
-  const currentChunk = chunks[currentIndex] ?? ''
+  const currentChunk = words[wordIndex] ?? ''
 
   return (
     <Tabs
@@ -450,7 +447,7 @@ export function RSVPReader({
           value={'reader'}
           className='flex min-h-0 flex-1 flex-col'
         >
-          {readerState === 'idle' && currentIndex === 0 ? (
+          {readerState === 'idle' && wordIndex === 0 ? (
             <ContentInput
               pastedContent={pastedContent}
               onPastedContentChange={handlePastedContentChange}
@@ -465,7 +462,7 @@ export function RSVPReader({
           ) : (
             <WordDisplay
               currentChunk={currentChunk}
-              chunks={chunks}
+              words={words}
               settings={settings}
               isPlaying={readerState === 'playing'}
               onStop={handleStop}
@@ -482,15 +479,13 @@ export function RSVPReader({
               onPause={handlePause}
               onStop={handleStop}
               onSettingsChange={onSettingsChange}
-              currentIndex={currentIndex}
-              totalWords={chunks.length}
               onSeek={handleSeek}
               containerRef={controlPanelRef}
               progressBar={
                 settings.showProgress && (
                   <ReadingProgressBar
-                    currentIndex={currentIndex}
-                    totalWords={chunks.length}
+                    currentIndex={wordIndex}
+                    totalWords={totalWords}
                   />
                 )
               }

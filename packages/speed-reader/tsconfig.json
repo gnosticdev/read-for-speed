@@ -5,8 +5,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"@read-for-speed/speed-reader/*": ["./src/components/*"],
-			"@read-for-speed/speed-reader/lib/*": ["./src/lib/*"],
-			"@read-for-speed/speed-reader/hooks/*": ["./src/hooks/*"]
+			"@read-for-speed/speed-reader/lib/*": ["./src/lib/*"]
 		}
 	},
 	"include": ["."],

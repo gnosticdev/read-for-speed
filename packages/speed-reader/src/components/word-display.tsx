@@ -5,7 +5,6 @@ import { Kbd } from '@read-for-speed/ui/components/kbd'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { calculateFontSize, findLargestChunkLength } from '../lib/content-utils'
 import { getSingleWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
@@ -13,7 +12,7 @@ import type { ReaderSettings } from './rsvp-reader'
 interface WordDisplayProps {
   currentChunk: string
   /** All chunks - used to calculate the largest chunk for font sizing */
-  chunks: string[]
+  words: string[]
   settings: ReaderSettings
   isPlaying: boolean
   onStop?: () => void
@@ -24,41 +23,8 @@ interface WordDisplayProps {
  * Font size is calculated dynamically based on container width to ensure
  * text always fits on a single line.
  */
-export function WordDisplay({ currentChunk, chunks, settings, onStop }: WordDisplayProps) {
+export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-
-  /**
-   * Measure container width and update on resize.
-   * Uses ResizeObserver for efficient resize detection.
-   */
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const updateWidth = () => {
-      setContainerWidth(container.clientWidth)
-    }
-
-    // Initial measurement
-    updateWidth()
-
-    // Observe resize events
-    const resizeObserver = new ResizeObserver(updateWidth)
-    resizeObserver.observe(container)
-
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [])
-
-  /**
-   * Calculate the largest chunk length from all chunks.
-   * Only recalculates when chunks change (i.e., when content or chunkSize changes).
-   */
-  const largestChunkLength = useMemo(() => {
-    return findLargestChunkLength(chunks)
-  }, [chunks])
 
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
     const cleanWord = currentChunk.trim()
@@ -77,26 +43,29 @@ export function WordDisplay({ currentChunk, chunks, settings, onStop }: WordDisp
     serif: 'var(--font-serif)',
   }[settings.fontFamily]
 
+  const fontSizeMultiple = {
+    sm: 0.75,
+    md: 1.0,
+    lg: 1.25,
+  }[settings.fontSizePreset]
+
   /**
    * Calculate the optimal font size based on container width, preset,
    * and the largest chunk length in the content.
    * Recalculates when container width, font settings, or chunks change.
    */
-  const fontSize = useMemo(() => {
-    return calculateFontSize({
-      containerWidth,
-      preset: settings.fontSizePreset,
-      fontFamily: settings.fontFamily,
-      largestChunkLength,
-    })
-  }, [containerWidth, settings.fontSizePreset, settings.fontFamily, largestChunkLength])
+  // const fontSize = useMemo(() => {
+  //   return calculateFontSize({
+  //     containerWidth,
+  //     preset: settings.fontSizePreset,
+  //     fontFamily: settings.fontFamily,
+  //     largestChunkLength,
+  //   })
+  // }, [containerWidth, settings.fontSizePreset, settings.fontFamily, largestChunkLength])
 
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
-      <div
-        ref={containerRef}
-        className='relative w-full max-w-4xl'
-      >
+      <div className='relative w-full max-w-4xl'>
         {/* Quick exit button so users can return to the main screen. */}
         {onStop && (
           <Button
@@ -121,8 +90,9 @@ export function WordDisplay({ currentChunk, chunks, settings, onStop }: WordDisp
 
         {/* Word container */}
         <div
-          className={cn('relative flex items-center justify-center mb-1.5')}
-          style={{ fontSize: `${fontSize}px`, fontFamily: fontStyle }}
+          className={cn('relative flex items-center justify-center mb-1.5 @container/word-display')}
+          style={{ fontSize: `calc(4cqi * ${fontSizeMultiple})`, fontFamily: fontStyle }}
+          ref={containerRef}
         >
           {/* Before ORP - align right */}
           <span className='text-foreground/70 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide'>

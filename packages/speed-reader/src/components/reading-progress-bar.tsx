@@ -17,7 +17,9 @@ export function ReadingProgressBar({
 }) {
   return (
     <Progress
-      max={totalWords}
+      locale='en-US'
+      format={{ maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+      max={totalWords ?? 1}
       value={currentIndex}
     >
       <div className='flex items-center justify-between gap-2'>
@@ -26,7 +28,7 @@ export function ReadingProgressBar({
         </ProgressLabel>
         <ProgressValue className='text-xs text-muted-foreground'>
           {(_formatted, value) =>
-            `${value?.toLocaleString() ?? 0} / ${totalWords.toLocaleString()}`
+            `${value?.toLocaleString() ?? 0} / ${totalWords?.toLocaleString() ?? 0}`
           }
         </ProgressValue>
       </div>

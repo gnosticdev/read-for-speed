@@ -28,8 +28,8 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
-	/* Leave off setting the background as the button will have its own background */
+	/* Body should be transparent so the floating button is the only visible element */
 	body {
-		@apply text-foreground;
+		@apply text-foreground bg-transparent;
 	}
 }

@@ -7,28 +7,17 @@ import { useIsMobile } from '@read-for-speed/ui/hooks/use-mobile'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { WholeWord } from 'lucide-react'
 import type { ReaderSettings } from '../rsvp-reader'
-import {
-  Popover,
-  type PopoverCreateHandle,
-  type PopoverHandle,
-  PopoverPopup,
-  PopoverTitle,
-  PopoverTrigger,
-} from '../ui/anchored-popover'
 
 interface ChunkSizeControlProps {
   settings: ReaderSettings
   onSettingsChange: (settings: ReaderSettings) => void
   className?: string
-  container?: PopoverPortalProps['container']
-  mobileTriggerHandle?: typeof PopoverHandle<React.ComponentType>
 }
 
 export const ChunkSizeControl = ({
   settings,
   onSettingsChange,
   className,
-  container,
 }: ChunkSizeControlProps) => {
   const isMobile = useIsMobile()
 
