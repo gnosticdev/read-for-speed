@@ -4,15 +4,14 @@ import { Button } from '@read-for-speed/ui/components/button'
 import { Kbd } from '@read-for-speed/ui/components/kbd'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { getSingleWordORPIndex } from '../lib/orp-index'
+import { useMemo, useRef } from 'react'
+import { getMultiWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
 
 interface WordDisplayProps {
-  currentChunk: string
-  /** All chunks - used to calculate the largest chunk for font sizing */
-  words: string[]
+  /** Current chunk words to display */
+  chunkWords: string[]
   settings: ReaderSettings
   isPlaying: boolean
   onStop?: () => void
@@ -23,19 +22,36 @@ interface WordDisplayProps {
  * Font size is calculated dynamically based on container width to ensure
  * text always fits on a single line.
  */
-export function WordDisplay({ currentChunk, settings, onStop }: WordDisplayProps) {
+export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
-    const cleanWord = currentChunk.trim()
-    const idx = getSingleWordORPIndex(cleanWord)
-    return {
-      orpIndex: idx,
-      beforeORP: cleanWord.slice(0, idx),
-      orpChar: cleanWord[idx] || '',
-      afterORP: cleanWord.slice(idx + 1),
+    if (chunkWords.length === 0) {
+      return { beforeORP: '', orpChar: '', afterORP: '' }
     }
-  }, [currentChunk])
+
+    const { anchorWordIndex, orpCharIndex } = getMultiWordORPIndex(chunkWords)
+    const anchorWord = chunkWords[anchorWordIndex] ?? ''
+    const cleanWord = anchorWord.trim()
+    const idx = orpCharIndex
+    const beforeWords = chunkWords.slice(0, anchorWordIndex).join(' ')
+    const afterWords = chunkWords.slice(anchorWordIndex + 1).join(' ')
+
+    const beforeText =
+      beforeWords && cleanWord.slice(0, idx)
+        ? `${beforeWords} ${cleanWord.slice(0, idx)}`
+        : beforeWords || cleanWord.slice(0, idx)
+    const afterText =
+      cleanWord.slice(idx + 1) && afterWords
+        ? `${cleanWord.slice(idx + 1)} ${afterWords}`
+        : cleanWord.slice(idx + 1) || afterWords
+
+    return {
+      beforeORP: beforeText,
+      orpChar: cleanWord[idx] || '',
+      afterORP: afterText,
+    }
+  }, [chunkWords])
 
   const fontStyle = {
     sans: 'var(--font-sans)',

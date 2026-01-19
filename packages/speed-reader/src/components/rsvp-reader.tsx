@@ -185,7 +185,7 @@ export function RSVPReader({
    */
   const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
-  const { words, wordIndex, wordCountIndexed, isPlaying } = useRSVPView()
+  const { words: chunkWords, wordIndex, wordCountIndexed } = useRSVPView()
   const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
 
   const [readerState, setReaderState] = useState<ReaderState>('idle')
@@ -261,8 +261,8 @@ export function RSVPReader({
    * Update total word count in stats when chunks change.
    */
   useEffect(() => {
-    setStats((prev) => ({ ...prev, totalWords: words.length }))
-  }, [words.length])
+    setStats((prev) => ({ ...prev, totalWords }))
+  }, [totalWords])
 
   // Calculate interval based on WPM
   // const getInterval = useCallback(() => {
@@ -314,7 +314,8 @@ export function RSVPReader({
   // }, [readerState, words.length, getInterval])
 
   const handlePlay = () => {
-    if (words.length === 0) return
+    console.log('handlePlay')
+    if (wordCountIndexed === 0) return
     play()
     setReaderState('playing')
   }
@@ -408,10 +409,7 @@ export function RSVPReader({
 
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [activePanel, readerState, settings, words.length, onSettingsChange])
-
-  /** The current chunk to display, retrieved from the memoized chunks array. */
-  const currentChunk = words[wordIndex] ?? ''
+  }, [activePanel, readerState, settings, chunkWords.length, onSettingsChange])
 
   return (
     <Tabs
@@ -461,8 +459,7 @@ export function RSVPReader({
             />
           ) : (
             <WordDisplay
-              currentChunk={currentChunk}
-              words={words}
+              chunkWords={chunkWords}
               settings={settings}
               isPlaying={readerState === 'playing'}
               onStop={handleStop}

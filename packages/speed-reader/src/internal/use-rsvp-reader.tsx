@@ -75,6 +75,7 @@ export function useRSVPReader({
   // Playback state
   const [isPlaying, setIsPlaying] = useState<boolean>(autoplay)
   const [wordIndex, _setWordIndex] = useState<number>(0)
+  const [wordCountIndexed, setWordCountIndexed] = useState<number>(0)
 
   // Incremental word indexing refs
   const textRef = useRef<string>(content)
@@ -96,6 +97,7 @@ export function useRSVPReader({
     parsingRef.current = false
     _setWordIndex(0)
     setIsPlaying(autoplay)
+    setWordCountIndexed(0)
 
     // kick indexing for initial viewport
     // (do not block; schedule via idle)
@@ -121,6 +123,7 @@ export function useRSVPReader({
       parsingRef.current = true
 
       const runBatch = (deadline?: IdleDeadline) => {
+        console.log('running batch', deadline)
         const text = textRef.current
         let re = reRef.current
         if (!re) re = reRef.current = /\S+/g
@@ -128,6 +131,7 @@ export function useRSVPReader({
         const starts = startsRef.current
         const ends = endsRef.current
 
+        const prevCount = indexedCountRef.current
         const startTime = performance.now()
         const timeBudgetMs = parseBatchMs
 
@@ -148,6 +152,9 @@ export function useRSVPReader({
         }
 
         console.log('indexedCountRef.current', indexedCountRef.current)
+        if (indexedCountRef.current !== prevCount) {
+          setWordCountIndexed(indexedCountRef.current)
+        }
 
         // Done?
         if (indexedCountRef.current >= target || re.lastIndex >= text.length) {
@@ -179,25 +186,27 @@ export function useRSVPReader({
 
   // Build current words chunk from offsets (no global chunk strings)
   const words = useMemo(() => {
+    console.log('building words', wordIndex, chunkSize, wordCountIndexed)
     const startWord = clamp(wordIndex, 0)
     const count = Math.max(1, chunkSize | 0)
     const endWordExclusive = startWord + count
 
     // If offsets not ready yet, return best-effort empty array
-    if (indexedCountRef.current <= startWord) return []
+    if (wordCountIndexed <= startWord) return []
 
     const starts = startsRef.current
     const ends = endsRef.current
     const text = textRef.current
 
-    const availableEnd = Math.min(endWordExclusive, indexedCountRef.current)
+    const availableEnd = Math.min(endWordExclusive, wordCountIndexed)
     const out: string[] = []
 
     for (let i = startWord; i < availableEnd; i++) {
       out.push(text.slice(starts[i], ends[i]))
     }
+    console.log('built words', out.length, out.slice(0, 10))
     return out
-  }, [wordIndex, chunkSize])
+  }, [wordIndex, chunkSize, wordCountIndexed])
 
   // Navigation
   const next = useCallback(() => {
@@ -218,6 +227,7 @@ export function useRSVPReader({
 
   // Playback timing: advance by chunkSize words per tick
   useEffect(() => {
+    console.log('starting playback', wpm, chunkSize)
     // clear any prior timer
     if (timerIdRef.current != null) {
       window.clearInterval(timerIdRef.current)
@@ -261,7 +271,7 @@ export function useRSVPReader({
   return {
     words,
     wordIndex,
-    wordCountIndexed: indexedCountRef.current,
+    wordCountIndexed,
     isPlaying,
     setWordIndex,
     next,

@@ -5,12 +5,10 @@ import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 
-import type { DialogRootActions } from '@base-ui/react'
-import type { ReaderSettings } from '@read-for-speed/speed-reader/rsvp-reader'
 import { Button } from '@read-for-speed/ui/components/button'
 import { BookOpen } from 'lucide-react'
 import type React from 'react'
-import { type RefObject, useRef } from 'react'
+import type { RefObject } from 'react'
 import {
   Dialog,
   DialogCreateHandle,
@@ -69,14 +67,8 @@ export default function ContentDialog({
   open,
   onOpenChange,
 }: ContentDialogProps) {
-  const actionsRef = useRef<DialogRootActions>({
-    unmount: () => void 0,
-    close: () => void 0,
-  })
-
   return (
     <Dialog
-      actionsRef={actionsRef}
       open={open}
       handle={contentDialogHandle}
       onOpenChange={onOpenChange}

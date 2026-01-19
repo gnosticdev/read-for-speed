@@ -27,19 +27,12 @@ export default function ContentApp({
   const controlsContainer = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let cancelled = false
-
     const article = new Readability(docClone).parse() // returns { textContent, ... }
-    if (cancelled) return
 
     setContent(article?.textContent ?? '')
     setTitle(article?.title ?? docClone.title)
     setError(article ? null : 'No readable text found on this page.')
     setTotalWords(article?.textContent?.split(/\s+/).length ?? 0)
-
-    return () => {
-      cancelled = true
-    }
   }, [])
 
   /**
