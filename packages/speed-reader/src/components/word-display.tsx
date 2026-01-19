@@ -68,19 +68,6 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
       <div className='relative w-full max-w-4xl'>
-        {/* Quick exit button so users can return to the main screen. */}
-        {onStop && (
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon-sm'
-            onClick={onStop}
-            className='absolute right-0 top-0 z-50'
-            aria-label='Stop reading'
-          >
-            <X />
-          </Button>
-        )}
         {/* Focal guide lines */}
         <div className='absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none'>
           <div className='absolute w-px h-16 bg-primary/20 -top-8' />
@@ -92,7 +79,9 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
 
         {/* Word container */}
         <div
-          className={cn('relative flex items-center justify-center mb-1.5 @container/word-display')}
+          className={cn(
+            'relative flex items-center justify-center mb-1.5 @container/word-display min-h-12',
+          )}
           style={{ fontSize: `calc(max(4cqi, 16px) * ${fontSizeMultiple})`, fontFamily: fontStyle }}
           ref={containerRef}
         >

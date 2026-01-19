@@ -441,9 +441,7 @@ export function RSVPReader({
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}
         <header className='flex items-center justify-between px-6 py-4 border-b'>
-          <div className='flex items-center gap-3'>
-            <h1 className='text-lg/tight font-semibold truncate max-w-1/3'>{pageContentTitle}</h1>
-          </div>
+          <h1 className='text-lg/tight font-semibold truncate grow'>{pageContentTitle}</h1>
           <TabsList variant='underline'>
             {/* Only show icons on mobile */}
             <TabsTrigger value='reader'>
@@ -488,27 +486,25 @@ export function RSVPReader({
           )}
           {/* Control panel shows on both overlay and page layouts */}
 
-          <div className='flex flex-col gap-2'>
-            <ControlPanel
-              state={readerState}
-              onReset={handleReset}
-              settings={settings}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onStop={handleStop}
-              onSettingsChange={onSettingsChange}
-              onSeek={handleSeek}
-              containerRef={controlPanelRef}
-              progressBar={
-                settings.showProgress && (
-                  <ReadingProgressBar
-                    currentIndex={wordIndex}
-                    totalWords={totalWords}
-                  />
-                )
-              }
-            />
-          </div>
+          <ControlPanel
+            state={readerState}
+            onReset={handleReset}
+            settings={settings}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onStop={handleStop}
+            onSettingsChange={onSettingsChange}
+            onSeek={handleSeek}
+            containerRef={controlPanelRef}
+            progressBar={
+              settings.showProgress && (
+                <ReadingProgressBar
+                  currentIndex={wordIndex}
+                  totalWords={totalWords}
+                />
+              )
+            }
+          />
         </TabsPanel>
 
         <TabsPanel
