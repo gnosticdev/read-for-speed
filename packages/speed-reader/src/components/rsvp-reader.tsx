@@ -202,23 +202,77 @@ export function RSVPReader({
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
   const [stats, setStats] = useState<ReadingStats>(initialStats)
 
-  const handleSaveStats = useCallback(
-    (newStats: Partial<ReadingStats>) => {
-      console.log('handleSaveStats', newStats)
-      setStats((s) => ({
-        ...s,
-        ...newStats,
-      }))
-      onSessionStatsChange?.({
-        ...stats,
-        ...newStats,
+  const sessionStartRef = useRef<number | null>(null)
+  const sessionElapsedRef = useRef(0)
+  const wordsReadInSessionRef = useRef(0)
+  const committedWordsRef = useRef(0)
+  const committedTimeRef = useRef(0)
+  const lastWordIndexRef = useRef(wordIndex)
+
+  const resetSessionTracking = useCallback(() => {
+    sessionStartRef.current = null
+    sessionElapsedRef.current = 0
+    wordsReadInSessionRef.current = 0
+    committedWordsRef.current = 0
+    committedTimeRef.current = 0
+    lastWordIndexRef.current = 0
+  }, [])
+
+  const commitSessionStats = useCallback(
+    (completeSession: boolean) => {
+      const activeSessionTime =
+        sessionStartRef.current != null ? (Date.now() - sessionStartRef.current) / 1000 : 0
+      const sessionTime = sessionElapsedRef.current + activeSessionTime
+
+      const deltaWords = Math.max(0, wordsReadInSessionRef.current - committedWordsRef.current)
+      const deltaTime = Math.max(0, sessionTime - committedTimeRef.current)
+      const shouldComplete =
+        completeSession && (wordsReadInSessionRef.current > 0 || sessionTime > 0)
+
+      if (deltaWords === 0 && deltaTime === 0 && !shouldComplete) return
+
+      setStats((prev) => {
+        const nextWordsRead = prev.wordsRead + deltaWords
+        const nextTime = prev.totalTimeSeconds + deltaTime
+        const nextSessions = prev.sessionsCompleted + (shouldComplete ? 1 : 0)
+        const nextAverageWpm = nextTime > 0 ? Math.round((nextWordsRead / nextTime) * 60) : 0
+
+        return {
+          ...prev,
+          wordsRead: nextWordsRead,
+          totalTimeSeconds: nextTime,
+          sessionsCompleted: nextSessions,
+          averageWpm: nextAverageWpm,
+          totalWords,
+        }
       })
+
+      committedWordsRef.current = wordsReadInSessionRef.current
+      committedTimeRef.current = sessionTime
     },
-    [stats, onSessionStatsChange],
+    [totalWords],
   )
 
-  const sessionStartRef = useRef<number | null>(null)
-  const wordsReadInSessionRef = useRef(0)
+  useEffect(() => {
+    onSessionStatsChange?.(stats)
+  }, [stats, onSessionStatsChange])
+
+  useEffect(() => {
+    setStats((prev) => (prev.totalWords === totalWords ? prev : { ...prev, totalWords }))
+  }, [totalWords])
+
+  useEffect(() => {
+    if (readerState !== 'playing') {
+      lastWordIndexRef.current = wordIndex
+      return
+    }
+
+    const prevIndex = lastWordIndexRef.current
+    if (wordIndex > prevIndex) {
+      wordsReadInSessionRef.current += wordIndex - prevIndex
+    }
+    lastWordIndexRef.current = wordIndex
+  }, [readerState, wordIndex])
 
   /**
    * Handles changes to the pasted content from the textarea.
@@ -238,14 +292,16 @@ export function RSVPReader({
   /**
    * Handles switching between page and paste input modes.
    */
-  const handleInputModeChange = useCallback((mode: 'page' | 'paste') => {
-    setInputMode(mode)
-    // Reset reading position when switching modes.
-    setWordIndex(0)
-    setReaderState('idle')
-    wordsReadInSessionRef.current = 0
-    sessionStartRef.current = null
-  }, [])
+  const handleInputModeChange = useCallback(
+    (mode: 'page' | 'paste') => {
+      setInputMode(mode)
+      // Reset reading position when switching modes.
+      setWordIndex(0)
+      setReaderState('idle')
+      resetSessionTracking()
+    },
+    [resetSessionTracking, setInputMode, setReaderState, setWordIndex],
+  )
 
   /**
    * Reset reading state when page content changes.
@@ -257,9 +313,8 @@ export function RSVPReader({
     // Reset reading position when page content is updated.
     setWordIndex(0)
     setReaderState('idle')
-    wordsReadInSessionRef.current = 0
-    sessionStartRef.current = null
-  }, [pageContent, inputMode])
+    resetSessionTracking()
+  }, [pageContent, inputMode, resetSessionTracking, setReaderState, setWordIndex])
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
@@ -272,27 +327,26 @@ export function RSVPReader({
     setInputMode('paste')
     setWordIndex(0)
     setReaderState('idle')
-    wordsReadInSessionRef.current = 0
-    sessionStartRef.current = null
-  }, [initialPastedContent])
+    resetSessionTracking()
+  }, [initialPastedContent, resetSessionTracking, setReaderState, setWordIndex])
 
   const handlePlay = () => {
     if (wordCountIndexed === 0) return
     play()
     setReaderState('playing')
-    sessionStartRef.current = Date.now()
+    if (sessionStartRef.current == null) {
+      sessionStartRef.current = Date.now()
+    }
   }
 
   const handlePause = () => {
     pause()
     setReaderState('paused')
     if (sessionStartRef.current) {
-      const sessionTime = (Date.now() - sessionStartRef.current) / 1000
-      handleSaveStats({
-        wordsRead: wordsReadInSessionRef.current,
-        totalTimeSeconds: sessionTime,
-      })
+      sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
+      sessionStartRef.current = null
     }
+    commitSessionStats(false)
   }
 
   const handleReset = () => {
@@ -303,14 +357,11 @@ export function RSVPReader({
     setReaderState('idle')
     setWordIndex(0)
     if (sessionStartRef.current) {
-      const sessionTime = (Date.now() - sessionStartRef.current) / 1000
-      handleSaveStats({
-        wordsRead: wordsReadInSessionRef.current,
-        totalTimeSeconds: sessionTime,
-      })
+      sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
       sessionStartRef.current = null
     }
-    wordsReadInSessionRef.current = 0
+    commitSessionStats(true)
+    resetSessionTracking()
   }
 
   const handleSeek = (index: number) => {
