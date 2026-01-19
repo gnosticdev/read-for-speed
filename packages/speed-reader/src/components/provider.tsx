@@ -20,7 +20,7 @@ export function RSVPProvider({
   children,
 }: {
   content: string
-  chunkSize: number
+  chunkSize: 1 | 2 | 3
   skipWords: number
   wpm: number
   autoplay?: boolean

@@ -257,64 +257,7 @@ export function RSVPReader({
     sessionStartRef.current = null
   }, [initialPastedContent])
 
-  /**
-   * Update total word count in stats when chunks change.
-   */
-  useEffect(() => {
-    setStats((prev) => ({ ...prev, totalWords }))
-  }, [totalWords])
-
-  // Calculate interval based on WPM
-  // const getInterval = useCallback(() => {
-  //   return 60000 / settings.wpm
-  // }, [settings.wpm])
-
-  // /**
-  //  * Handle chunk progression during playback.
-  //  * Advances one chunk at a time based on WPM.
-  //  * Note: skipWords is only used for manual skip forward/back, not playback.
-  //  */
-  // useEffect(() => {
-  //   if (readerState !== 'playing') return
-
-  //   if (sessionStartRef.current === null) {
-  //     sessionStartRef.current = Date.now()
-  //     wordsReadInSessionRef.current = 0
-  //   }
-
-  //   intervalRef.current = setInterval(() => {
-  //     setWordIndex((prev) => {
-  //       if (prev >= words.length - 1) {
-  //         // Session complete
-  //         setReaderState('done')
-  //         const sessionTime = (Date.now() - (sessionStartRef.current || Date.now())) / 1000
-  //         setStats((s) => ({
-  //           ...s,
-  //           wordsRead: s.wordsRead + wordsReadInSessionRef.current + 1,
-  //           sessionsCompleted: s.sessionsCompleted + 1,
-  //           totalTimeSeconds: s.totalTimeSeconds + sessionTime,
-  //           averageWpm: Math.round(
-  //             ((s.wordsRead + wordsReadInSessionRef.current) / (s.totalTimeSeconds + sessionTime)) *
-  //               60,
-  //           ),
-  //         }))
-  //         sessionStartRef.current = null
-  //         return 0
-  //       }
-  //       wordsReadInSessionRef.current += 1
-  //       return prev + 1
-  //     })
-  //   }, getInterval())
-
-  //   return () => {
-  //     if (intervalRef.current) {
-  //       clearInterval(intervalRef.current)
-  //     }
-  //   }
-  // }, [readerState, words.length, getInterval])
-
   const handlePlay = () => {
-    console.log('handlePlay')
     if (wordCountIndexed === 0) return
     play()
     setReaderState('playing')
@@ -356,6 +299,16 @@ export function RSVPReader({
   const handleSeek = (index: number) => {
     setWordIndex(index)
   }
+
+  const handlePanelChange = useCallback(
+    (panel: 'reader' | 'settings' | 'stats') => {
+      if (readerState === 'playing') {
+        handlePause()
+      }
+      setActivePanel(panel)
+    },
+    [handlePause, readerState],
+  )
 
   /**
    * Keyboard shortcuts for reader control.
@@ -414,7 +367,7 @@ export function RSVPReader({
   return (
     <Tabs
       value={activePanel}
-      onValueChange={(value) => setActivePanel(value as 'reader' | 'settings' | 'stats')}
+      onValueChange={handlePanelChange}
       className={cn('@container/reader-main', classNames?.container)}
     >
       <div className={cn('flex min-h-0 flex-col')}>

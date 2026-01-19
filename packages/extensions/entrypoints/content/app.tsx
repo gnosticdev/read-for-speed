@@ -18,8 +18,9 @@ export default function ContentApp({
   const [settings, setSettings] = useState<ReaderSettings>(initialSettings)
   const [pastedText, setPastedText] = useState<string | undefined>(undefined)
   const [openDialog, setOpenDialog] = useState(false)
+  const [inputMode, setInputMode] = useState<'page' | 'paste'>('page')
 
-  const [content, setContent] = useState<string>('')
+  const [pageContent, setPageContent] = useState<string>('')
   const [title, setTitle] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [totalWords, setTotalWords] = useState<number>(0)
@@ -29,7 +30,7 @@ export default function ContentApp({
   useEffect(() => {
     const article = new Readability(docClone).parse() // returns { textContent, ... }
 
-    setContent(article?.textContent ?? '')
+    setPageContent(article?.textContent ?? '')
     setTitle(article?.title ?? docClone.title)
     setError(article ? null : 'No readable text found on this page.')
     setTotalWords(article?.textContent?.split(/\s+/).length ?? 0)
@@ -53,6 +54,7 @@ export default function ContentApp({
     switch (message.type) {
       case 'SHOW_READER_WITH_SELECTED_TEXT':
         setPastedText(message.payload)
+        setInputMode('paste')
         setOpenDialog(true)
         break
       case 'SHOW_READER':
@@ -60,6 +62,13 @@ export default function ContentApp({
         break
     }
   }, [])
+
+  const content = useMemo(() => {
+    if (inputMode === 'page') {
+      return pageContent
+    }
+    return pastedText ?? ''
+  }, [inputMode, pageContent, pastedText])
 
   useEffect(() => {
     browser.runtime.onMessage.addListener(handleMessageEvent)
@@ -69,9 +78,9 @@ export default function ContentApp({
   return (
     <RSVPProvider
       content={content}
-      chunkSize={initialSettings.chunkSize}
-      skipWords={initialSettings.skipWords}
-      wpm={initialSettings.wpm}
+      chunkSize={settings.chunkSize}
+      skipWords={settings.skipWords}
+      wpm={settings.wpm}
     >
       <ContentDialog
         uiContainer={uiContainer}
@@ -80,7 +89,9 @@ export default function ContentApp({
         onOpenChange={setOpenDialog}
       >
         <RSVPReader
-          pageContent={content}
+          pageContent={pageContent}
+          contentMode={inputMode}
+          onContentModeChange={setInputMode}
           pageContentTitle={title}
           pageContentError={error}
           totalWords={totalWords}

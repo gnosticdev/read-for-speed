@@ -65,20 +65,6 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
     lg: 1.25,
   }[settings.fontSizePreset]
 
-  /**
-   * Calculate the optimal font size based on container width, preset,
-   * and the largest chunk length in the content.
-   * Recalculates when container width, font settings, or chunks change.
-   */
-  // const fontSize = useMemo(() => {
-  //   return calculateFontSize({
-  //     containerWidth,
-  //     preset: settings.fontSizePreset,
-  //     fontFamily: settings.fontFamily,
-  //     largestChunkLength,
-  //   })
-  // }, [containerWidth, settings.fontSizePreset, settings.fontFamily, largestChunkLength])
-
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
       <div className='relative w-full max-w-4xl'>
@@ -107,7 +93,7 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
         {/* Word container */}
         <div
           className={cn('relative flex items-center justify-center mb-1.5 @container/word-display')}
-          style={{ fontSize: `calc(4cqi * ${fontSizeMultiple})`, fontFamily: fontStyle }}
+          style={{ fontSize: `calc(max(4cqi, 16px) * ${fontSizeMultiple})`, fontFamily: fontStyle }}
           ref={containerRef}
         >
           {/* Before ORP - align right */}

@@ -1,11 +1,7 @@
-import type { PopoverPortalProps } from '@base-ui/react'
 import { MobileChunkSizeControlTrigger } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
-import { Button } from '@read-for-speed/ui/components/button'
-import { Slider } from '@read-for-speed/ui/components/slider'
 import { ToggleGroup, ToggleGroupItem } from '@read-for-speed/ui/components/toggle-group'
 import { useIsMobile } from '@read-for-speed/ui/hooks/use-mobile'
 import { cn } from '@read-for-speed/ui/lib/utils'
-import { WholeWord } from 'lucide-react'
 import type { ReaderSettings } from '../rsvp-reader'
 
 interface ChunkSizeControlProps {

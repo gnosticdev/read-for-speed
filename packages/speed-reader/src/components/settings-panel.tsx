@@ -39,6 +39,9 @@ const STEP_WPM = 25
 const MIN_SKIP_WORDS = 1
 const MAX_SKIP_WORDS = 100
 const STEP_SKIP_WORDS = 1
+const MIN_CHUNK_SIZE = 1
+const MAX_CHUNK_SIZE = 3
+const STEP_CHUNK_SIZE = 1
 
 /**
  * Font size preset options with display labels.
@@ -193,6 +196,25 @@ export function SettingsPanel({
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_WPM} (Slow)</span>
               <span>{MAX_WPM} (Fast)</span>
+            </div>
+          </div>
+          {/* Chunk size */}
+          <div className='space-y-3'>
+            <Label htmlFor='chunk-size-input'>Chunk Size: {settings.chunkSize} words</Label>
+            <p className='text-xs text-muted-foreground'>The number of words to display at once.</p>
+            <Slider
+              id='chunk-size-input'
+              min={MIN_CHUNK_SIZE}
+              max={MAX_CHUNK_SIZE}
+              step={STEP_CHUNK_SIZE}
+              value={settings.chunkSize}
+              onValueChange={(value) =>
+                onSettingsChange({ ...settings, chunkSize: value as 1 | 2 | 3 })
+              }
+            />
+            <div className='flex justify-between text-xs text-muted-foreground'>
+              <span>{MIN_CHUNK_SIZE} Word</span>
+              <span>{MAX_CHUNK_SIZE} Words</span>
             </div>
           </div>
 
