@@ -5,6 +5,7 @@ import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 import { Logo } from '@read-for-speed/speed-reader/logo'
+import type { ReaderSettings } from '@read-for-speed/speed-reader/rsvp-reader'
 import { Button } from '@read-for-speed/ui/components/button'
 import { BookOpen } from 'lucide-react'
 import type React from 'react'
@@ -19,26 +20,51 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/dialog-with-portal'
+import { SETTINGS_STORAGE_KEY } from '@/entrypoints/content/app'
+import { cn } from '@/lib/utils'
 
 const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
 
 /**
  * Floating button to trigger dialog if the setting is enabled.
  */
-export const TriggerButton = () => (
-  <DialogTrigger
-    handle={contentDialogHandle}
-    render={(props) => (
-      <Button
-        variant='default'
-        size='icon'
-        {...props}
-      >
-        <BookOpen />
-      </Button>
-    )}
-  />
-)
+export const TriggerButton = ({ initiallyVisible }: { initiallyVisible: boolean }) => {
+  const [isVisible, setVisible] = useState(initiallyVisible)
+
+  const handleVisibleChange = useCallback(
+    (value: ReaderSettings | null) => {
+      if (!value) return
+      console.log('setting visible to', value.showFloatingButton)
+      if (value.showFloatingButton === isVisible) return
+      setVisible(value.showFloatingButton)
+    },
+    [isVisible],
+  )
+
+  useEffect(() => {
+    const unwatch = storage.watch<ReaderSettings | null>(
+      `local:${SETTINGS_STORAGE_KEY}`,
+      handleVisibleChange,
+    )
+    return () => unwatch()
+  }, [])
+
+  return (
+    <DialogTrigger
+      handle={contentDialogHandle}
+      render={(props) => (
+        <Button
+          variant='default'
+          size='icon'
+          className={cn(isVisible ? 'inline-flex' : 'hidden')}
+          {...props}
+        >
+          <BookOpen />
+        </Button>
+      )}
+    />
+  )
+}
 
 export interface ContentDialogProps {
   uiContainer: HTMLElement
@@ -76,13 +102,14 @@ export default function ContentDialog({
       <DialogPopup
         className='sm:max-w-3xl overflow-hidden'
         portalContainer={uiContainer}
+        bottomStickOnMobile={false}
         keepMounted={true}
       >
         <DialogHeader>
           <DialogTitle>
             <div className='flex items-center gap-2'>
               <Logo className='size-4' />
-              <span className='text-lg/tight font-semibold'>Read For Speed</span>
+              <span className='sm:text-lg/tight text-base/tight font-semibold'>Read For Speed</span>
             </div>
           </DialogTitle>
         </DialogHeader>

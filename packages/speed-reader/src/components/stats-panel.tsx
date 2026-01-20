@@ -10,6 +10,26 @@ import {
 } from '@read-for-speed/ui/components/card'
 import { BookOpen, Clock, Trophy, Zap } from 'lucide-react'
 
+/**
+ * Statistics tracked during reading sessions.
+ */
+
+export interface ReadingStats {
+  wordsRead: number
+  totalWords: number
+  sessionsCompleted: number
+  averageWpm: number
+  totalTimeSeconds: number
+}
+
+export const DEFAULT_READING_STATS: ReadingStats = {
+  wordsRead: 0,
+  totalWords: 0,
+  sessionsCompleted: 0,
+  averageWpm: 0,
+  totalTimeSeconds: 0,
+}
+
 interface StatsPanelProps {
   stats: ReadingStats
   onClose: () => void
@@ -105,15 +125,4 @@ export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelPro
       </Card>
     </div>
   )
-}
-/**
- * Statistics tracked during reading sessions.
- */
-
-export interface ReadingStats {
-  wordsRead: number
-  totalWords: number
-  sessionsCompleted: number
-  averageWpm: number
-  totalTimeSeconds: number
 }

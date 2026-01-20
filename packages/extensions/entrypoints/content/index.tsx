@@ -1,12 +1,10 @@
 import ReactDOM from 'react-dom/client'
 
 import '@/assets/tailwind.css'
-import {
-  DEFAULT_READER_SETTINGS,
-  type ReaderSettings,
-} from '@read-for-speed/speed-reader/rsvp-reader'
+
 import ContentApp from '@/entrypoints/content/app'
-import { sessionStats } from '@/lib/session-start-time'
+import { sessionStats } from '@/lib/session-stats'
+import { readerSettings } from '@/lib/settings'
 import { SETTINGS_STORAGE_KEY } from './app'
 
 /**
@@ -21,11 +19,10 @@ export default defineContentScript({
   matches: ['*://*/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
-    const initialSettings = await storage.getItem<ReaderSettings>(`local:${SETTINGS_STORAGE_KEY}`, {
-      fallback: DEFAULT_READER_SETTINGS,
-    })
-
     const initialStats = await sessionStats.getValue()
+    const initialSettings = await readerSettings.getValue()
+
+    console.log('initialSettings', initialSettings)
 
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
@@ -64,7 +61,7 @@ export default defineContentScript({
         // Render the app with the provider wrapping ContentApp.
         root.render(
           <>
-            {initialSettings.showFloatingButton && <TriggerButton />}
+            <TriggerButton initiallyVisible={initialSettings.showFloatingButton} />
             <ContentApp
               ctx={ctx}
               docClone={docClone}

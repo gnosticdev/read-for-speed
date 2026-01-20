@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@read-for-speed/ui/components/button'
 import { ScrollArea } from '@read-for-speed/ui/components/scroll-area'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
 import { Textarea } from '@read-for-speed/ui/components/textarea'
@@ -10,12 +11,8 @@ interface ContentInputProps {
   pastedContent: string
   /** Callback when the pasted content changes. */
   onPastedContentChange: (content: string) => void
-  /** Handler to trigger page content extraction (optional). */
-  onUsePageContent?: () => void
   /** Callback when user switches to the page tab. */
   onSelectPageContent?: () => void
-  pageContentStatus?: 'idle' | 'loading' | 'error' | 'ready'
-  pageContentTitle?: string | null
   pageContentError?: string | null
   /** Full page content (read-only display). */
   pageContent?: string
@@ -25,17 +22,20 @@ interface ContentInputProps {
   onModeChange: (mode: 'page' | 'paste') => void
   /** CSS classes for the content input component */
   className?: string
+  /** Callback when an error is presented and the user clicks the `Try Again` button. */
+  onErrorResubmit?: () => void
 }
 
 export function ContentInput({
   className,
   pastedContent,
   onPastedContentChange,
-  onUsePageContent: _onUsePageContent,
+  pageContentError,
   onSelectPageContent,
   pageContent = '',
   activeMode,
   onModeChange,
+  onErrorResubmit,
 }: ContentInputProps) {
   /**
    * Handle tab switching between page and paste modes.
@@ -58,7 +58,9 @@ export function ContentInput({
     <div className={cn('flex-1 flex flex-col items-center justify-center px-6 py-8', className)}>
       <div className='w-full max-w-2xl space-y-6'>
         <div className='text-center space-y-2'>
-          <h2 className='text-2xl font-semibold'>Speed Read Any Content</h2>
+          <h2 className='text-2xl @max-md/reader-main:text-xl font-semibold'>
+            Speed Read Any Content
+          </h2>
           <p className='text-muted-foreground'>
             Paste text or use the current page to begin reading at lightning speed
           </p>
@@ -77,19 +79,31 @@ export function ContentInput({
             value='page'
             keepMounted
           >
-            <div className='space-y-4'>
-              <ScrollArea
-                data-page-content
-                className='w-full h-48'
-              >
-                <article className='text-left text-sm text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input h-fit min-h-full'>
-                  {pageContent}
-                </article>
-              </ScrollArea>
-              <span className='text-xs text-right text-muted-foreground'>
-                {pageWordCount} words
-              </span>
-            </div>
+            {pageContentError && onErrorResubmit ? (
+              <div className='flex flex-col gap-4'>
+                <div className='text-red-500 text-sm text-center'>{pageContentError}</div>
+                <Button
+                  variant='destructive-outline'
+                  onClick={onErrorResubmit}
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <div className='space-y-4'>
+                <ScrollArea
+                  data-page-content
+                  className='w-full h-48'
+                >
+                  <article className='text-left text-sm text-foreground whitespace-pre-line wrap-break-word dark:bg-input/30 px-4 py-2 bg-input h-fit min-h-full'>
+                    {pageContent}
+                  </article>
+                </ScrollArea>
+                <span className='text-xs text-right text-muted-foreground'>
+                  {pageWordCount} words
+                </span>
+              </div>
+            )}
           </TabsPanel>
 
           <TabsPanel

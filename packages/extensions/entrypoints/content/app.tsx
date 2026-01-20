@@ -2,12 +2,10 @@ import { isProbablyReaderable, Readability } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
-import type { ContentScriptContext, WxtWindowEventMap } from '#imports'
+import type { ContentScriptContext } from '#imports'
 import ContentDialog from '@/components/content-dialog'
 import type { RSVPReaderMessage } from '@/lib/message-types'
-import { sessionStats } from '@/lib/session-start-time'
-
-type WxtLocationChangeEvent = WxtWindowEventMap['wxt:locationchange']
+import { sessionStats } from '@/lib/session-stats'
 
 export const SETTINGS_STORAGE_KEY = 'read-for-speed:settings' as const
 
@@ -16,7 +14,6 @@ export default function ContentApp({
   initialSettings,
   initialStats,
   uiContainer,
-  ctx,
 }: {
   docClone: Document
   initialSettings: ReaderSettings
@@ -34,7 +31,7 @@ export default function ContentApp({
   const [error, setError] = useState<string | null>(null)
   const [totalWords, setTotalWords] = useState<number>(0)
 
-  const controlsContainer = useRef<HTMLDivElement>(null)
+  const controlsContainerRef = useRef<HTMLDivElement | null>(null)
 
   const parseWebPageContent = useCallback((newDoc: Document) => {
     const article = new Readability(newDoc).parse() // returns { textContent, ... }
@@ -84,17 +81,12 @@ export default function ContentApp({
     }
   }, [])
 
-  const content = useMemo(() => {
-    if (inputMode === 'page') {
-      return pageContent
-    }
-    return pastedText ?? ''
-  }, [inputMode, pageContent, pastedText])
-
   useEffect(() => {
     browser.runtime.onMessage.addListener(handleMessageEvent)
     return () => browser.runtime.onMessage.removeListener(handleMessageEvent)
   }, [handleMessageEvent])
+
+  const content = inputMode === 'page' ? pageContent : (pastedText ?? '')
 
   return (
     <RSVPProvider
@@ -105,7 +97,7 @@ export default function ContentApp({
     >
       <ContentDialog
         uiContainer={uiContainer}
-        controlsContainerRef={controlsContainer}
+        controlsContainerRef={controlsContainerRef}
         open={openDialog}
         onOpenChange={setOpenDialog}
       >
@@ -125,7 +117,7 @@ export default function ContentApp({
           classNames={{
             container: 'h-full',
           }}
-          controlPanelRef={controlsContainer}
+          controlPanelRef={controlsContainerRef}
         />
       </ContentDialog>
     </RSVPProvider>

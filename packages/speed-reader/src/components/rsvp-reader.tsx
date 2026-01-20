@@ -11,7 +11,7 @@ import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
-import { type ReadingStats, StatsPanel } from './stats-panel'
+import { DEFAULT_READING_STATS, type ReadingStats, StatsPanel } from './stats-panel'
 import { WordDisplay } from './word-display'
 
 export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
@@ -21,20 +21,21 @@ export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
  * The actual pixel size is calculated dynamically based on container width.
  */
 export type FontSizePreset = 'sm' | 'md' | 'lg'
-
+export type FontFamily = 'sans' | 'mono' | 'serif'
+export type ChunkSize = 1 | 2 | 3
 /**
  * Settings for the RSVP reader display and behavior.
  */
 export interface ReaderSettings {
   wpm: number
   skipWords: number
-  chunkSize: 1 | 2 | 3
+  chunkSize: ChunkSize
   /**
    * Font size preset - the actual pixel size is calculated dynamically
    * based on container width to ensure text fits on a single line.
    */
   fontSizePreset: FontSizePreset
-  fontFamily: 'sans' | 'mono' | 'serif'
+  fontFamily: FontFamily
   showProgress: boolean
   /** Show a floating button - usefule when mounting the reader to a dialog */
   showFloatingButton: boolean
@@ -96,21 +97,25 @@ export interface RSVPReaderConfig {
    */
   controlPanelRef?: RefObject<HTMLDivElement | null>
   /**
+   * Total number of words in the reader.
+   */
+  totalWords: number
+  /**
    * Callback when reader state changes.
    */
   onReaderStateChange?: (state: ReaderState) => void
   /**
-   * Total number of words in the reader.
+   * Initial stats.
    */
-  totalWords: number
+  initialStats?: ReadingStats
   /**
    * Callback when session stats change.
    */
   onSessionStatsChange?: (stats: ReadingStats) => void
   /**
-   * Initial stats.
+   * Callback when an error is presented and the user clicks the `Try Again` button.
    */
-  initialStats: ReadingStats
+  onErrorResubmit?: () => void
 }
 
 /**
@@ -174,6 +179,7 @@ export function RSVPReader({
   onContentModeChange,
   onSessionStatsChange,
   initialStats,
+  onErrorResubmit,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -199,7 +205,7 @@ export function RSVPReader({
   const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
 
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
-  const [stats, setStats] = useState<ReadingStats>(initialStats)
+  const [stats, setStats] = useState<ReadingStats>(initialStats ?? DEFAULT_READING_STATS)
 
   const sessionStartRef = useRef<number | null>(null)
   const sessionElapsedRef = useRef(0)
@@ -466,12 +472,12 @@ export function RSVPReader({
               pastedContent={pastedContent}
               onPastedContentChange={handlePastedContentChange}
               onSelectPageContent={() => setInputMode('page')}
-              pageContentTitle={pageContentTitle}
               pageContentError={pageContentError}
               pageContent={pageContent ?? ''}
               activeMode={inputMode}
               onModeChange={handleInputModeChange}
               className={classNames?.contentInputContainer}
+              onErrorResubmit={onErrorResubmit}
             />
           ) : (
             <WordDisplay

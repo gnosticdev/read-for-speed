@@ -10,6 +10,7 @@ import { Button } from '@read-for-speed/ui/components/button'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -39,9 +40,6 @@ const STEP_WPM = 25
 const MIN_SKIP_WORDS = 1
 const MAX_SKIP_WORDS = 100
 const STEP_SKIP_WORDS = 1
-const MIN_CHUNK_SIZE = 1
-const MAX_CHUNK_SIZE = 3
-const STEP_CHUNK_SIZE = 1
 
 /**
  * Font size preset options with display labels.
@@ -72,7 +70,13 @@ export function SettingsPanel({
       <Card className='w-full max-w-md'>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
+          <CardDescription>
+            Adjust your settings for the speed reader. Settings changed here will be applied
+            immediately.
+          </CardDescription>
         </CardHeader>
+
+        <Separator />
 
         <CardContent className='space-y-6'>
           {/* Font Family */}
@@ -115,7 +119,6 @@ export function SettingsPanel({
               ))}
             </ToggleGroup>
           </div>
-          <Separator />
 
           {/* Font Size */}
           <div className='space-y-3'>
@@ -141,8 +144,9 @@ export function SettingsPanel({
                   side='top'
                   tooltipStyle
                   portalContainer={popoverAnchor}
+                  className='max-w-xs'
                 >
-                  <PopoverTitle className='text-sm mb-3'>Font Size</PopoverTitle>
+                  <PopoverTitle className='text-sm mb-3'>Note</PopoverTitle>
                   The font size is automatically calculated to fit the display width. Choose a
                   preset to adjust the relative size.
                 </PopoverPopup>
@@ -179,6 +183,49 @@ export function SettingsPanel({
             </ToggleGroup>
           </div>
 
+          <Separator />
+
+          {/* Chunk size */}
+          <div className='space-y-3'>
+            <div className='space-y-1'>
+              <Label htmlFor='chunk-size-input'>Chunk Size</Label>
+              <p className='text-xs text-muted-foreground'>
+                The number of words to display at once.
+              </p>
+            </div>
+            <ToggleGroup
+              id='chunk-size-input'
+              value={[settings.chunkSize.toString()]}
+              onValueChange={(value) => {
+                const nextValue = value[0]
+                if (!nextValue) return
+                onSettingsChange({
+                  ...settings,
+                  chunkSize: Number(nextValue) as 1 | 2 | 3,
+                })
+              }}
+              className='w-full'
+              variant='outline'
+            >
+              {(
+                [
+                  { value: '1', label: '1' },
+                  { value: '2', label: '2' },
+                  { value: '3', label: '3' },
+                ] as const
+              ).map((size) => (
+                <ToggleGroupItem
+                  key={size.value}
+                  value={size.value}
+                  aria-label={size.label}
+                  className='flex-1'
+                >
+                  {size.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+
           {/* Reading Speed */}
           <div className='space-y-3'>
             <Label htmlFor='speed-input'>Default Speed: {settings.wpm} WPM</Label>
@@ -196,25 +243,6 @@ export function SettingsPanel({
             <div className='flex justify-between text-xs text-muted-foreground'>
               <span>{MIN_WPM} (Slow)</span>
               <span>{MAX_WPM} (Fast)</span>
-            </div>
-          </div>
-          {/* Chunk size */}
-          <div className='space-y-3'>
-            <Label htmlFor='chunk-size-input'>Chunk Size: {settings.chunkSize} words</Label>
-            <p className='text-xs text-muted-foreground'>The number of words to display at once.</p>
-            <Slider
-              id='chunk-size-input'
-              min={MIN_CHUNK_SIZE}
-              max={MAX_CHUNK_SIZE}
-              step={STEP_CHUNK_SIZE}
-              value={settings.chunkSize}
-              onValueChange={(value) =>
-                onSettingsChange({ ...settings, chunkSize: value as 1 | 2 | 3 })
-              }
-            />
-            <div className='flex justify-between text-xs text-muted-foreground'>
-              <span>{MIN_CHUNK_SIZE} Word</span>
-              <span>{MAX_CHUNK_SIZE} Words</span>
             </div>
           </div>
 
@@ -297,7 +325,7 @@ export function SettingsPanel({
             onClick={onSave}
             className='w-full'
           >
-            Save Settings
+            Done
           </Button>
         </CardFooter>
       </Card>

@@ -20,7 +20,7 @@ interface WordDisplayProps {
  * Font size is calculated dynamically based on container width to ensure
  * text always fits on a single line.
  */
-export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) {
+export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
@@ -102,7 +102,7 @@ export function WordDisplay({ chunkWords, settings, onStop }: WordDisplayProps) 
         </div>
 
         {/* Keyboard hints */}
-        <div className='absolute -bottom-16 inset-x-0 flex justify-between gap-6 text-xs text-muted-foreground'>
+        <div className='relative bottom-0 inset-x-0 flex justify-between gap-6 text-xs text-muted-foreground @max-md/reader-main:hidden'>
           <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
             <Kbd>Space</Kbd> Play/Pause
           </div>

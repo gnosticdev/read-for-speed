@@ -1,5 +1,5 @@
 import type { RSVPReaderMessage } from '@/lib/message-types'
-import { sessionStats } from '@/lib/session-start-time'
+import { sessionStats } from '@/lib/session-stats'
 
 export default defineBackground(() => {
 	void sessionStats.setValue({
