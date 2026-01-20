@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/compo
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
 import { DEFAULT_READING_STATS, type ReadingStats, StatsPanel } from './stats-panel'
@@ -116,6 +116,10 @@ export interface RSVPReaderConfig {
    * Callback when an error is presented and the user clicks the `Try Again` button.
    */
   onErrorResubmit?: () => void
+  /**
+   * Ref to the container element for the reader. Used for keyboard shortcuts in the control panel. Use if reader not mounted to the body, such as a dialog
+   */
+  containerRef?: RefObject<HTMLElement | null>
 }
 
 /**
@@ -180,6 +184,7 @@ export function RSVPReader({
   onSessionStatsChange,
   readingStats,
   onErrorResubmit,
+  containerRef,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -429,8 +434,10 @@ export function RSVPReader({
       }
     }
 
-    document.body.addEventListener('keydown', handleKeydown)
-    return () => document.body.removeEventListener('keydown', handleKeydown)
+    const container = containerRef?.current ?? (window as unknown as HTMLElement)
+
+    container.addEventListener('keydown', handleKeydown)
+    return () => container.removeEventListener('keydown', handleKeydown)
   }, [activePanel, readerState, settings, chunkWords.length, onSettingsChange])
 
   return (

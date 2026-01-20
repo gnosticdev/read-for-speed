@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
 
 export interface ContentDialogProps {
+  popupRef: RefObject<HTMLDivElement | null>
   uiContainer: HTMLElement
   children: React.ReactNode
   controlsContainerRef: RefObject<HTMLDivElement | null>
@@ -47,6 +48,7 @@ export interface ContentDialogProps {
  * - Open/close triggers from browser extension messages
  */
 export default function ContentDialog({
+  popupRef,
   uiContainer,
   children,
   controlsContainerRef,
@@ -77,6 +79,7 @@ export default function ContentDialog({
         portalContainer={uiContainer}
         bottomStickOnMobile={true}
         keepMounted={true}
+        ref={popupRef}
       >
         <DialogHeader>
           <DialogTitle>

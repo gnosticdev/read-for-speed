@@ -2,7 +2,6 @@ import { isProbablyReaderable, Readability } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
-import { useTransition } from 'react'
 import ContentDialog from '@/components/content-dialog'
 import type { RSVPReaderMessage } from '@/lib/message-types'
 import { sessionStats } from '@/lib/session-stats'
@@ -25,13 +24,12 @@ export default function ContentApp({
   const [pastedText, setPastedText] = useState<string | undefined>(undefined)
   const [openDialog, setOpenDialog] = useState(false)
   const [inputMode, setInputMode] = useState<'page' | 'paste'>('page')
-  const [isLoading, startTransition] = useTransition()
-
   const [pageContent, setPageContent] = useState<string>('')
   const [title, setTitle] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [totalWords, setTotalWords] = useState<number>(0)
 
+  const dialogRef = useRef<HTMLDivElement | null>(null)
   const controlsContainerRef = useRef<HTMLDivElement | null>(null)
 
   const parseWebPageContent = useCallback((newDoc: Document) => {
@@ -98,6 +96,7 @@ export default function ContentApp({
       wpm={settings.wpm}
     >
       <ContentDialog
+        popupRef={dialogRef}
         uiContainer={uiContainer}
         controlsContainerRef={controlsContainerRef}
         open={openDialog}
