@@ -4,9 +4,17 @@
 assert_lefthook_installed: true
 
 pre-push:
+  parallel: true
   jobs:
-    - name: typecheck
+    - name: typecheck speed-reader
       run: bun run typecheck
+      root: ./packages/speed-reader
+    - name: typecheck ui
+      run: bun run typecheck
+      root: ./packages/ui
+    - name: typecheck extensions
+      run: bun run typecheck
+      root: ./packages/extensions
 
 pre-commit:
   parallel: true
