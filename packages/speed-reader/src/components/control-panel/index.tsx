@@ -11,8 +11,8 @@ import { PlaybackControls } from './playback-controls'
 import { SpeedControl } from './speed-control'
 
 interface ControlPanelProps {
-  state: ReaderState
   settings: ReaderSettings
+  isPlaying: boolean
   onPlay: () => void
   /**
    * Callback to pause the reader.
@@ -35,6 +35,14 @@ interface ControlPanelProps {
    */
   onReset: () => void
   /**
+   * Callback to skip backward.
+   */
+  skipBack: () => void
+  /**
+   * Callback to skip forward.
+   */
+  skipForward: () => void
+  /**
    * Ref to the container element for the control panel.
    * Control panel will be rendered at the bottom of the `reader` tab if no ref is provided.
    */
@@ -46,7 +54,7 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({
-  state,
+  isPlaying,
   settings,
   onPlay,
   onPause,
@@ -55,9 +63,9 @@ export function ControlPanel({
   containerRef,
   onSettingsChange,
   progressBar,
+  skipBack,
+  skipForward,
 }: ControlPanelProps) {
-  const { skipBack, skipForward } = useRSVPControls()
-
   const ControlPanelComponent = (
     <div
       className='border-t border-border w-full @container/control-panel space-y-4 py-4'
@@ -74,7 +82,7 @@ export function ControlPanel({
 
         {/* Playback controls */}
         <PlaybackControls
-          state={state}
+          isPlaying={isPlaying}
           onPause={onPause}
           onPlay={onPlay}
           skipBack={skipBack}

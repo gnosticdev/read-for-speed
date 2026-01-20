@@ -58,7 +58,7 @@ export function StatsPanel({ stats, onClose, layout = 'overlay' }: StatsPanelPro
     >
       <Card className='w-full max-w-md'>
         <CardHeader>
-          <CardTitle>Reading Statistics</CardTitle>
+          <CardTitle>Reading Stats</CardTitle>
         </CardHeader>
 
         <CardContent>

@@ -5,7 +5,6 @@ import '@/assets/tailwind.css'
 import ContentApp from '@/entrypoints/content/app'
 import { sessionStats } from '@/lib/session-stats'
 import { readerSettings } from '@/lib/settings'
-import { SETTINGS_STORAGE_KEY } from './app'
 
 /**
  * Content script entry point for the Read For Speed extension.
@@ -60,16 +59,12 @@ export default defineContentScript({
 
         // Render the app with the provider wrapping ContentApp.
         root.render(
-          <>
-            <TriggerButton initiallyVisible={initialSettings.showFloatingButton} />
-            <ContentApp
-              ctx={ctx}
-              docClone={docClone}
-              initialSettings={initialSettings}
-              uiContainer={uiContainer}
-              initialStats={initialStats}
-            />
-          </>,
+          <ContentApp
+            docClone={docClone}
+            initialSettings={initialSettings}
+            uiContainer={uiContainer}
+            initialStats={initialStats}
+          />,
         )
 
         return { root, wrapper }

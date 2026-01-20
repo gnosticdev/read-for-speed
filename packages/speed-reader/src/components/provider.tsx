@@ -13,20 +13,27 @@ const RSVPControlsCtx = createContext<Controls | null>(null)
 
 export function RSVPProvider({
   content,
+  autoplay,
   chunkSize,
   skipWords,
   wpm,
-  autoplay,
+
   children,
 }: {
   content: string
-  chunkSize: 1 | 2 | 3
-  skipWords: number
-  wpm: number
   autoplay?: boolean
   children: React.ReactNode
+  chunkSize: number
+  skipWords: number
+  wpm: number
 }) {
-  const readerState = useRSVPReader({ content, chunkSize, skipWords, wpm, autoplay })
+  const readerState = useRSVPReader({
+    content,
+    chunkSize,
+    skipWords,
+    wpm,
+    autoplay,
+  })
 
   const view = useMemo<View>(
     () => ({

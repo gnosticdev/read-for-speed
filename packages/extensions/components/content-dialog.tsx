@@ -20,51 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/dialog-with-portal'
-import { SETTINGS_STORAGE_KEY } from '@/entrypoints/content/app'
+import { readerSettings } from '@/lib/settings'
 import { cn } from '@/lib/utils'
 
 const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
-
-/**
- * Floating button to trigger dialog if the setting is enabled.
- */
-export const TriggerButton = ({ initiallyVisible }: { initiallyVisible: boolean }) => {
-  const [isVisible, setVisible] = useState(initiallyVisible)
-
-  const handleVisibleChange = useCallback(
-    (value: ReaderSettings | null) => {
-      if (!value) return
-      console.log('setting visible to', value.showFloatingButton)
-      if (value.showFloatingButton === isVisible) return
-      setVisible(value.showFloatingButton)
-    },
-    [isVisible],
-  )
-
-  useEffect(() => {
-    const unwatch = storage.watch<ReaderSettings | null>(
-      `local:${SETTINGS_STORAGE_KEY}`,
-      handleVisibleChange,
-    )
-    return () => unwatch()
-  }, [])
-
-  return (
-    <DialogTrigger
-      handle={contentDialogHandle}
-      render={(props) => (
-        <Button
-          variant='default'
-          size='icon'
-          className={cn(isVisible ? 'inline-flex' : 'hidden')}
-          {...props}
-        >
-          <BookOpen />
-        </Button>
-      )}
-    />
-  )
-}
 
 export interface ContentDialogProps {
   uiContainer: HTMLElement
@@ -72,6 +31,7 @@ export interface ContentDialogProps {
   controlsContainerRef: RefObject<HTMLDivElement | null>
   open: boolean
   onOpenChange: (open: boolean) => void
+  showFloatingButton: boolean
 }
 /**
  * Main content app component that renders the speed reader dialog.
@@ -92,6 +52,7 @@ export default function ContentDialog({
   controlsContainerRef,
   open,
   onOpenChange,
+  showFloatingButton,
 }: ContentDialogProps) {
   return (
     <Dialog
@@ -99,10 +60,22 @@ export default function ContentDialog({
       handle={contentDialogHandle}
       onOpenChange={onOpenChange}
     >
+      <DialogTrigger
+        handle={contentDialogHandle}
+        render={
+          <Button
+            variant='default'
+            size='icon'
+            className={cn(showFloatingButton ? 'inline-flex' : 'hidden')}
+          />
+        }
+      >
+        <BookOpen />
+      </DialogTrigger>
       <DialogPopup
-        className='sm:max-w-3xl overflow-hidden'
+        className='sm:max-w-5xl overflow-hidden'
         portalContainer={uiContainer}
-        bottomStickOnMobile={false}
+        bottomStickOnMobile={true}
         keepMounted={true}
       >
         <DialogHeader>

@@ -30,23 +30,23 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
 
     const { anchorWordIndex, orpCharIndex } = getMultiWordORPIndex(chunkWords)
     const anchorWord = chunkWords[anchorWordIndex] ?? ''
-    const cleanWord = anchorWord.trim()
+
     const idx = orpCharIndex
     const beforeWords = chunkWords.slice(0, anchorWordIndex).join(' ')
     const afterWords = chunkWords.slice(anchorWordIndex + 1).join(' ')
 
     const beforeText =
-      beforeWords && cleanWord.slice(0, idx)
-        ? `${beforeWords} ${cleanWord.slice(0, idx)}`
-        : beforeWords || cleanWord.slice(0, idx)
+      beforeWords && anchorWord.slice(0, idx)
+        ? `${beforeWords} ${anchorWord.slice(0, idx)}`
+        : beforeWords || anchorWord.slice(0, idx)
     const afterText =
-      cleanWord.slice(idx + 1) && afterWords
-        ? `${cleanWord.slice(idx + 1)} ${afterWords}`
-        : cleanWord.slice(idx + 1) || afterWords
+      anchorWord.slice(idx + 1) && afterWords
+        ? `${anchorWord.slice(idx + 1)} ${afterWords}`
+        : anchorWord.slice(idx + 1) || afterWords
 
     return {
       beforeORP: beforeText,
-      orpChar: cleanWord[idx] || '',
+      orpChar: anchorWord[idx] || '',
       afterORP: afterText,
     }
   }, [chunkWords])
@@ -65,26 +65,29 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
 
   return (
     <div className='flex-1 flex items-center justify-center px-6'>
-      <div className='relative w-full max-w-4xl'>
+      <div className='relative w-full max-w-4xl @container'>
         {/* Focal guide lines */}
         <div className='absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none'>
           <div className='absolute w-px h-16 bg-primary/20 -top-8' />
           <div
             className='absolute w-px h-16 bg-primary/20 -bottom-8 top-auto'
-            style={{ top: '32px' }}
+            // style={{ top: '32px' }}
           />
         </div>
 
         {/* Word container */}
         <div
           className={cn(
-            'relative flex items-center justify-center mb-1.5 @container/word-display min-h-12',
+            'relative flex items-center justify-center mb-1.5 min-h-32 whitespace-nowrap',
           )}
-          style={{ fontSize: `calc(max(5cqi, 16px) * ${fontSizeMultiple})`, fontFamily: fontStyle }}
+          style={{
+            fontSize: `calc(max(4cqi, 1rem) * ${fontSizeMultiple})`,
+            fontFamily: fontStyle,
+          }}
           ref={containerRef}
         >
           {/* Before ORP - align right */}
-          <span className='text-foreground/70 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide'>
+          <span className='text-foreground/80 text-right min-w-[40%] flex justify-end leading-relaxed tracking-wide flex-1'>
             {beforeORP}
           </span>
 
@@ -96,13 +99,13 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
           </span>
 
           {/* After ORP - align left */}
-          <span className='text-foreground/70 text-left min-w-[40%] leading-relaxed tracking-wide'>
+          <span className='text-foreground/70 text-left min-w-[40%] leading-relaxed tracking-wide flex-1'>
             {afterORP}
           </span>
         </div>
 
         {/* Keyboard hints */}
-        <div className='relative bottom-0 inset-x-0 flex justify-between gap-6 text-xs text-muted-foreground @max-md/reader-main:hidden'>
+        <div className='relative bottom-0 inset-x-0 flex justify-center max-w-fit mx-auto bg-muted/80 rounded-sm p-px gap-6 text-xs text-muted-foreground @max-lg/reader-main:hidden'>
           <div className='flex @max-md/reader-main:flex-col items-center gap-1'>
             <Kbd>Space</Kbd> Play/Pause
           </div>

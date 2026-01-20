@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/compo
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
 import { DEFAULT_READING_STATS, type ReadingStats, StatsPanel } from './stats-panel'
@@ -105,9 +105,9 @@ export interface RSVPReaderConfig {
    */
   onReaderStateChange?: (state: ReaderState) => void
   /**
-   * Initial stats.
+   * Reading stats displayed in the stats panel.
    */
-  initialStats?: ReadingStats
+  readingStats?: ReadingStats
   /**
    * Callback when session stats change.
    */
@@ -178,7 +178,7 @@ export function RSVPReader({
   contentMode,
   onContentModeChange,
   onSessionStatsChange,
-  initialStats,
+  readingStats,
   onErrorResubmit,
 }: RSVPReaderConfig) {
   /**
@@ -199,13 +199,13 @@ export function RSVPReader({
    * User-provided pasted content, independent from page content.
    * Initialized with selection text if provided.
    */
-  const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
+  const [pastedContent, _setPastedContent] = useState(initialPastedContent ?? '')
 
   const { words: chunkWords, wordIndex, wordCountIndexed, readerState } = useRSVPView()
   const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
 
   const [activePanel, setActivePanel] = useState<'reader' | 'settings' | 'stats'>('reader')
-  const [stats, setStats] = useState<ReadingStats>(initialStats ?? DEFAULT_READING_STATS)
+  const [stats, setStats] = useState<ReadingStats>(readingStats ?? DEFAULT_READING_STATS)
 
   const sessionStartRef = useRef<number | null>(null)
   const sessionElapsedRef = useRef(0)
@@ -284,7 +284,7 @@ export function RSVPReader({
    */
   const handlePastedContentChange = useCallback(
     (nextContent: string) => {
-      setPastedContent(nextContent)
+      _setPastedContent(nextContent)
       onPastedContentChange?.(nextContent)
     },
     [onPastedContentChange],
@@ -327,7 +327,7 @@ export function RSVPReader({
   useEffect(() => {
     if (!initialPastedContent?.trim()) return
 
-    setPastedContent(initialPastedContent)
+    _setPastedContent(initialPastedContent)
     setInputMode('paste')
     setWordIndex(0)
     stop()
@@ -429,8 +429,8 @@ export function RSVPReader({
       }
     }
 
-    window.addEventListener('keydown', handleKeydown)
-    return () => window.removeEventListener('keydown', handleKeydown)
+    document.body.addEventListener('keydown', handleKeydown)
+    return () => document.body.removeEventListener('keydown', handleKeydown)
   }, [activePanel, readerState, settings, chunkWords.length, onSettingsChange])
 
   return (
@@ -490,7 +490,9 @@ export function RSVPReader({
           {/* Control panel shows on both overlay and page layouts */}
 
           <ControlPanel
-            state={readerState}
+            isPlaying={readerState === 'playing'}
+            skipBack={skipBack}
+            skipForward={skipForward}
             onReset={handleReset}
             settings={settings}
             onPlay={handlePlay}

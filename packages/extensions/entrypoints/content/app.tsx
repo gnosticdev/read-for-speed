@@ -2,10 +2,11 @@ import { isProbablyReaderable, Readability } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
-import type { ContentScriptContext } from '#imports'
+import { useTransition } from 'react'
 import ContentDialog from '@/components/content-dialog'
 import type { RSVPReaderMessage } from '@/lib/message-types'
 import { sessionStats } from '@/lib/session-stats'
+import { readerSettings } from '@/lib/settings'
 
 export const SETTINGS_STORAGE_KEY = 'read-for-speed:settings' as const
 
@@ -19,12 +20,12 @@ export default function ContentApp({
   initialSettings: ReaderSettings
   initialStats: ReadingStats
   uiContainer: HTMLElement
-  ctx: ContentScriptContext
 }) {
   const [settings, setSettings] = useState<ReaderSettings>(initialSettings)
   const [pastedText, setPastedText] = useState<string | undefined>(undefined)
   const [openDialog, setOpenDialog] = useState(false)
   const [inputMode, setInputMode] = useState<'page' | 'paste'>('page')
+  const [isLoading, startTransition] = useTransition()
 
   const [pageContent, setPageContent] = useState<string>('')
   const [title, setTitle] = useState<string>('')
@@ -56,8 +57,9 @@ export default function ContentApp({
    */
   const handleSettingsChange = useCallback(
     (newSettings: ReaderSettings) => {
-      setSettings(newSettings)
-      void storage.setItem(`local:${SETTINGS_STORAGE_KEY}`, newSettings)
+      readerSettings.setValue(newSettings).then(() => {
+        setSettings(newSettings)
+      })
     },
     [settings],
   )
@@ -100,11 +102,12 @@ export default function ContentApp({
         controlsContainerRef={controlsContainerRef}
         open={openDialog}
         onOpenChange={setOpenDialog}
+        showFloatingButton={settings.showFloatingButton}
       >
         <RSVPReader
           pageContent={pageContent}
           onPastedContentChange={setPastedText}
-          initialStats={initialStats}
+          readingStats={initialStats}
           onSessionStatsChange={saveSessionStats}
           contentMode={inputMode}
           onContentModeChange={setInputMode}

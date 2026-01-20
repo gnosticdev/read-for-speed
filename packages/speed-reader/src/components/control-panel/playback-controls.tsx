@@ -4,7 +4,7 @@ import { Pause, Play, RefreshCcw, SkipBack, SkipForward, Square } from 'lucide-r
 import type { ReaderState } from '../rsvp-reader'
 
 interface PlaybackControlsProps {
-  state: ReaderState
+  isPlaying: boolean
   onPause: () => void
   onPlay: () => void
   skipBack: () => void
@@ -15,7 +15,7 @@ interface PlaybackControlsProps {
 }
 
 export const PlaybackControls = ({
-  state,
+  isPlaying,
   onPause,
   onPlay,
   skipBack,
@@ -44,7 +44,7 @@ export const PlaybackControls = ({
       </Button>
 
       {/* Play/Pause button */}
-      {state === 'playing' ? (
+      {isPlaying ? (
         <Button
           size='icon-xl'
           variant='default'
@@ -77,7 +77,7 @@ export const PlaybackControls = ({
 
       <Button
         size='icon'
-        variant={state === 'playing' ? 'destructive-outline' : 'outline'}
+        variant={isPlaying ? 'destructive-outline' : 'outline'}
         onClick={onStop}
         aria-label='Stop'
       >
