@@ -32,7 +32,6 @@ export default defineBackground(() => {
 		})
 		console.log('context menu created')
 		browser.contextMenus.onClicked.addListener(async (info, tab) => {
-			console.log('context menu clicked,', info, tab)
 			if (!tab?.id) return
 
 			if (info.selectionText) {

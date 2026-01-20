@@ -21,8 +21,6 @@ export default defineContentScript({
     const initialStats = await sessionStats.getValue()
     const initialSettings = await readerSettings.getValue()
 
-    console.log('initialSettings', initialSettings)
-
     const ui = await createShadowRootUi(ctx, {
       name: 'read-for-speed-ui',
       position: 'modal',
