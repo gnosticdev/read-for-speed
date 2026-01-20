@@ -13,7 +13,8 @@
 		"zip": "bun run typecheck && wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
 		"typecheck": "tsc --noEmit",
-		"postinstall": "wxt prepare"
+		"postinstall": "wxt prepare",
+		"lint": "biome check . --write --no-errors-on-unmatched --files-ignore-unknown=true --log-level error"
 	},
 	"dependencies": {
 		"@base-ui/react": "catalog:",
