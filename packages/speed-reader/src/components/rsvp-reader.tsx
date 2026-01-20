@@ -119,7 +119,7 @@ export interface RSVPReaderConfig {
   /**
    * Ref to the container element for the reader. Used for keyboard shortcuts in the control panel. Use if reader not mounted to the body, such as a dialog
    */
-  containerRef?: RefObject<HTMLElement | null>
+  containerRef?: RefObject<HTMLDivElement | null>
 }
 
 /**
@@ -176,15 +176,15 @@ export function RSVPReader({
   settings,
   onSettingsChange,
   controlPanelRef,
-  onReaderStateChange,
   classNames,
   totalWords,
+  containerRef,
   contentMode,
   onContentModeChange,
   onSessionStatsChange,
   readingStats,
   onErrorResubmit,
-  containerRef,
+  onReaderStateChange,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -263,13 +263,10 @@ export function RSVPReader({
     [totalWords],
   )
 
+  // sync stats to parent
   useEffect(() => {
     onSessionStatsChange?.(stats)
   }, [stats, onSessionStatsChange])
-
-  useEffect(() => {
-    setStats((prev) => (prev.totalWords === totalWords ? prev : { ...prev, totalWords }))
-  }, [totalWords])
 
   useEffect(() => {
     if (readerState !== 'playing') {
@@ -294,10 +291,6 @@ export function RSVPReader({
     },
     [onPastedContentChange],
   )
-
-  useEffect(() => {
-    onReaderStateChange?.(readerState)
-  }, [readerState])
 
   /**
    * Handles switching between page and paste input modes.
@@ -324,6 +317,10 @@ export function RSVPReader({
     stop()
     resetSessionTracking()
   }, [pageContent, inputMode, resetSessionTracking, setWordIndex, stop])
+
+  useEffect(() => {
+    onReaderStateChange?.(readerState)
+  }, [readerState, onReaderStateChange])
 
   /**
    * Update pasted content and switch to paste mode when initialPastedContent changes.
@@ -366,6 +363,7 @@ export function RSVPReader({
       sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
       sessionStartRef.current = null
     }
+
     commitSessionStats(true)
     resetSessionTracking()
   }
@@ -434,10 +432,8 @@ export function RSVPReader({
       }
     }
 
-    const container = containerRef?.current ?? (window as unknown as HTMLElement)
-
-    container.addEventListener('keydown', handleKeydown)
-    return () => container.removeEventListener('keydown', handleKeydown)
+    window.addEventListener('keydown', handleKeydown)
+    return () => window.removeEventListener('keydown', handleKeydown)
   }, [activePanel, readerState, settings, chunkWords.length, onSettingsChange])
 
   return (
@@ -445,6 +441,7 @@ export function RSVPReader({
       value={activePanel}
       onValueChange={handlePanelChange}
       className={cn('@container/reader-main', classNames?.container)}
+      ref={containerRef}
     >
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}

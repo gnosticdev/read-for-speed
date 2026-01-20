@@ -105,6 +105,7 @@ export default function ContentApp({
       >
         <RSVPReader
           pageContent={pageContent}
+          onErrorResubmit={() => parseWebPageContent(docClone)}
           onPastedContentChange={setPastedText}
           readingStats={initialStats}
           onSessionStatsChange={saveSessionStats}

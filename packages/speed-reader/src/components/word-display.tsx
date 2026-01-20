@@ -58,9 +58,9 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
   }[settings.fontFamily]
 
   const fontSizeMultiple = {
-    sm: 0.75,
+    sm: 0.85,
     md: 1.0,
-    lg: 1.25,
+    lg: 1.1,
   }[settings.fontSizePreset]
 
   return (
@@ -81,7 +81,7 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
             'relative flex items-center justify-center mb-1.5 min-h-32 whitespace-nowrap',
           )}
           style={{
-            fontSize: `calc(max(4cqi, 1rem) * ${fontSizeMultiple})`,
+            fontSize: `calc(max(3cqi, 1rem) * ${fontSizeMultiple})`,
             fontFamily: fontStyle,
           }}
           ref={containerRef}
