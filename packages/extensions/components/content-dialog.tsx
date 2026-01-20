@@ -5,7 +5,6 @@ import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
 import { Logo } from '@read-for-speed/speed-reader/logo'
-import type { ReaderSettings } from '@read-for-speed/speed-reader/rsvp-reader'
 import { Button } from '@read-for-speed/ui/components/button'
 import { BookOpen } from 'lucide-react'
 import type React from 'react'
@@ -20,7 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/dialog-with-portal'
-import { readerSettings } from '@/lib/settings'
 import { cn } from '@/lib/utils'
 
 const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
@@ -93,6 +91,7 @@ export default function ContentDialog({
         <DialogFooter
           variant='bare'
           ref={controlsContainerRef}
+          className='has-only:gap-0' // if only 1 child, gap is meaningless
         />
       </DialogPopup>
     </Dialog>

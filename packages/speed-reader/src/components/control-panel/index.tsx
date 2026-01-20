@@ -1,11 +1,10 @@
 'use client'
 
 import { MobileControlPopover } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
-import { useRSVPControls } from '@read-for-speed/speed-reader/provider'
 import type React from 'react'
 import type { RefObject } from 'react'
 import { createPortal } from 'react-dom'
-import type { ReaderSettings, ReaderState } from '../rsvp-reader'
+import type { ReaderSettings } from '../rsvp-reader'
 import { ChunkSizeControl } from './chunk-size-control'
 import { PlaybackControls } from './playback-controls'
 import { SpeedControl } from './speed-control'
@@ -96,6 +95,8 @@ export function ControlPanel({
           settings={settings}
           onSettingsChange={onSettingsChange}
         />
+
+        {/* Single popover for the speed and chunk size controls. */}
         <MobileControlPopover
           container={containerRef}
           onSettingsChange={onSettingsChange}
