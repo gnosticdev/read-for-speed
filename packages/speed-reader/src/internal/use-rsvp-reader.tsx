@@ -31,8 +31,6 @@ export type RSVPState = {
   totalWords: number
   /** Playback state */
   readerState: ReaderState
-  /** Set current word index */
-
   /** Manually set current word index */
   setWordIndex: (i: number) => void
   /** Next word */
@@ -295,13 +293,17 @@ export function useRSVPReader({
     () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing')),
     [],
   )
+  /**
+   * Stop playback and reset to the beginning.
+   * Always pauses first if currently playing to ensure cleanup.
+   */
   const stop = useCallback(() => {
     if (readerState === 'playing') {
       pause()
     }
     setReaderState('idle')
     setWordIndex(0)
-  }, [pause, setWordIndex])
+  }, [readerState, pause, setWordIndex])
 
   return {
     words,

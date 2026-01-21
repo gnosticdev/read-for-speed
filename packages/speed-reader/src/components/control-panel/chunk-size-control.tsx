@@ -24,6 +24,7 @@ export const ChunkSizeControl = ({
     <div className={cn('flex items-center gap-3', className)}>
       <span className='text-sm text-muted-foreground @max-md/control-panel:hidden'>Words</span>
       <ToggleGroup
+        variant='outline'
         value={[settings.chunkSize.toString()]}
         onValueChange={(value) =>
           onSettingsChange({ ...settings, chunkSize: Number(value[0] ?? 1) as 1 | 2 | 3 })

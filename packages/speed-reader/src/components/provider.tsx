@@ -8,7 +8,15 @@ type View = Pick<
 >
 type Controls = Pick<
   RSVPState,
-  'setWordIndex' | 'next' | 'prev' | 'skipForward' | 'skipBack' | 'play' | 'pause' | 'toggle'
+  | 'setWordIndex'
+  | 'next'
+  | 'prev'
+  | 'skipForward'
+  | 'skipBack'
+  | 'play'
+  | 'pause'
+  | 'toggle'
+  | 'stop'
 >
 
 const RSVPViewCtx = createContext<View | null>(null)
@@ -20,7 +28,6 @@ export function RSVPProvider({
   chunkSize,
   skipWords,
   wpm,
-
   children,
 }: {
   content: string
@@ -65,6 +72,7 @@ export function RSVPProvider({
       play: readerState.play,
       pause: readerState.pause,
       toggle: readerState.toggle,
+      stop: readerState.stop,
     }),
     [
       readerState.setWordIndex,
@@ -75,6 +83,7 @@ export function RSVPProvider({
       readerState.play,
       readerState.pause,
       readerState.toggle,
+      readerState.stop,
     ],
   )
 

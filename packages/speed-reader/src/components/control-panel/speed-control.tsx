@@ -1,9 +1,16 @@
-import type { PopoverPortalProps } from '@base-ui/react'
+import type { NumberFieldRoot, PopoverPortalProps } from '@base-ui/react'
 import { MobileSpeedControlTrigger } from '@read-for-speed/speed-reader/control-panel/mobile-control-popovers'
-import { Button } from '@read-for-speed/ui/components/button'
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+  NumberFieldScrubArea,
+} from '@read-for-speed/ui/components/number-field'
 import { useIsMobile } from '@read-for-speed/ui/hooks/use-mobile'
 import { cn } from '@read-for-speed/ui/lib/utils'
-import { Minus, Plus } from 'lucide-react'
+import { useCallback } from 'react'
 import type { ReaderSettings } from '../rsvp-reader'
 
 export interface SpeedControlProps {
@@ -18,37 +25,41 @@ export const SpeedControl = ({ settings, onSettingsChange, className }: SpeedCon
   /**
    * Adjust the reading speed by the given delta.
    */
-  const adjustWpm = (delta: number) => {
-    onSettingsChange({
-      ...settings,
-      wpm: Math.max(50, Math.min(1000, settings.wpm + delta)),
-    })
-  }
+  const adjustWpm = useCallback(
+    (value: number | null) => {
+      if (value === null) return
+      onSettingsChange({
+        ...settings,
+        wpm: Math.max(50, Math.min(1000, value)),
+      })
+    },
+    [onSettingsChange, settings],
+  )
 
   if (isMobile) {
     return <MobileSpeedControlTrigger />
   }
 
   return (
-    <div className={cn('flex items-center gap-3', className)}>
-      <span className='text-sm text-muted-foreground w-12 @max-md/control-panel:hidden'>WPM</span>
-      <Button
-        size='icon'
-        variant='secondary'
-        onClick={() => adjustWpm(-25)}
-        aria-label='Decrease speed'
-      >
-        <Minus />
-      </Button>
-      <span className='w-12 text-center font-mono'>{settings.wpm}</span>
-      <Button
-        size='icon'
-        variant={'secondary'}
-        onClick={() => adjustWpm(25)}
-        aria-label='Increase speed'
-      >
-        <Plus />
-      </Button>
-    </div>
+    <NumberField
+      id='speed-input'
+      min={50}
+      max={1000}
+      step={5}
+      value={settings.wpm}
+      onValueChange={adjustWpm}
+      aria-label='Words per minute control'
+      className={cn(
+        'flex-row text-muted-foreground items-center gap-3 max-w-fit text-sm',
+        className,
+      )}
+    >
+      <NumberFieldScrubArea label='WPM' />
+      <NumberFieldGroup>
+        <NumberFieldDecrement />
+        <NumberFieldInput className={'max-w-20'} />
+        <NumberFieldIncrement />
+      </NumberFieldGroup>
+    </NumberField>
   )
 }

@@ -176,8 +176,8 @@ export function RSVPReader({
   controlPanelRef,
   classNames,
   containerRef,
-  inputMode: contentMode,
-  onInputModeChange: onContentModeChange,
+  inputMode,
+  onInputModeChange,
   onSessionStatsChange,
   readingStats,
   onErrorResubmit,
@@ -192,9 +192,9 @@ export function RSVPReader({
    * otherwise defaults to 'page'
    */
   const [internalInputMode, setInternalInputMode] = useControllableState<'page' | 'paste'>({
-    value: contentMode,
+    value: inputMode,
     defaultValue: 'page',
-    onChange: onContentModeChange,
+    onChange: onInputModeChange,
   })
 
   /**
@@ -204,7 +204,7 @@ export function RSVPReader({
   const [pastedContent, _setPastedContent] = useState(initialPastedContent ?? '')
 
   const { words: chunkWords, wordIndex, wordCountIndexed, totalWords, readerState } = useRSVPView()
-  const { pause, play, setWordIndex, skipForward, skipBack } = useRSVPControls()
+  const { pause, play, setWordIndex, skipForward, skipBack, stop } = useRSVPControls()
 
   const [activePanel, setActivePanel] = useState<PanelState>('reader')
   const [stats, setStats] = useState<ReadingStats>(readingStats ?? DEFAULT_READING_STATS)
@@ -267,6 +267,7 @@ export function RSVPReader({
     onSessionStatsChange?.(stats)
   }, [stats, onSessionStatsChange])
 
+  // track words read in session
   useEffect(() => {
     if (!isPlaying) {
       lastWordIndexRef.current = wordIndex
@@ -305,17 +306,17 @@ export function RSVPReader({
     [resetSessionTracking, setInternalInputMode, setWordIndex, stop],
   )
 
-  /**
-   * Reset reading state when page content changes.
-   */
-  useEffect(() => {
-    if (internalInputMode !== 'page') return
-    if (typeof pageContent !== 'string' || !pageContent.trim()) return
+  // /**
+  //  * Reset reading state when page content changes.
+  //  */
+  // useEffect(() => {
+  //   if (internalInputMode !== 'page') return
+  //   if (typeof pageContent !== 'string' || !pageContent.trim()) return
 
-    // Reset reading position when page content is updated.
-    stop()
-    resetSessionTracking()
-  }, [pageContent, internalInputMode, resetSessionTracking, setWordIndex, stop])
+  //   // Reset reading position when page content is updated.
+  //   stop()
+  //   resetSessionTracking()
+  // }, [pageContent, internalInputMode, resetSessionTracking, setWordIndex, stop])
 
   useEffect(() => {
     onReaderStateChange?.(readerState)
@@ -336,6 +337,7 @@ export function RSVPReader({
   }, [initialPastedContent, resetSessionTracking, setWordIndex, stop])
 
   const handlePlay = () => {
+    console.log('handlePlay', wordCountIndexed)
     if (wordCountIndexed === 0) return
     play()
     if (sessionStartRef.current == null) {
@@ -358,6 +360,8 @@ export function RSVPReader({
 
   const handleStop = () => {
     stop()
+    console.log('handleStop', readerState)
+
     if (sessionStartRef.current) {
       sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
       sessionStartRef.current = null
@@ -444,7 +448,7 @@ export function RSVPReader({
     >
       <div className={cn('flex min-h-0 flex-col')}>
         {/* Header */}
-        <header className='flex items-center justify-between px-6 py-4 border-b'>
+        <header className='flex items-center justify-between px-6 py-4 border-b sticky top-1 bg-popover z-10'>
           <h1 className='text-lg/tight @max-md/reader-main:text-sm font-semibold truncate max-w-1/2'>
             {pageContentTitle}
           </h1>

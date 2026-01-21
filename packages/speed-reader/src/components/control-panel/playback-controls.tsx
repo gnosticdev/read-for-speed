@@ -1,7 +1,6 @@
 import { Button } from '@read-for-speed/ui/components/button'
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { Pause, Play, RefreshCcw, SkipBack, SkipForward, Square } from 'lucide-react'
-import type { ReaderState } from '../rsvp-reader'
 
 interface PlaybackControlsProps {
   isPlaying: boolean
@@ -70,7 +69,7 @@ export const PlaybackControls = ({
         size='icon'
         variant='outline'
         onClick={skipForward}
-        aria-label='Stop'
+        aria-label='Skip forward'
       >
         <SkipForward />
       </Button>
@@ -79,7 +78,7 @@ export const PlaybackControls = ({
         size='icon'
         variant={isPlaying ? 'destructive-outline' : 'outline'}
         onClick={onStop}
-        aria-label='Stop'
+        aria-label='Stop reader'
       >
         <Square />
       </Button>
