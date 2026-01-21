@@ -2,7 +2,7 @@
 
 import { ContentInput } from '@read-for-speed/speed-reader/content-input'
 import { ControlPanel } from '@read-for-speed/speed-reader/control-panel'
-import { useRSVPControls, useRSVPView } from '@read-for-speed/speed-reader/provider'
+import { useRSVPControls, useRSVPValues } from '@read-for-speed/speed-reader/provider'
 import { ReadingProgressBar } from '@read-for-speed/speed-reader/reading-progress-bar'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
 import { cn } from '@read-for-speed/ui/lib/utils'
@@ -191,7 +191,7 @@ export function RSVPReader({
    * Defaults to 'paste' if there's initial pasted content (e.g., selection text),
    * otherwise defaults to 'page'
    */
-  const [internalInputMode, setInternalInputMode] = useControllableState<'page' | 'paste'>({
+  const [controlledInputMode, setControlledInputMode] = useControllableState<'page' | 'paste'>({
     value: inputMode,
     defaultValue: 'page',
     onChange: onInputModeChange,
@@ -203,7 +203,13 @@ export function RSVPReader({
    */
   const [pastedContent, _setPastedContent] = useState(initialPastedContent ?? '')
 
-  const { words: chunkWords, wordIndex, wordCountIndexed, totalWords, readerState } = useRSVPView()
+  const {
+    words: chunkWords,
+    wordIndex,
+    wordCountIndexed,
+    totalWords,
+    readerState,
+  } = useRSVPValues()
   const { pause, play, setWordIndex, skipForward, skipBack, stop } = useRSVPControls()
 
   const [activePanel, setActivePanel] = useState<PanelState>('reader')
@@ -297,13 +303,13 @@ export function RSVPReader({
    */
   const handleInputModeChange = useCallback(
     (mode: 'page' | 'paste') => {
-      setInternalInputMode(mode)
+      setControlledInputMode(mode)
       // Reset reading position when switching modes.
       setWordIndex(0)
       stop()
       resetSessionTracking()
     },
-    [resetSessionTracking, setInternalInputMode, setWordIndex, stop],
+    [resetSessionTracking, setControlledInputMode, setWordIndex, stop],
   )
 
   // /**
@@ -330,7 +336,7 @@ export function RSVPReader({
     if (!initialPastedContent?.trim()) return
 
     _setPastedContent(initialPastedContent)
-    setInternalInputMode('paste')
+    setControlledInputMode('paste')
     setWordIndex(0)
     stop()
     resetSessionTracking()
@@ -478,10 +484,10 @@ export function RSVPReader({
             <ContentInput
               pastedContent={pastedContent}
               onPastedContentChange={handlePastedContentChange}
-              onSelectPageContent={() => setInternalInputMode('page')}
+              onSelectPageContent={() => setControlledInputMode('page')}
               pageContentError={pageContentError}
               pageContent={pageContent ?? ''}
-              activeMode={internalInputMode}
+              activeMode={controlledInputMode}
               onModeChange={handleInputModeChange}
               className={classNames?.contentInputContainer}
               onErrorResubmit={onErrorResubmit}

@@ -2,7 +2,7 @@ import type React from 'react'
 import { createContext, useContext, useMemo } from 'react'
 import { type RSVPState, useRSVPReader } from '../internal/use-rsvp-reader'
 
-type View = Pick<
+type Values = Pick<
   RSVPState,
   'words' | 'wordIndex' | 'wordCountIndexed' | 'totalWords' | 'readerState'
 >
@@ -19,7 +19,7 @@ type Controls = Pick<
   | 'stop'
 >
 
-const RSVPViewCtx = createContext<View | null>(null)
+const RSVPValuesCtx = createContext<Values | null>(null)
 const RSVPControlsCtx = createContext<Controls | null>(null)
 
 export function RSVPProvider({
@@ -45,7 +45,7 @@ export function RSVPProvider({
     autoplay,
   })
 
-  const view = useMemo<View>(
+  const view = useMemo<Values>(
     () => ({
       words: readerState.words,
       wordIndex: readerState.wordIndex,
@@ -88,15 +88,15 @@ export function RSVPProvider({
   )
 
   return (
-    <RSVPViewCtx.Provider value={view}>
+    <RSVPValuesCtx.Provider value={view}>
       <RSVPControlsCtx.Provider value={controls}>{children}</RSVPControlsCtx.Provider>
-    </RSVPViewCtx.Provider>
+    </RSVPValuesCtx.Provider>
   )
 }
 
-export function useRSVPView() {
-  const ctx = useContext(RSVPViewCtx)
-  if (!ctx) throw new Error('useRSVPView must be used within RSVPProvider')
+export function useRSVPValues() {
+  const ctx = useContext(RSVPValuesCtx)
+  if (!ctx) throw new Error('useRSVPValues must be used within RSVPProvider')
   return ctx
 }
 

@@ -33,20 +33,19 @@ export type RSVPState = {
   readerState: ReaderState
   /** Manually set current word index */
   setWordIndex: (i: number) => void
-  /** Next word */
+  /** Next word by `chunkSize` setting amount */
   next: () => void
-  /** Previous word */
+  /** Previous word by `chunkSize` setting amount */
   prev: () => void
-  /** Skip forward */
+  /** Skip forward by `skipWords` setting amount */
   skipForward: () => void
-  /** Skip back */
+  /** Skip back by `skipWords` setting amount */
   skipBack: () => void
-
-  /** Play the reader at the provided word index and speed */
+  /** Play the reader at the current word index and speed */
   play: () => void
-  /** Pause */
+  /** Pause the reader */
   pause: () => void
-  /** Toggle playback state */
+  /** Toggle the reader playback state from playing to paused and vice versa */
   toggle: () => void
   /** Stop the reader */
   stop: () => void
@@ -294,7 +293,8 @@ export function useRSVPReader({
     [],
   )
   /**
-   * Stop playback and reset to the beginning.
+   * Stop playback and set reader to `idle` state.
+   *
    * Always pauses first if currently playing to ensure cleanup.
    */
   const stop = useCallback(() => {
@@ -302,8 +302,7 @@ export function useRSVPReader({
       pause()
     }
     setReaderState('idle')
-    setWordIndex(0)
-  }, [readerState, pause, setWordIndex])
+  }, [readerState, pause, setReaderState])
 
   return {
     words,
