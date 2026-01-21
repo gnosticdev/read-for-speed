@@ -17,6 +17,8 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
   )
 }
 
+type PortalProps = Pick<PopoverPrimitive.Portal.Props, 'container' | 'keepMounted'>
+
 function PopoverPopup({
   children,
   className,
@@ -25,16 +27,22 @@ function PopoverPopup({
   sideOffset = 4,
   alignOffset = 0,
   tooltipStyle = false,
+  container,
+  keepMounted,
   ...props
-}: PopoverPrimitive.Popup.Props & {
-  side?: PopoverPrimitive.Positioner.Props['side']
-  align?: PopoverPrimitive.Positioner.Props['align']
-  sideOffset?: PopoverPrimitive.Positioner.Props['sideOffset']
-  alignOffset?: PopoverPrimitive.Positioner.Props['alignOffset']
-  tooltipStyle?: boolean
-}) {
+}: PopoverPrimitive.Popup.Props &
+  PortalProps & {
+    side?: PopoverPrimitive.Positioner.Props['side']
+    align?: PopoverPrimitive.Positioner.Props['align']
+    sideOffset?: PopoverPrimitive.Positioner.Props['sideOffset']
+    alignOffset?: PopoverPrimitive.Positioner.Props['alignOffset']
+    tooltipStyle?: boolean
+  }) {
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal
+      container={container}
+      keepMounted={keepMounted}
+    >
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

@@ -56,18 +56,28 @@ function DialogViewport({ className, ...props }: DialogPrimitive.Viewport.Props)
   )
 }
 
+// added for convenience
+type PortalProps = Pick<DialogPrimitive.Portal.Props, 'container' | 'keepMounted'>
+
 function DialogPopup({
   className,
   children,
   showCloseButton = true,
   bottomStickOnMobile = true,
+  // for portal
+  container,
+  keepMounted,
   ...props
-}: DialogPrimitive.Popup.Props & {
-  showCloseButton?: boolean
-  bottomStickOnMobile?: boolean
-}) {
+}: DialogPrimitive.Popup.Props &
+  PortalProps & {
+    showCloseButton?: boolean
+    bottomStickOnMobile?: boolean
+  }) {
   return (
-    <DialogPortal>
+    <DialogPortal
+      container={container}
+      keepMounted={keepMounted}
+    >
       <DialogBackdrop />
       <DialogViewport
         className={cn(bottomStickOnMobile && 'max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12')}
@@ -141,7 +151,7 @@ function DialogFooter({
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
-      className={cn('font-heading text-xl leading-none', className)}
+      className={cn('font-heading font-semibold text-xl leading-none', className)}
       data-slot='dialog-title'
       {...props}
     />

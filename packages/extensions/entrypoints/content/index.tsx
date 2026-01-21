@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom/client'
 
 import '@/assets/tailwind.css'
 
+import React from 'react'
 import ContentApp from '@/entrypoints/content/app'
 import { sessionStats } from '@/lib/session-stats'
 import { readerSettings } from '@/lib/settings'
@@ -29,15 +30,12 @@ export default defineContentScript({
       anchor: document.body,
       append: 'last',
       onMount: (uiContainer, shadowRoot, _shadowHost) => {
-        // // Make the body transparent so no weird outline on button.
-        // uiContainer.classList.add('bg-transparent')
-
-        // Set dark mode class if system prefers dark color scheme.
+        // Add dark mode before mounting
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           uiContainer.classList.add('dark')
         }
 
-        // Calculate where to show the button - either below header or 25% of viewport height.
+        // Dont cover the header if there is one
         const headerHeight = document.querySelector('header')?.clientHeight ?? 0
         const top =
           headerHeight > window.innerHeight * 0.25 ? headerHeight : window.innerHeight * 0.25
@@ -57,20 +55,20 @@ export default defineContentScript({
 
         // Render the app with the provider wrapping ContentApp.
         root.render(
-          <ContentApp
-            docClone={docClone}
-            initialSettings={initialSettings}
-            uiContainer={uiContainer}
-            initialStats={initialStats}
-          />,
+          <React.StrictMode>
+            <ContentApp
+              docClone={docClone}
+              initialSettings={initialSettings}
+              uiContainer={uiContainer}
+              initialStats={initialStats}
+            />
+          </React.StrictMode>,
         )
 
-        return { root, wrapper }
+        return root
       },
-      onRemove: (mounted) => {
-        if (!mounted) return
-        mounted.root?.unmount()
-        mounted.wrapper?.remove()
+      onRemove: (root) => {
+        root?.unmount()
       },
     })
 

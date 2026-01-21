@@ -4,29 +4,16 @@ import '@/assets/tailwind.css'
 import '@fontsource-variable/chivo-mono'
 import '@fontsource-variable/merriweather'
 import '@fontsource-variable/figtree'
+import type { DialogPortalProps } from '@base-ui/react'
 import { Logo } from '@read-for-speed/speed-reader/logo'
 import { Button } from '@read-for-speed/ui/components/button'
 import { BookOpen } from 'lucide-react'
-import type React from 'react'
 import type { RefObject } from 'react'
-import {
-  Dialog,
-  DialogCreateHandle,
-  DialogFooter,
-  DialogHeader,
-  DialogPanel,
-  DialogPopup,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/dialog-with-portal'
 import { cn } from '@/lib/utils'
 
-const contentDialogHandle = DialogCreateHandle<React.ComponentType | null>()
-
 export interface ContentDialogProps {
-  popupRef: RefObject<HTMLDivElement | null>
-  uiContainer: HTMLElement
   children: React.ReactNode
+  container: DialogPortalProps['container']
   controlsContainerRef: RefObject<HTMLDivElement | null>
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -46,8 +33,7 @@ export interface ContentDialogProps {
  * - Open/close triggers from browser extension messages
  */
 export default function ContentDialog({
-  popupRef,
-  uiContainer,
+  container,
   children,
   controlsContainerRef,
   open,
@@ -57,27 +43,21 @@ export default function ContentDialog({
   return (
     <Dialog
       open={open}
-      handle={contentDialogHandle}
       onOpenChange={onOpenChange}
     >
       <DialogTrigger
-        handle={contentDialogHandle}
         render={
-          <Button
-            variant='default'
-            size='icon'
-            className={cn(showFloatingButton ? 'inline-flex' : 'hidden')}
-          />
+          <Button>
+            <BookOpen className='size-4' />
+          </Button>
         }
-      >
-        <BookOpen />
-      </DialogTrigger>
+        className={cn({ hidden: !showFloatingButton })}
+      />
       <DialogPopup
         className='sm:max-w-5xl overflow-hidden'
-        portalContainer={uiContainer}
+        container={container}
         bottomStickOnMobile={true}
         keepMounted={true}
-        ref={popupRef}
       >
         <DialogHeader>
           <DialogTitle>

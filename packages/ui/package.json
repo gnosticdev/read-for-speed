@@ -21,7 +21,7 @@
 		"./hooks/*": "./src/hooks/*.ts"
 	},
 	"dependencies": {
-		"@base-ui/react": "^1.1.0",
+		"@base-ui/react": "1.1.0",
 		"class-variance-authority": "catalog:",
 		"clsx": "catalog:",
 		"lucide-react": "catalog:",

@@ -2,7 +2,10 @@ import type React from 'react'
 import { createContext, useContext, useMemo } from 'react'
 import { type RSVPState, useRSVPReader } from '../internal/use-rsvp-reader'
 
-type View = Pick<RSVPState, 'words' | 'wordIndex' | 'wordCountIndexed' | 'readerState'>
+type View = Pick<
+  RSVPState,
+  'words' | 'wordIndex' | 'wordCountIndexed' | 'totalWords' | 'readerState'
+>
 type Controls = Pick<
   RSVPState,
   'setWordIndex' | 'next' | 'prev' | 'skipForward' | 'skipBack' | 'play' | 'pause' | 'toggle'
@@ -40,12 +43,14 @@ export function RSVPProvider({
       words: readerState.words,
       wordIndex: readerState.wordIndex,
       wordCountIndexed: readerState.wordCountIndexed,
+      totalWords: readerState.totalWords,
       readerState: readerState.readerState,
     }),
     [
       readerState.words,
       readerState.wordIndex,
       readerState.wordCountIndexed,
+      readerState.totalWords,
       readerState.readerState,
     ],
   )

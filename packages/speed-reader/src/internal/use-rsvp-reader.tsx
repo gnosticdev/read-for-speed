@@ -27,6 +27,8 @@ export type RSVPState = {
   wordIndex: number
   /** How many words have offsets indexed so far */
   wordCountIndexed: number
+  /** Total number of words in the content (available once fully indexed) */
+  totalWords: number
   /** Playback state */
   readerState: ReaderState
   /** Set current word index */
@@ -80,6 +82,15 @@ export function useRSVPReader({
   const [wordIndex, _setWordIndex] = useState<number>(0)
   const [wordCountIndexed, setWordCountIndexed] = useState<number>(0)
 
+  /**
+   * Calculate total words upfront - this is lightweight (just counting matches)
+   * and gives us the total immediately for progress display and bounds checking
+   */
+  const totalWords = useMemo(() => {
+    const matches = content.match(/\S+/g)
+    return matches ? matches.length : 0
+  }, [content])
+
   // Incremental word indexing refs
   const textRef = useRef<string>(content)
   const reRef = useRef<RegExp | null>(null)
@@ -106,14 +117,23 @@ export function useRSVPReader({
     scheduleEnsure(0 + Math.max(1, chunkSize) + bufferWords)
   }, [content])
 
-  const clamp = (v: number, lo: number) => (v < lo ? lo : v)
+  const clamp = (v: number, lo: number, hi: number) => {
+    if (v < lo) return lo
+    if (hi > 0 && v >= hi) return hi - 1
+    return v
+  }
 
-  const setWordIndex = useCallback((i: number) => {
-    _setWordIndex(() => {
-      const next = i | 0
-      return next < 0 ? 0 : next
-    })
-  }, [])
+  const setWordIndex = useCallback(
+    (i: number) => {
+      _setWordIndex(() => {
+        const next = i | 0
+        // Clamp to valid range: [0, totalWords - 1]
+        // If totalWords is not yet known (0), allow any non-negative index
+        return clamp(next, 0, totalWords)
+      })
+    },
+    [totalWords],
+  )
 
   // Ensure we have indexed offsets up to at least targetWordCount
   const ensureIndexedUpTo = useCallback(
@@ -156,8 +176,9 @@ export function useRSVPReader({
           setWordCountIndexed(indexedCountRef.current)
         }
 
-        // Done?
-        if (indexedCountRef.current >= target || re.lastIndex >= text.length) {
+        // Done? Check if we've reached the end of the text or target
+        const reachedEnd = re.lastIndex >= text.length
+        if (indexedCountRef.current >= target || reachedEnd) {
           parsingRef.current = false
           return
         }
@@ -186,7 +207,7 @@ export function useRSVPReader({
 
   // Build current words chunk from offsets (no global chunk strings)
   const words = useMemo(() => {
-    const startWord = clamp(wordIndex, 0)
+    const startWord = Math.max(0, wordIndex)
     const count = Math.max(1, chunkSize | 0)
     const endWordExclusive = startWord + count
 
@@ -206,7 +227,7 @@ export function useRSVPReader({
     return out
   }, [wordIndex, chunkSize, wordCountIndexed])
 
-  // Navigation
+  // Navigation - all respect totalWords bounds via setWordIndex clamping
   const next = useCallback(() => {
     setWordIndex(wordIndex + Math.max(1, chunkSize | 0))
   }, [wordIndex, chunkSize, setWordIndex])
@@ -240,7 +261,16 @@ export function useRSVPReader({
     const tickMs = perWordMs * stepWords
 
     timerIdRef.current = window.setInterval(() => {
-      _setWordIndex((i) => i + stepWords)
+      _setWordIndex((i) => {
+        const next = i + stepWords
+        // Stop playback if we've reached or exceeded the end
+        if (totalWords > 0 && next >= totalWords) {
+          setReaderState('paused')
+          // Return the last valid position (totalWords - 1 or current if already at end)
+          return Math.min(i, totalWords - 1)
+        }
+        return next
+      })
     }, tickMs)
 
     return () => {
@@ -249,7 +279,7 @@ export function useRSVPReader({
         timerIdRef.current = null
       }
     }
-  }, [readerState, wpm, chunkSize])
+  }, [readerState, wpm, chunkSize, totalWords])
 
   // Cleanup idle work on unmount
   useEffect(() => {
@@ -277,6 +307,7 @@ export function useRSVPReader({
     words,
     wordIndex,
     wordCountIndexed,
+    totalWords,
     readerState,
     setWordIndex,
     next,

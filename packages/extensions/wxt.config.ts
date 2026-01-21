@@ -5,17 +5,21 @@ import { defineConfig } from 'wxt'
 // See https://wxt.dev/api/config.html
 export default defineConfig({
 	modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
-
+	imports: {
+		dirs: ['../speed-reader/src/components', '../ui/src/components'],
+	},
 	webExt: {
 		binaries: {
 			chrome: `${os.homedir()}/Library/Caches/ms-playwright/chromium-1200/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
 		},
+		openConsole: true,
 		chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
 		startUrls: [
 			'https://standardebooks.org/ebooks/herman-melville/moby-dick/text/single-page#chapter-28',
 		],
 		disabled: false,
 	},
+
 	manifest: {
 		description:
 			'Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect any long form content.',
@@ -32,8 +36,6 @@ export default defineConfig({
 			'clipboardWrite',
 			'clipboardRead',
 			'storage',
-			'tabs',
-			'scripting',
 		],
 		// Required, don't open popup, only action
 		action: {},
@@ -44,5 +46,6 @@ export default defineConfig({
 	},
 	vite: () => ({
 		plugins: [tailwind()],
+		build: { minify: false, sourcemap: true },
 	}),
 })

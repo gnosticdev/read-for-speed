@@ -20,7 +20,7 @@
 		"./lib/*": "./src/lib/*.ts"
 	},
 	"dependencies": {
-		"@base-ui/react": "^1.1.0",
+		"@base-ui/react": "catalog:",
 		"@read-for-speed/ui": "workspace:*",
 		"class-variance-authority": "catalog:",
 		"clsx": "catalog:",
@@ -30,7 +30,7 @@
 		"tailwind-merge": "catalog:",
 		"tailwindcss": "catalog:",
 		"tw-animate-css": "catalog:",
-		"usehooks-ts": "^3.1.1"
+		"usehooks-ts": "catalog:"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",

@@ -1,4 +1,4 @@
-# Read for Speed: RSVP Reader
+# Read for Speed: Speed Reading with the RSVP Technique
 
 Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect for books, articles, or any long form content.
 
@@ -14,16 +14,19 @@ Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Pres
 
 ## Monorepo Structure
 
-- `packages/ui`: Shared UI components
-- `packages/speed-reader`: Speed reader component
-- `packages/extensions`: Chrome, Firefox
-- `packages/extensions-safari`: Safari (WIP)
+```sh
+.
+└── packages
+    ├── extensions # Chrome, Firefox
+    ├── speed-reader # RSVP Reader component
+    └── ui # Shared UI components
+```
 
 ## RSVP Reader Component
 
 The main reader component that takes in content and displays it in RSVP format.
 
-> **NOTE:** To parse content, use the [Readability JS](https://github.com/mozilla/readability) library.
+> **NOTE:** To parse content, [Readability JS](https://github.com/mozilla/readability) library is recommended.
 
 ## Extensions
 

@@ -1,11 +1,5 @@
 'use client'
 
-import {
-  Popover,
-  PopoverPopup,
-  PopoverTitle,
-  PopoverTrigger,
-} from '@read-for-speed/speed-reader/ui/anchored-popover'
 import { Button } from '@read-for-speed/ui/components/button'
 import {
   Card,
@@ -16,6 +10,12 @@ import {
   CardTitle,
 } from '@read-for-speed/ui/components/card'
 import { Label } from '@read-for-speed/ui/components/label'
+import {
+  Popover,
+  PopoverPopup,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@read-for-speed/ui/components/popover'
 import { Separator } from '@read-for-speed/ui/components/separator'
 import { Slider } from '@read-for-speed/ui/components/slider'
 import { Switch } from '@read-for-speed/ui/components/switch'
@@ -143,7 +143,7 @@ export function SettingsPanel({
                 <PopoverPopup
                   side='top'
                   tooltipStyle
-                  portalContainer={popoverAnchor}
+                  container={popoverAnchor}
                   className='max-w-xs'
                 >
                   <PopoverTitle className='text-sm mb-3'>Note</PopoverTitle>

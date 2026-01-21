@@ -11,14 +11,15 @@
 	},
 	"private": true,
 	"scripts": {
-		"clean": "rm -rf packages/*/node_modules packages/*/dist bun.lock",
+		"clean": "rm -rf node_modules bun.lock && bun run --filter './packages/*' clean",
 		"clean-install": "bun run clean && bun i --no-cache",
 		"dev:extensions": "bun --filter './packages/extensions' dev",
 		"dev:speed-reader": "bun --filter './packages/speed-reader' dev",
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"build:extensions": "bun --filter './packages/extensions' build",
-		"build:speed-reader": "bun --filter './packages/speed-reader' build"
+		"build:speed-reader": "bun --filter './packages/speed-reader' build",
+		"typecheck": "bun run --filter './packages/*' typecheck"
 	},
 	"type": "module",
 	"workspaces": {
@@ -40,7 +41,8 @@
 			"@base-ui/react": "^1.1.0",
 			"@types/node": "^24",
 			"@types/react": "^19.2.3",
-			"@types/react-dom": "^19.2.3"
+			"@types/react-dom": "^19.2.3",
+			"usehooks-ts": "^3.1.1"
 		}
 	}
 }

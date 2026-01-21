@@ -4,7 +4,7 @@ import { sessionStats } from '@/lib/session-stats'
 export default defineBackground(() => {
 	void sessionStats.setValue({
 		wordsRead: 0,
-		totalWords: 0,
+		totalWordsRead: 0,
 		sessionsCompleted: 0,
 		averageWpm: 0,
 		totalTimeSeconds: 0,

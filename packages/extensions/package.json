@@ -31,7 +31,8 @@
 		"react-dom": "catalog:",
 		"tailwind-merge": "catalog:",
 		"tailwindcss": "catalog:",
-		"tw-animate-css": "catalog:"
+		"tw-animate-css": "catalog:",
+		"usehooks-ts": "catalog:"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",

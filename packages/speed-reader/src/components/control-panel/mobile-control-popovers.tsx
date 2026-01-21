@@ -1,14 +1,14 @@
 import type { SpeedControlProps } from '@read-for-speed/speed-reader/control-panel/speed-control'
 import { Button } from '@read-for-speed/ui/components/button'
-import { Slider, SliderValue } from '@read-for-speed/ui/components/slider'
-import { WholeWord, Zap } from 'lucide-react'
 import {
   Popover,
   PopoverCreateHandle,
   PopoverPopup,
   PopoverTitle,
   PopoverTrigger,
-} from '../ui/anchored-popover'
+} from '@read-for-speed/ui/components/popover'
+import { Slider, SliderValue } from '@read-for-speed/ui/components/slider'
+import { WholeWord, Zap } from 'lucide-react'
 
 const mobileControlHandle = PopoverCreateHandle<
   typeof MobileSpeedControlPanel | typeof MobileChunkSizeControlPanel
@@ -115,7 +115,7 @@ export function MobileControlPopover({ container, onSettingsChange, settings }: 
       {({ payload: Payload }) => (
         <>
           <PopoverPopup
-            portalContainer={container}
+            container={container}
             side='top'
             align='center'
             className={'absolute'}

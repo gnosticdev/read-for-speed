@@ -1,8 +1,12 @@
-import { isProbablyReaderable, Readability } from '@mozilla/readability'
+'use client'
+
+import { isProbablyReaderable } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
 import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
 import ContentDialog from '@/components/content-dialog'
+import { parseWebPageContent } from '@/entrypoints/content/parse-page-content'
+import { useOnMount } from '@/hooks/use-on-mount'
 import type { RSVPReaderMessage } from '@/lib/message-types'
 import { sessionStats } from '@/lib/session-stats'
 import { readerSettings } from '@/lib/settings'
@@ -27,27 +31,34 @@ export default function ContentApp({
   const [pageContent, setPageContent] = useState<string>('')
   const [title, setTitle] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [totalWords, setTotalWords] = useState<number>(0)
 
-  const dialogRef = useRef<HTMLDivElement | null>(null)
   const controlsContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const parseWebPageContent = useCallback((newDoc: Document) => {
-    const article = new Readability(newDoc).parse() // returns { textContent, ... }
+  const parseAndSetPageContent = useCallback(
+    (force = false) => {
+      const isReaderable = isProbablyReaderable(docClone)
+      if (isReaderable === false && force === false) {
+        setError('Page is not reader mode compatible.')
+        return
+      }
 
-    setPageContent(article?.textContent ?? '')
-    setTitle(article?.title ?? newDoc.title)
-    setError(article ? null : 'No readable text found on this page.')
-    setTotalWords(article?.textContent?.split(/\s+/).length ?? 0)
-  }, [])
+      // will continue here if force = true or isReaderable = true
+      const parsed = parseWebPageContent(docClone)
+      if (parsed.error) {
+        setError(parsed.message)
+        return
+      }
 
-  useEffect(() => {
-    if (isProbablyReaderable(docClone)) {
-      parseWebPageContent(docClone)
-    } else {
-      setError('Page is not reader mode compatible.')
-    }
-  }, [])
+      setPageContent(parsed.textContent)
+      setTitle(parsed.title)
+      setError(null)
+    },
+    [docClone],
+  )
+
+  useOnMount(() => {
+    parseAndSetPageContent()
+  })
 
   /**
    * Handle settings changes from RSVPReader.
@@ -67,7 +78,7 @@ export default function ContentApp({
   }, [])
 
   const handleMessageEvent = useCallback((message: RSVPReaderMessage) => {
-    if (!message) return
+    console.log('message', message)
 
     switch (message.type) {
       case 'SHOW_READER_WITH_SELECTED_TEXT':
@@ -96,8 +107,7 @@ export default function ContentApp({
       wpm={settings.wpm}
     >
       <ContentDialog
-        popupRef={dialogRef}
-        uiContainer={uiContainer}
+        container={uiContainer}
         controlsContainerRef={controlsContainerRef}
         open={openDialog}
         onOpenChange={setOpenDialog}
@@ -105,15 +115,14 @@ export default function ContentApp({
       >
         <RSVPReader
           pageContent={pageContent}
-          onErrorResubmit={() => parseWebPageContent(docClone)}
+          onErrorResubmit={() => parseAndSetPageContent(true)}
           onPastedContentChange={setPastedText}
           readingStats={initialStats}
           onSessionStatsChange={saveSessionStats}
-          contentMode={inputMode}
-          onContentModeChange={setInputMode}
+          inputMode={inputMode}
+          onInputModeChange={setInputMode}
           pageContentTitle={title}
           pageContentError={error}
-          totalWords={totalWords}
           initialPastedContent={pastedText}
           settings={settings}
           onSettingsChange={handleSettingsChange}
