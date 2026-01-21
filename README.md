@@ -39,3 +39,7 @@ The main reader component that takes in content and displays it in RSVP format.
 #### Safari (WIP)
 
 - built by using the [Safari Extension Converter](https://developer.apple.com/documentation/safariservices/packaging-a-web-extension-for-safari).
+
+## TODO
+
+- [ ] Add epub support for native reading experience
