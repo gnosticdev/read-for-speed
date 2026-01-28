@@ -12,6 +12,7 @@
 		"build:firefox": "wxt build -b firefox",
 		"zip": "bun run typecheck && wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
+		"publish": "bun run build && node publish.ts",
 		"typecheck": "tsc --noEmit",
 		"postinstall": "wxt prepare",
 		"lint": "biome check . --write --no-errors-on-unmatched --files-ignore-unknown=true --log-level error"
