@@ -16,6 +16,11 @@
 		"postinstall": "wxt prepare",
 		"lint": "biome check . --write --no-errors-on-unmatched --files-ignore-unknown=true --log-level error"
 	},
+	"author": {
+		"email": "64601257+gnosticdev@users.noreply.github.com",
+		"name": "gnosticdev",
+		"url": "https://github.com/gnosticdev"
+	},
 	"dependencies": {
 		"@base-ui/react": "catalog:",
 		"@read-for-speed/ui": "workspace:*",

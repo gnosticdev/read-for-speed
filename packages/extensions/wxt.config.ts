@@ -19,11 +19,29 @@ export default defineConfig({
 		],
 		disabled: false,
 	},
+	targetBrowsers: ['firefox', 'chrome'],
+	// manifestVersion: 3,
+	hooks: {
+		'build:manifestGenerated': (wxt, manifest) => {
+			if (wxt.config.browser === 'firefox') {
+				wxt.logger.info('firefox manifest generated')
+				// @ts-expect-error - firefox manifest
+				manifest.author = 'gnosticdev'
+				manifest.browser_specific_settings = {
+					gecko: {
+						data_collection_permissions: {
+							required: ['websiteContent'],
+						},
+					},
+				}
+			}
+		},
+	},
 
 	manifest: {
 		description:
 			'Speed read at 300-1000 words per minute using the RSVP (Rapid Serial Visual Presentation) technique. Perfect any long form content.',
-		version: '1.0.0',
+		version: '1.0.1',
 		author: {
 			email: '64601257+gnosticdev@users.noreply.github.com',
 		},

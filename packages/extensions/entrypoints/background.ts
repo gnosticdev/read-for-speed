@@ -16,12 +16,21 @@ export default defineBackground(() => {
 		accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
 	})
 
-	browser.action.onClicked.addListener(async (tab) => {
-		if (!tab?.id) return
-		await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
-			type: 'SHOW_READER',
+	if (import.meta.env.MANIFEST_VERSION === 3) {
+		browser.action.onClicked.addListener(async (tab) => {
+			if (!tab?.id) return
+			await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
+				type: 'SHOW_READER',
+			})
 		})
-	})
+	} else {
+		browser.browserAction.onClicked.addListener(async (tab) => {
+			if (!tab?.id) return
+			await browser.tabs.sendMessage<RSVPReaderMessage>(tab.id, {
+				type: 'SHOW_READER',
+			})
+		})
+	}
 
 	browser.runtime.onInstalled.addListener(async () => {
 		browser.contextMenus.create({

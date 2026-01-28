@@ -40,6 +40,22 @@ The main reader component that takes in content and displays it in RSVP format.
 
 - built by using the [Safari Extension Converter](https://developer.apple.com/documentation/safariservices/packaging-a-web-extension-for-safari).
 
-## TODO
+## Roadmap
 
+- [x] Chrome extension
+- [x] Settings panel
+- [x] Reading stats
+- [x] Word display with control panel
+ -[x] SPeed control from 50 - 1000 WPM
+ -[x] Word skip size control from 1 - 10 words
+ -[x] Progress bar
+ -[x] Panel for reading stats
+ -[x] Panel for settings
+ -[x] Control panel for playback, skip, reset, etc.
+ -[ ] Panel for help / documentation
+- [x] Allow for reading chunks of 1-3 words
+- [x] Check for readerability before parsing page content
+- [x] Make sure parsing doesnt block the main thread
+- [x] Make sure errors from parsing don't break the page
+- [ ] Test on different sites like Reddit, Hacker News, etc.
 - [ ] Add epub support for native reading experience
