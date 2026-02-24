@@ -1,5 +1,5 @@
 import type React from 'react'
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, memo, useContext, useMemo } from 'react'
 import { type RSVPState, unsafe_useRSVPReader } from '../internal/use-rsvp-reader'
 
 type Values = Pick<
@@ -22,7 +22,7 @@ type Controls = Pick<
 const RSVPValuesCtx = createContext<Values | null>(null)
 const RSVPControlsCtx = createContext<Controls | null>(null)
 
-export function RSVPProvider({
+export const RSVPProvider = memo(function RSVPProviderPure({
   content,
   autoplay,
   chunkSize,
@@ -92,7 +92,7 @@ export function RSVPProvider({
       <RSVPControlsCtx.Provider value={controls}>{children}</RSVPControlsCtx.Provider>
     </RSVPValuesCtx.Provider>
   )
-}
+})
 
 export function useRSVPValues() {
   const ctx = useContext(RSVPValuesCtx)

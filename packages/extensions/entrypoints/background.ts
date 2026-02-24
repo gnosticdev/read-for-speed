@@ -16,6 +16,7 @@ export default defineBackground(() => {
 		accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
 	})
 
+	// manifest version 3 uses `.action` instead of `.browserAction`
 	if (import.meta.env.MANIFEST_VERSION === 3) {
 		browser.action.onClicked.addListener(async (tab) => {
 			if (!tab?.id) return

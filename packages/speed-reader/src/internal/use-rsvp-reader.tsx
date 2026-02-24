@@ -43,11 +43,15 @@ export type RSVPState = {
   skipBack: () => void
   /** Play the reader at the current word index and speed */
   play: () => void
-  /** Pause the reader */
+  /**
+   * Pause the reader - keeps the position in tact and only pauses the playback.
+   */
   pause: () => void
   /** Toggle the reader playback state from playing to paused and vice versa */
   toggle: () => void
-  /** Stop the reader */
+  /**
+   * Stop the reader - pauses if currently playing and sets the reader to `idle` state.
+   */
   stop: () => void
 }
 
@@ -71,7 +75,10 @@ export function unsafe_useRSVPReader({
   parseBatchMs = 8,
 }: UseRSVPParams): RSVPState {
   // Playback state
-  const [readerState, setReaderState] = useState<ReaderState>(autoplay ? 'playing' : 'idle')
+  const [readerState, setReaderState] = useState<ReaderState>(() => {
+    if (autoplay) return 'playing'
+    return 'idle'
+  })
   const [wordIndex, setWordIndex] = useState<number>(0)
   const [wordCountIndexed, setWordCountIndexed] = useState<number>(0)
 
@@ -285,17 +292,8 @@ export function unsafe_useRSVPReader({
 
   // convenience methods
   const play = () => setReaderState('playing')
-  /**
-   * Pause keeps the position in tact and only pauses the playback.
-   */
   const pause = () => setReaderState('paused')
-  /**
-   * Toggle between playing and paused states.
-   */
   const toggle = () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing'))
-  /**
-   * Stop playback - pauses if currently playing and sets the reader to `idle` state.
-   */
   const stop = useCallback(() => {
     if (readerState === 'playing') {
       pause()

@@ -13,7 +13,7 @@ import { useEventListener } from 'usehooks-ts'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
 import { DEFAULT_READING_STATS, type ReadingStats, StatsPanel } from './stats-panel'
-import { WordDisplay } from './word-display'
+import { ReaderDisplay } from './word-display'
 
 export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
 
@@ -126,6 +126,10 @@ export interface RSVPReaderConfig {
    * Ref to the container element for the reader. Used for keyboard shortcuts in the control panel. Use if reader not mounted to the body, such as a dialog
    */
   containerRef?: RefObject<HTMLDivElement | null>
+  /**
+   * Enable debug mode to log internal state changes and events.
+   */
+  debugMode?: boolean
 }
 
 /**
@@ -190,6 +194,7 @@ export function RSVPReader({
   readingStats,
   onErrorResubmit,
   onReaderStateChange,
+  debugMode = false,
 }: RSVPReaderConfig) {
   /**
    * The currently active input mode determines which content source is used for reading.
@@ -209,7 +214,7 @@ export function RSVPReader({
    * User-provided pasted content, independent from page content.
    * Initialized with selection text if provided.
    */
-  const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
+  const [pastedContent, setPastedContent] = useState<string | undefined>(initialPastedContent)
 
   const { words, wordIndex, wordCountIndexed, totalWords, readerState } = useRSVPValues()
   const { pause, play, setWordIndex, skipForward, skipBack, stop } = useRSVPControls()
@@ -278,10 +283,12 @@ export function RSVPReader({
   // track words read in session
   useEffect(() => {
     if (!isPlaying) {
+      if (debugMode) console.log('not playing, not tracking words read in session')
       lastWordIndexRef.current = wordIndex
       return
     }
 
+    if (debugMode) console.log('tracking words read in session', wordIndex)
     const prevIndex = lastWordIndexRef.current
     if (wordIndex > prevIndex) {
       wordsReadInSessionRef.current += wordIndex - prevIndex
@@ -294,8 +301,12 @@ export function RSVPReader({
    */
   const handlePastedContentChange = useCallback(
     (nextContent: string) => {
+      stop()
+      if (debugMode) console.log('handlePastedContentChange', nextContent)
       setPastedContent(nextContent)
       onPastedContentChange?.(nextContent)
+      setActivePanel('reader')
+      setControlledInputMode('paste')
     },
     [onPastedContentChange],
   )
@@ -305,6 +316,7 @@ export function RSVPReader({
    */
   const handleInputModeChange = useCallback(
     (mode: InputMode) => {
+      if (debugMode) console.log('handleInputModeChange', mode)
       setControlledInputMode(mode)
       // Reset reading position when switching modes.
       setWordIndex(0)
@@ -327,6 +339,7 @@ export function RSVPReader({
   // }, [pageContent, internalInputMode, resetSessionTracking, setWordIndex, stop])
 
   useEffect(() => {
+    if (debugMode) console.log('useEffect onReaderStateChange', readerState)
     onReaderStateChange?.(readerState)
   }, [readerState, onReaderStateChange])
 
@@ -335,6 +348,7 @@ export function RSVPReader({
    * This handles new selection text while the reader is already open.
    */
   useEffect(() => {
+    if (debugMode) console.log('useEffect initialPastedContent', initialPastedContent)
     if (!initialPastedContent?.trim()) return
 
     setPastedContent(initialPastedContent)
@@ -345,7 +359,7 @@ export function RSVPReader({
   }, [initialPastedContent, resetSessionTracking, setWordIndex, stop])
 
   const handlePlay = () => {
-    console.log('handlePlay', wordCountIndexed)
+    if (debugMode) console.log('handlePlay', wordCountIndexed)
     if (wordCountIndexed === 0) return
     play()
     if (sessionStartRef.current == null) {
@@ -368,7 +382,7 @@ export function RSVPReader({
 
   const handleStop = () => {
     stop()
-    console.log('handleStop', readerState)
+    if (debugMode) console.log('handleStop', readerState)
 
     if (sessionStartRef.current) {
       sessionElapsedRef.current += (Date.now() - sessionStartRef.current) / 1000
@@ -434,7 +448,7 @@ export function RSVPReader({
           e.stopPropagation()
           if (activePanel !== 'reader') {
             setActivePanel('reader')
-          } else if (readerState === 'playing') {
+          } else if (isPlaying) {
             handlePause()
           } else {
             handleStop()
@@ -442,15 +456,10 @@ export function RSVPReader({
           break
       }
     },
-    [activePanel, isPlaying, settings, words.length, onSettingsChange],
+    [activePanel, isPlaying, settings, words.length, onSettingsChange, handlePause, handleStop],
   )
 
   useEventListener('keydown', handleKeyboardShortcuts)
-  // useEffect(() => {
-
-  //   window.addEventListener('keydown', handleKeydown)
-  //   return () => window.removeEventListener('keydown', handleKeydown)
-  // }, [activePanel, isPlaying, settings, chunkWords.length, onSettingsChange])
 
   return (
     <Tabs
@@ -498,15 +507,15 @@ export function RSVPReader({
               onPastedContentChange={handlePastedContentChange}
               onSelectPageContent={() => setControlledInputMode('page')}
               pageContentError={pageContentError}
-              pageContent={pageContent ?? ''}
+              pageContent={pageContent}
               activeMode={controlledInputMode}
               onModeChange={handleInputModeChange}
               className={classNames?.contentInputContainer}
               onErrorResubmit={onErrorResubmit}
             />
           ) : (
-            <WordDisplay
-              chunkWords={words}
+            <ReaderDisplay
+              currentWordChunks={words}
               settings={settings}
               isPlaying={isPlaying}
               onStop={handleStop}

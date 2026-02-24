@@ -7,33 +7,32 @@ import { getMultiWordORPIndex } from '../lib/orp-index'
 
 import type { ReaderSettings } from './rsvp-reader'
 
-interface WordDisplayProps {
-  /** Current chunk words to display */
-  chunkWords: string[]
+interface ReaderDisplayProps {
+  /** Current word chunk to display */
+  currentWordChunks: string[]
   settings: ReaderSettings
   isPlaying: boolean
   onStop?: () => void
 }
 
 /**
- * Displays a single word/chunk using the RSVP technique with ORP highlighting.
- * Font size is calculated dynamically based on container width to ensure
- * text always fits on a single line.
+ * Displays 1-2 words at a time using the RSVP technique with ORP highlighting.
+ * Font size is calculated dynamically based on container width to ensure text always fits on a single line.
  */
-export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
+export function ReaderDisplay({ currentWordChunks, settings }: ReaderDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const { beforeORP, orpChar, afterORP } = useMemo(() => {
-    if (chunkWords.length === 0) {
+    if (currentWordChunks.length === 0) {
       return { beforeORP: '', orpChar: '', afterORP: '' }
     }
 
-    const { anchorWordIndex, orpCharIndex } = getMultiWordORPIndex(chunkWords)
-    const anchorWord = chunkWords[anchorWordIndex] ?? ''
+    const { anchorWordIndex, orpCharIndex } = getMultiWordORPIndex(currentWordChunks)
+    const anchorWord = currentWordChunks[anchorWordIndex] ?? ''
 
     const idx = orpCharIndex
-    const beforeWords = chunkWords.slice(0, anchorWordIndex).join(' ')
-    const afterWords = chunkWords.slice(anchorWordIndex + 1).join(' ')
+    const beforeWords = currentWordChunks.slice(0, anchorWordIndex).join(' ')
+    const afterWords = currentWordChunks.slice(anchorWordIndex + 1).join(' ')
 
     const beforeText =
       beforeWords && anchorWord.slice(0, idx)
@@ -49,7 +48,7 @@ export function WordDisplay({ chunkWords, settings }: WordDisplayProps) {
       orpChar: anchorWord[idx] || '',
       afterORP: afterText,
     }
-  }, [chunkWords])
+  }, [currentWordChunks])
 
   const fontStyle = {
     sans: 'var(--font-sans)',

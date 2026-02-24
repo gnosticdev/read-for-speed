@@ -9,7 +9,7 @@ import type { InputMode } from './rsvp-reader'
 
 interface ContentInputProps {
   /** Content for the paste tab (user-provided text). */
-  pastedContent: string
+  pastedContent: string | undefined
   /** Callback when the pasted content changes. */
   onPastedContentChange: (content: string) => void
   /** Callback when user switches to the page tab. */
@@ -50,7 +50,7 @@ export function ContentInput({
     }
   }
 
-  const pastedWordCount = pastedContent.split(/\s+/).filter((w) => w.length > 0).length
+  const pastedWordCount = pastedContent?.split(/\s+/).filter((w) => w.length > 0).length ?? 0
   const pageWordCount = Intl.NumberFormat('en-US').format(
     pageContent.split(/\s+/).filter((w) => w.length > 0).length,
   )
@@ -118,6 +118,11 @@ export function ContentInput({
                 onChange={(e) => onPastedContentChange(e.target.value)}
                 placeholder='Paste your text here...'
                 className='w-full h-48 resize-none! text-sm'
+                onPaste={(e) => {
+                  console.log('onPaste', e.clipboardData.getData('text'))
+                  e.preventDefault()
+                  onPastedContentChange(e.clipboardData.getData('text'))
+                }}
               />
               <span className='text-xs text-right text-muted-foreground'>
                 {pastedWordCount} words
