@@ -5,6 +5,7 @@ import { ScrollArea } from '@read-for-speed/ui/components/scroll-area'
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/components/tabs'
 import { Textarea } from '@read-for-speed/ui/components/textarea'
 import { cn } from '@read-for-speed/ui/lib/utils'
+import type { InputMode } from './rsvp-reader'
 
 interface ContentInputProps {
   /** Content for the paste tab (user-provided text). */
@@ -17,9 +18,9 @@ interface ContentInputProps {
   /** Full page content (read-only display). */
   pageContent?: string
   /** Currently active input mode (controlled by parent). */
-  activeMode: 'page' | 'paste'
+  activeMode: InputMode
   /** Callback when the input mode changes. */
-  onModeChange: (mode: 'page' | 'paste') => void
+  onModeChange: (mode: InputMode) => void
   /** CSS classes for the content input component */
   className?: string
   /** Callback when an error is presented and the user clicks the `Try Again` button. */
@@ -41,7 +42,7 @@ export function ContentInput({
    * Handle tab switching between page and paste modes.
    * Notifies parent so it knows which content source to use for reading.
    */
-  const handleModeChange = (mode: 'page' | 'paste') => {
+  const handleModeChange = (mode: InputMode) => {
     onModeChange(mode)
     if (mode === 'page') {
       // Notify parent that page content is now the active source.

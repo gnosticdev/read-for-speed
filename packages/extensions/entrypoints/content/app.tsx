@@ -2,7 +2,11 @@
 
 import { isProbablyReaderable } from '@mozilla/readability'
 import { RSVPProvider } from '@read-for-speed/speed-reader/provider'
-import { type ReaderSettings, RSVPReader } from '@read-for-speed/speed-reader/rsvp-reader'
+import {
+  type InputMode,
+  type ReaderSettings,
+  RSVPReader,
+} from '@read-for-speed/speed-reader/rsvp-reader'
 import type { ReadingStats } from '@read-for-speed/speed-reader/stats-panel'
 import ContentDialog from '@/components/content-dialog'
 import { parseWebPageContent } from '@/entrypoints/content/parse-page-content'
@@ -27,7 +31,7 @@ export default function ContentApp({
   const [settings, setSettings] = useState<ReaderSettings>(initialSettings)
   const [pastedText, setPastedText] = useState<string | undefined>(undefined)
   const [openDialog, setOpenDialog] = useState(false)
-  const [inputMode, setInputMode] = useState<'page' | 'paste'>('page')
+  const [inputMode, setInputMode] = useState<InputMode>('page')
   const [pageContent, setPageContent] = useState<string>('')
   const [title, setTitle] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +82,9 @@ export default function ContentApp({
   }, [])
 
   const handleMessageEvent = useCallback((message: RSVPReaderMessage) => {
-    console.log('message', message)
+    if (import.meta.env.DEV) {
+      console.log('message', message)
+    }
 
     switch (message.type) {
       case 'SHOW_READER_WITH_SELECTED_TEXT':

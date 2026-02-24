@@ -27,6 +27,11 @@ interface SettingsPanelProps {
   settings: ReaderSettings
   onSettingsChange: (settings: ReaderSettings) => void
   onSave: () => void
+  /**
+   * Layout of the settings panel.
+   *
+   * If rendered in an overlay (dialog) it will be positioned relative to the anchor element.
+   */
   layout?: 'overlay' | 'page'
   /**
    * Ref to the font size control button

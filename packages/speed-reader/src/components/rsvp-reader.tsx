@@ -18,6 +18,13 @@ import { WordDisplay } from './word-display'
 export type ReaderState = 'idle' | 'playing' | 'paused' | 'done'
 
 /**
+ * The input mode determines which content source is used for reading.
+ * - 'page': Uses the extracted page content.
+ * - 'paste': Uses user-provided pasted content (including selection text).
+ */
+export type InputMode = 'page' | 'paste'
+
+/**
  * Font size preset options for the RSVP reader.
  * The actual pixel size is calculated dynamically based on container width.
  */
@@ -73,11 +80,11 @@ export interface RSVPReaderConfig {
   /**
    * Controlled input mode.
    */
-  inputMode?: 'page' | 'paste'
+  inputMode?: InputMode
   /**
    * Callback when input mode changes.
    */
-  onInputModeChange?: (mode: 'page' | 'paste') => void
+  onInputModeChange?: (mode: InputMode) => void
   /**
    * Initial content for the "paste" tab.
    */
@@ -192,7 +199,7 @@ export function RSVPReader({
    * Defaults to 'paste' if there's initial pasted content (e.g., selection text),
    * otherwise defaults to 'page'
    */
-  const [controlledInputMode, setControlledInputMode] = useControllableState<'page' | 'paste'>({
+  const [controlledInputMode, setControlledInputMode] = useControllableState<InputMode>({
     value: inputMode,
     defaultValue: 'page',
     onChange: onInputModeChange,
@@ -297,7 +304,7 @@ export function RSVPReader({
    * Handles switching between page and paste input modes.
    */
   const handleInputModeChange = useCallback(
-    (mode: 'page' | 'paste') => {
+    (mode: InputMode) => {
       setControlledInputMode(mode)
       // Reset reading position when switching modes.
       setWordIndex(0)
