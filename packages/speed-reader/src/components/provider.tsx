@@ -1,6 +1,6 @@
 import type React from 'react'
 import { createContext, useContext, useMemo } from 'react'
-import { type RSVPState, useRSVPReader } from '../internal/use-rsvp-reader'
+import { type RSVPState, unsafe_useRSVPReader } from '../internal/use-rsvp-reader'
 
 type Values = Pick<
   RSVPState,
@@ -37,7 +37,7 @@ export function RSVPProvider({
   skipWords: number
   wpm: number
 }) {
-  const readerState = useRSVPReader({
+  const readerState = unsafe_useRSVPReader({
     content,
     chunkSize,
     skipWords,

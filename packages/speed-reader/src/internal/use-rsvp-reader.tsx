@@ -51,10 +51,6 @@ export type RSVPState = {
   stop: () => void
 }
 
-/////////////////////////////////////////////
-// WIP: may use this if chunking is too slow
-/////////////////////////////////////////////
-
 /**
  * **NOTE** you should use `useRSVP`
  * RSVP hook:
@@ -65,7 +61,7 @@ export type RSVPState = {
  * - This is a low-level hook that is used to power the RSVPReader component
  * @internal
  */
-export function useRSVPReader({
+export function unsafe_useRSVPReader({
   content,
   chunkSize,
   skipWords,
@@ -90,6 +86,7 @@ export function useRSVPReader({
 
   // Incremental word indexing refs
   const textRef = useRef<string>(content)
+  // RegExp matcher to keep track of lastIndex matching position
   const reRef = useRef<RegExp | null>(null)
   const startsRef = useRef<number[]>([])
   const endsRef = useRef<number[]>([])
@@ -288,12 +285,16 @@ export function useRSVPReader({
 
   // convenience methods
   const play = () => setReaderState('playing')
+  /**
+   * Pause keeps the position in tact and only pauses the playback.
+   */
   const pause = () => setReaderState('paused')
+  /**
+   * Toggle between playing and paused states.
+   */
   const toggle = () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing'))
   /**
-   * Stop playback and set reader to `idle` state.
-   *
-   * Always pauses first if currently playing to ensure cleanup.
+   * Stop playback - pauses if currently playing and sets the reader to `idle` state.
    */
   const stop = useCallback(() => {
     if (readerState === 'playing') {

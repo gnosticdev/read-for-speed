@@ -458,7 +458,10 @@ export function RSVPReader({
           <h1 className='text-lg/tight @max-md/reader-main:text-sm font-semibold truncate max-w-1/2'>
             {pageContentTitle}
           </h1>
-          <TabsList variant='underline'>
+          <TabsList
+            variant='underline'
+            data-rsvp='reader-tabs-list'
+          >
             {/* Only show icons on mobile */}
             <TabsTrigger value='reader'>
               <BookOpen className='size-4 @md/reader-main:hidden' />
@@ -478,7 +481,9 @@ export function RSVPReader({
         {/* Main content area */}
         <TabsPanel
           value={'reader'}
+          data-rsvp='reader-tabs-panel'
           className='flex min-h-0 flex-1 flex-col'
+          data-play-state={readerState}
         >
           {readerState === 'idle' ? (
             <ContentInput
