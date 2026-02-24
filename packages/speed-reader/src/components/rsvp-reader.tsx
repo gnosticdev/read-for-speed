@@ -9,6 +9,7 @@ import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEventListener } from 'usehooks-ts'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
 import { DEFAULT_READING_STATS, type ReadingStats, StatsPanel } from './stats-panel'
@@ -201,15 +202,9 @@ export function RSVPReader({
    * User-provided pasted content, independent from page content.
    * Initialized with selection text if provided.
    */
-  const [pastedContent, _setPastedContent] = useState(initialPastedContent ?? '')
+  const [pastedContent, setPastedContent] = useState(initialPastedContent ?? '')
 
-  const {
-    words: chunkWords,
-    wordIndex,
-    wordCountIndexed,
-    totalWords,
-    readerState,
-  } = useRSVPValues()
+  const { words, wordIndex, wordCountIndexed, totalWords, readerState } = useRSVPValues()
   const { pause, play, setWordIndex, skipForward, skipBack, stop } = useRSVPControls()
 
   const [activePanel, setActivePanel] = useState<PanelState>('reader')
@@ -292,7 +287,7 @@ export function RSVPReader({
    */
   const handlePastedContentChange = useCallback(
     (nextContent: string) => {
-      _setPastedContent(nextContent)
+      setPastedContent(nextContent)
       onPastedContentChange?.(nextContent)
     },
     [onPastedContentChange],
@@ -335,7 +330,7 @@ export function RSVPReader({
   useEffect(() => {
     if (!initialPastedContent?.trim()) return
 
-    _setPastedContent(initialPastedContent)
+    setPastedContent(initialPastedContent)
     setControlledInputMode('paste')
     setWordIndex(0)
     stop()
@@ -398,8 +393,8 @@ export function RSVPReader({
    * - Arrow Left/Right: Skip backward/forward by skipWords chunks
    * - Escape: Stop or close panels
    */
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
+  const handleKeyboardShortcuts = useCallback(
+    (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
 
       switch (e.code) {
@@ -439,11 +434,16 @@ export function RSVPReader({
           }
           break
       }
-    }
+    },
+    [activePanel, isPlaying, settings, words.length, onSettingsChange],
+  )
 
-    window.addEventListener('keydown', handleKeydown)
-    return () => window.removeEventListener('keydown', handleKeydown)
-  }, [activePanel, isPlaying, settings, chunkWords.length, onSettingsChange])
+  useEventListener('keydown', handleKeyboardShortcuts)
+  // useEffect(() => {
+
+  //   window.addEventListener('keydown', handleKeydown)
+  //   return () => window.removeEventListener('keydown', handleKeydown)
+  // }, [activePanel, isPlaying, settings, chunkWords.length, onSettingsChange])
 
   return (
     <Tabs
@@ -494,7 +494,7 @@ export function RSVPReader({
             />
           ) : (
             <WordDisplay
-              chunkWords={chunkWords}
+              chunkWords={words}
               settings={settings}
               isPlaying={isPlaying}
               onStop={handleStop}

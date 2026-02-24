@@ -76,7 +76,7 @@ export function useRSVPReader({
 }: UseRSVPParams): RSVPState {
   // Playback state
   const [readerState, setReaderState] = useState<ReaderState>(autoplay ? 'playing' : 'idle')
-  const [wordIndex, _setWordIndex] = useState<number>(0)
+  const [wordIndex, setWordIndex] = useState<number>(0)
   const [wordCountIndexed, setWordCountIndexed] = useState<number>(0)
 
   /**
@@ -106,7 +106,7 @@ export function useRSVPReader({
     endsRef.current = []
     indexedCountRef.current = 0
     parsingRef.current = false
-    _setWordIndex(0)
+    setWordIndex(0)
     setWordCountIndexed(0)
 
     // kick indexing for initial viewport
@@ -120,9 +120,9 @@ export function useRSVPReader({
     return v
   }
 
-  const setWordIndex = useCallback(
+  const setClampedWordIndex = useCallback(
     (i: number) => {
-      _setWordIndex(() => {
+      setWordIndex(() => {
         const next = i | 0
         // Clamp to valid range: [0, totalWords - 1]
         // If totalWords is not yet known (0), allow any non-negative index
@@ -226,20 +226,20 @@ export function useRSVPReader({
 
   // Navigation - all respect totalWords bounds via setWordIndex clamping
   const next = useCallback(() => {
-    setWordIndex(wordIndex + Math.max(1, chunkSize | 0))
-  }, [wordIndex, chunkSize, setWordIndex])
+    setClampedWordIndex(wordIndex + Math.max(1, chunkSize | 0))
+  }, [wordIndex, chunkSize, setClampedWordIndex])
 
   const prev = useCallback(() => {
-    setWordIndex(wordIndex - Math.max(1, chunkSize | 0))
-  }, [wordIndex, chunkSize, setWordIndex])
+    setClampedWordIndex(wordIndex - Math.max(1, chunkSize | 0))
+  }, [wordIndex, chunkSize, setClampedWordIndex])
 
   const skipForward = useCallback(() => {
-    setWordIndex(wordIndex + Math.max(1, skipWords | 0))
-  }, [wordIndex, skipWords, setWordIndex])
+    setClampedWordIndex(wordIndex + Math.max(1, skipWords | 0))
+  }, [wordIndex, skipWords, setClampedWordIndex])
 
   const skipBack = useCallback(() => {
-    setWordIndex(wordIndex - Math.max(1, skipWords | 0))
-  }, [wordIndex, skipWords, setWordIndex])
+    setClampedWordIndex(wordIndex - Math.max(1, skipWords | 0))
+  }, [wordIndex, skipWords, setClampedWordIndex])
 
   // Playback timing: advance by chunkSize words per tick
   useEffect(() => {
@@ -258,7 +258,7 @@ export function useRSVPReader({
     const tickMs = perWordMs * stepWords
 
     timerIdRef.current = window.setInterval(() => {
-      _setWordIndex((i) => {
+      setWordIndex((i) => {
         const next = i + stepWords
         // Stop playback if we've reached or exceeded the end
         if (totalWords > 0 && next >= totalWords) {
@@ -286,12 +286,10 @@ export function useRSVPReader({
     }
   }, [])
 
-  const play = useCallback(() => setReaderState('playing'), [])
-  const pause = useCallback(() => setReaderState('paused'), [])
-  const toggle = useCallback(
-    () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing')),
-    [],
-  )
+  // convenience methods
+  const play = () => setReaderState('playing')
+  const pause = () => setReaderState('paused')
+  const toggle = () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing'))
   /**
    * Stop playback and set reader to `idle` state.
    *
@@ -310,7 +308,7 @@ export function useRSVPReader({
     wordCountIndexed,
     totalWords,
     readerState,
-    setWordIndex,
+    setWordIndex: setClampedWordIndex,
     next,
     prev,
     skipForward,

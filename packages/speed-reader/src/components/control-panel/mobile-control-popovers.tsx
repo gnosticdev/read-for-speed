@@ -19,7 +19,10 @@ const MobileChunkSizeControlPanel = ({
   onSettingsChange,
 }: Pick<SpeedControlProps, 'settings' | 'onSettingsChange'>) => {
   return (
-    <div className='*:justify-center *:flex *:flex-col-reverse *:items-center *:gap-3'>
+    <div
+      className='*:justify-center *:flex *:flex-col-reverse *:items-center *:gap-3'
+      data-rsvp='mobile-chunk-size-control-panel'
+    >
       <PopoverTitle className='text-center text-sm mb-4'>Chunk Size</PopoverTitle>
       <Slider
         min={1}
@@ -45,7 +48,10 @@ const MobileSpeedControlPanel = ({
   onSettingsChange,
 }: Pick<SpeedControlProps, 'settings' | 'onSettingsChange'>) => {
   return (
-    <div className='*:justify-center *:flex *:flex-col-reverse *:items-center *:gap-3'>
+    <div
+      className='*:justify-center *:flex *:flex-col-reverse *:items-center *:gap-3'
+      data-rsvp='mobile-speed-control-panel'
+    >
       <PopoverTitle className='text-center text-sm mb-4'>Speed (WPM)</PopoverTitle>
       <Slider
         min={50}
@@ -71,6 +77,7 @@ const MobileSpeedControlPanel = ({
  */
 export const MobileSpeedControlTrigger = () => (
   <PopoverTrigger
+    data-rsvp='mobile-speed-control-trigger'
     handle={
       mobileControlHandle as ReturnType<typeof PopoverCreateHandle<typeof MobileSpeedControlPanel>>
     }
@@ -88,6 +95,7 @@ export const MobileSpeedControlTrigger = () => (
 
 export const MobileChunkSizeControlTrigger = () => (
   <PopoverTrigger
+    data-rsvp='mobile-chunk-size-control-trigger'
     handle={
       mobileControlHandle as ReturnType<
         typeof PopoverCreateHandle<typeof MobileChunkSizeControlPanel>
@@ -111,7 +119,10 @@ export const MobileChunkSizeControlTrigger = () => (
  */
 export function MobileControlPopover({ container, onSettingsChange, settings }: SpeedControlProps) {
   return (
-    <Popover handle={mobileControlHandle}>
+    <Popover
+      handle={mobileControlHandle}
+      data-rsvp='mobile-control-popover'
+    >
       {({ payload: Payload }) => (
         <>
           <PopoverPopup

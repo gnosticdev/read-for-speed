@@ -21,7 +21,10 @@ export const ChunkSizeControl = ({
     return <MobileChunkSizeControlTrigger />
   }
   return (
-    <div className={cn('flex items-center gap-3', className)}>
+    <div
+      className={cn('flex items-center gap-3', className)}
+      data-rsvp='chunk-size-control'
+    >
       <span className='text-sm text-muted-foreground @max-md/control-panel:hidden'>Words</span>
       <ToggleGroup
         variant='outline'
