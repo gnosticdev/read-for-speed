@@ -291,15 +291,21 @@ export function unsafe_useRSVPReader({
   }, [])
 
   // convenience methods
-  const play = () => setReaderState('playing')
-  const pause = () => setReaderState('paused')
-  const toggle = () => setReaderState((p) => (p === 'playing' ? 'paused' : 'playing'))
+  const play = useCallback(() => {
+    setReaderState('playing')
+  }, [])
+
+  const pause = useCallback(() => {
+    setReaderState('paused')
+  }, [])
+
+  const toggle = useCallback(() => {
+    setReaderState((p) => (p === 'playing' ? 'paused' : 'playing'))
+  }, [])
+
   const stop = useCallback(() => {
-    if (readerState === 'playing') {
-      pause()
-    }
     setReaderState('idle')
-  }, [readerState, pause, setReaderState])
+  }, [])
 
   return {
     words,

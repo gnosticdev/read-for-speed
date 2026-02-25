@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsPanel, TabsTrigger } from '@read-for-speed/ui/compo
 import { cn } from '@read-for-speed/ui/lib/utils'
 import { BookOpen, ChartBar, Settings } from 'lucide-react'
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useEventListener } from 'usehooks-ts'
 import { useControllableState } from '../internal/use-controllable-state'
 import { SettingsPanel } from './settings-panel'
@@ -177,7 +177,7 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
  * />
  * ```
  */
-export function RSVPReader({
+export const RSVPReader = memo(function RSVPReaderPure({
   pageContent,
   pageContentTitle,
   pageContentError,
@@ -215,6 +215,7 @@ export function RSVPReader({
    * Initialized with selection text if provided.
    */
   const [pastedContent, setPastedContent] = useState<string | undefined>(initialPastedContent)
+  const pastedContentRef = useRef<string | undefined>(initialPastedContent)
 
   const { words, wordIndex, wordCountIndexed, totalWords, readerState } = useRSVPValues()
   const { pause, play, setWordIndex, skipForward, skipBack, stop } = useRSVPControls()
@@ -279,6 +280,10 @@ export function RSVPReader({
   useEffect(() => {
     onSessionStatsChange?.(stats)
   }, [stats, onSessionStatsChange])
+
+  useEffect(() => {
+    pastedContentRef.current = pastedContent
+  }, [pastedContent])
 
   // track words read in session
   useEffect(() => {
@@ -350,6 +355,8 @@ export function RSVPReader({
   useEffect(() => {
     if (debugMode) console.log('useEffect initialPastedContent', initialPastedContent)
     if (!initialPastedContent?.trim()) return
+    // Ignore parent echoes of local textarea edits; only apply true external updates.
+    if (initialPastedContent === pastedContentRef.current) return
 
     setPastedContent(initialPastedContent)
     setControlledInputMode('paste')
@@ -359,8 +366,10 @@ export function RSVPReader({
   }, [initialPastedContent, resetSessionTracking, setWordIndex, stop])
 
   const handlePlay = () => {
-    if (debugMode) console.log('handlePlay', wordCountIndexed)
-    if (wordCountIndexed === 0) return
+    if (debugMode) console.log('handlePlay', { wordCountIndexed, totalWords })
+    // `wordCountIndexed` is built asynchronously, so rely on `totalWords`
+    // to allow immediate playback after newly pasted text.
+    if (totalWords === 0) return
     play()
     if (sessionStartRef.current == null) {
       sessionStartRef.current = Date.now()
@@ -572,4 +581,4 @@ export function RSVPReader({
       </div>
     </Tabs>
   )
-}
+})

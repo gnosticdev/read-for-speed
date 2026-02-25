@@ -121,6 +121,7 @@ export default function ContentApp({
       >
         <RSVPReader
           pageContent={pageContent}
+          debugMode={import.meta.env.DEV}
           onErrorResubmit={() => parseAndSetPageContent(true)}
           onPastedContentChange={setPastedText}
           readingStats={initialStats}
