@@ -12,7 +12,7 @@
 		"build:firefox": "wxt build -b firefox",
 		"zip": "bun run typecheck && wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
-		"publish": "bun run build && node publish.ts",
+		"publish": "bun run build && bun run ./publish.ts",
 		"typecheck": "tsc --noEmit",
 		"postinstall": "wxt prepare",
 		"lint": "biome check . --write --no-errors-on-unmatched --files-ignore-unknown=true --log-level error"
@@ -42,11 +42,12 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
-		"@types/react": "catalog:",
 		"@tailwindcss/vite": "catalog:",
+		"@types/react": "catalog:",
 		"@types/react-dom": "catalog:",
 		"@wxt-dev/auto-icons": "^1.1.1",
 		"@wxt-dev/module-react": "^1.1.5",
+		"chrome-webstore-upload-cli": "3.5.0",
 		"typescript": "catalog:",
 		"wxt": "^0.20.18"
 	}
